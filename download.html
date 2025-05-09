@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Downloads – TWOEM Online Productions</title>
+  <link rel="icon" href="./images/twoem.jpg" type="image/jpeg">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    #downloads { padding: 100px 0 60px; }
+    #downloads-list {
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+      color: #fff;
+    }
+    #downloads-list ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    #downloads-list li {
+      margin: 0.5em 0;
+    }
+    #downloads-list a {
+      color: #ffc371;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    #downloads-list a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header/Nav (copied from index.html) -->
+  <header>
+    <nav class="container">
+      <img src="images/twoem.jpg" alt="TWOEM Logo" class="logo">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="services.html">Our Services</a></li>
+        <li><a href="index.html#gallery">Gallery</a></li>
+        <li><a href="index.html#contact">Contact Us</a></li>
+        <li><a href="download.html">Downloads</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Downloads Section -->
+  <section id="downloads">
+    <div class="container" id="downloads-list">
+      <h2>Available Downloads</h2>
+      <ul id="fileList"></ul>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      &copy; 2025 TWOEM Online Productions. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    const pdfFiles = [
+      "KGHS.pdf",
+      "twoem invoice.pdf",
+      "twoem delivery note.pdf",
+      "BILLING CLIENT APRIL 2025.xlsx",
+      "twoem invoice.pdf",
+      "twoem delivery note.pdf",
+      "KGHS.pdf",
+      "twoem invoice.pdf",
+      "twoem delivery note.pdf",
+      "KGHS.pdf",
+      "twoem invoice.pdf",
+      "twoem delivery note.pdf",
+      "KGHS.pdf",
+      "twoem invoice.pdf",
+      "twoem delivery note.pdf",
+      // Add more files here as needed
+    ];
+
+    const fileList = document.getElementById('fileList');
+
+    pdfFiles.forEach(file => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = 'download/' + encodeURIComponent(file);
+      a.textContent = file;
+      a.target = "_blank";
+      a.download = file;
+      li.appendChild(a);
+      fileList.appendChild(li);
+    });
+  </script>
+
+</body>
+</html>
