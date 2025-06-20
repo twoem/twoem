@@ -6,6 +6,11 @@ const mongoose = require('mongoose');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const MongoStore = require('connect-mongo');
+const fs = require('fs');
+
+// Debug: Show deployment environment
+console.log('Current directory:', process.cwd());
+console.log('Directory contents:', fs.readdirSync('.'));
 
 // Initialize app
 const app = express();
@@ -32,6 +37,8 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Session configuration
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -67,6 +74,11 @@ app.use('/data-protection', require('./routes/dataProtectionRoutes'));
 app.use('/portals', require('./routes/portalRoutes'));
 app.use('/admin', authLimiter, require('./routes/adminRoutes'));
 app.use('/student', authLimiter, require('./routes/studentRoutes'));
+
+// Root route (kept from original, but homeRoutes should handle this)
+app.get('/', (req, res) => {
+    res.render('index', { title: 'Twoem | Home' });
+});
 
 // Error handling
 app.use((req, res) => {
