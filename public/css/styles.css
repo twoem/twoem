@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+.btn {
+    @apply bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200;
+}
+
+.card {
+    @apply bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200;
+}
+
+.input-field {
+    @apply w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}
+
+.alert-success {
+    @apply bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4;
+}
+
+.alert-error {
+    @apply bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4;
+}
+
+/* Animation for notifications */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.notification {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        background: white;
+        color: black;
+        font-size: 12pt;
+    }
+    
+    @page {
+        margin: 1cm;
+    }
+}
