@@ -1,3 +1,8 @@
+const path = require('path');
+console.log('Current directory:', process.cwd());
+console.log('package.json path:', path.resolve('../package.json'));
+console.log('package.json exists:', require('fs').existsSync('../package.json'));
+
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
