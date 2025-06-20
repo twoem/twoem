@@ -37,20 +37,15 @@ const studentSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    lastLogin: Date,
     passwordResetTokenHash: String,
     passwordResetExpires: Date,
-    lastLogin: Date,
     coursesCompleted: {
         type: [String],
         default: []
     }
 }, {
     timestamps: true
-});
-
-// Virtual for default password
-studentSchema.virtual('defaultPassword').get(function() {
-    return 'Portal@2025';
 });
 
 // Hash password before saving
