@@ -1,13 +1,15 @@
 {
   "name": "twoem-website",
   "version": "1.0.0",
-  "main": "./src/app.js",
+  "main": "app.js",
+  "type": "module",
   "scripts": {
-    "prestart": "cd /opt/render/project",
-    "start": "node src/app.js",
+    "start": "NODE_PATH=. node app.js",
     "build": "npm install && npm run build:css",
-    "build:css": "tailwindcss build src/css/tailwind.css -o public/css/styles.css",
-    "dev": "nodemon src/app.js"
+    "build:css": "tailwindcss build src/css/tailwind.css -o public/css/styles.css"
+  },
+  "engines": {
+    "node": "18.x"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
