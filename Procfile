@@ -1,1 +1,1 @@
-web: npm start
+web: cd /opt/render/project && npm start
