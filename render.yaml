@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: twoem-website
+    env: node
+    buildCommand: npm install && npm run build:css
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: MONGODB_URI
+        required: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: EMAIL_USER
+        required: true
+      - key: EMAIL_PASS
+        required: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD_HASH
+        required: true
+      - key: WEBSITE_DOMAIN
+        value: twoem.onrender.com
+    plan: free
