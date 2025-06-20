@@ -1,0 +1,158 @@
+<%- include('partials/header', {title: 'Twoem | Services', currentPage: 'services'}) %>
+
+<main class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8 text-center">Our Services</h1>
+    
+    <!-- Digital Printing -->
+    <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-6">
+            <div class="md:w-1/3">
+                <img src="<%= services.printing.image %>" alt="Digital Printing" class="w-full rounded-lg">
+            </div>
+            <div class="md:w-2/3">
+                <h2 class="text-2xl font-semibold mb-4"><%= services.printing.title %></h2>
+                <ul class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
+                    <% services.printing.items.forEach(item => { %>
+                        <li class="flex items-start">
+                            <svg class="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <%= item %>
+                        </li>
+                    <% }); %>
+                </ul>
+                <a href="https://wa.me/254707330204?text=<%= services.printing.whatsapp %>" 
+                   target="_blank" 
+                   class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-8.982-7.245h-.004a7.041 7.041 0 00-5.933 10.784l-1.22 4.397 4.498-1.21a7.04 7.04 0 006.929-5.929h.002a7.041 7.041 0 00-6.272-7.842z"/>
+                    </svg>
+                    Get Service via WhatsApp
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Government Services -->
+    <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-6"><%= services.government.title %></h2>
+        
+        <% services.government.subsections.forEach(subsection => { %>
+            <div class="mb-8">
+                <div class="flex flex-col md:flex-row gap-6 mb-4">
+                    <% if (subsection.image) { %>
+                        <div class="md:w-1/3">
+                            <img src="<%= subsection.image %>" alt="<%= subsection.title %>" class="w-full rounded-lg">
+                        </div>
+                    <% } %>
+                    <div class="<%= subsection.image ? 'md:w-2/3' : 'w-full' %>">
+                        <h3 class="text-xl font-semibold mb-3"><%= subsection.title %></h3>
+                        <ul class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+                            <% subsection.items.forEach(item => { %>
+                                <li class="flex items-start">
+                                    <svg class="h-5 w-5 text-blue-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <%= item %>
+                                </li>
+                            <% }); %>
+                        </ul>
+                        <a href="https://wa.me/254707330204?text=<%= subsection.whatsapp %>" 
+                           target="_blank" 
+                           class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 inline-flex items-center text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-8.982-7.245h-.004a7.041 7.041 0 00-5.933 10.784l-1.22 4.397 4.498-1.21a7.04 7.04 0 006.929-5.929h.002a7.041 7.041 0 00-6.272-7.842z"/>
+                            </svg>
+                            Request <%= subsection.title %>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <% }); %>
+    </section>
+
+    <!-- Office Services -->
+    <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-6">
+            <div class="md:w-1/3">
+                <img src="<%= services.office.image %>" alt="Office Services" class="w-full rounded-lg">
+            </div>
+            <div class="md:w-2/3">
+                <h2 class="text-2xl font-semibold mb-4"><%= services.office.title %></h2>
+                <ul class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
+                    <% services.office.items.forEach(item => { %>
+                        <li class="flex items-start">
+                            <svg class="h-5 w-5 text-blue-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <%= item %>
+                        </li>
+                    <% }); %>
+                </ul>
+                <a href="https://wa.me/254707330204?text=<%= services.office.whatsapp %>" 
+                   target="_blank" 
+                   class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-8.982-7.245h-.004a7.041 7.041 0 00-5.933 10.784l-1.22 4.397 4.498-1.21a7.04 7.04 0 006.929-5.929h.002a7.041 7.041 0 00-6.272-7.842z"/>
+                    </svg>
+                    Get Office Services
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Internet Services -->
+    <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-6">
+            <div class="md:w-1/3">
+                <img src="<%= services.internet.image %>" alt="Internet Services" class="w-full rounded-lg">
+            </div>
+            <div class="md:w-2/3">
+                <h2 class="text-2xl font-semibold mb-4"><%= services.internet.title %></h2>
+                <ul class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
+                    <% services.internet.items.forEach(item => { %>
+                        <li class="flex items-start">
+                            <svg class="h-5 w-5 text-blue-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <%= item %>
+                        </li>
+                    <% }); %>
+                </ul>
+                <a href="https://wa.me/254707330204?text=<%= services.internet.whatsapp %>" 
+                   target="_blank" 
+                   class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-8.982-7.245h-.004a7.041 7.041 0 00-5.933 10.784l-1.22 4.397 4.498-1.21a7.04 7.04 0 006.929-5.929h.002a7.041 7.041 0 00-6.272-7.842z"/>
+                    </svg>
+                    Get Internet Services
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Computer Services -->
+    <section class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-semibold mb-4"><%= services.computer.title %></h2>
+        <ul class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
+            <% services.computer.items.forEach(item => { %>
+                <li class="flex items-start">
+                    <svg class="h-5 w-5 text-blue-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <%= item %>
+                </li>
+            <% }); %>
+        </ul>
+        <a href="https://wa.me/254707330204?text=<%= services.computer.whatsapp %>" 
+           target="_blank" 
+           class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 inline-flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-8.982-7.245h-.004a7.041 7.041 0 00-5.933 10.784l-1.22 4.397 4.498-1.21a7.04 7.04 0 006.929-5.929h.002a7.041 7.041 0 00-6.272-7.842z"/>
+            </svg>
+            Get Computer Services
+        </a>
+    </section>
+</main>
+
+<%- include('partials/footer') %>
