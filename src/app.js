@@ -5,6 +5,11 @@ const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const helmet = require('helmet');
+const fs = require('fs');
+
+// Debug: Show deployment environment
+console.log('Current directory:', process.cwd());
+console.log('Directory contents:', fs.readdirSync('.'));
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI, {
@@ -17,14 +22,16 @@ mongoose.connect(process.env.MONGODB_URI, {
   process.exit(1);
 });
 
-// Express app
 const app = express();
 
 // Middleware
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../public')));
+
+// CORRECTED Static files path
+const publicPath = path.join(__dirname, '..', 'public');
+app.use(express.static(publicPath));
 
 // Session configuration
 app.use(session({
@@ -47,9 +54,9 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 // Routes
-app.use('/', require('./routes/homeRoutes'));
-app.use('/admin', require('./routes/adminRoutes'));
-// Add other routes...
+app.get('/', (req, res) => {
+  res.render('index', { title: 'Twoem | Home' });
+});
 
 // Error handling
 app.use((req, res) => {
@@ -61,9 +68,7 @@ app.use((err, req, res, next) => {
   res.status(500).render('500', { title: 'Server Error' });
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Website URL: ${process.env.WEBSITE_DOMAIN}`);
 });
