@@ -17,19 +17,19 @@ const app = express();
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log('Connected to MongoDB');
-}).catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+  process.exit(1);
 });
 
 // Session store
 const sessionStore = MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
-    collectionName: 'sessions'
+  mongoUrl: process.env.MONGODB_URI,
+  collectionName: 'sessions'
 });
 
 // Middleware
@@ -40,59 +40,65 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // Session configuration
 app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: sessionStore,
-    cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 3600000, // 1 hour
-        domain: process.env.WEBSITE_DOMAIN,
-        sameSite: 'lax'
-    }
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: sessionStore,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 3600000,
+    domain: process.env.WEBSITE_DOMAIN,
+    sameSite: 'lax'
+  }
 }));
 
 // Rate limiting for auth routes
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 requests per windowMs
-    message: 'Too many login attempts, please try again later'
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many login attempts, please try again later'
 });
 
 // View engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// Routes
-app.use('/', require('./routes/homeRoutes'));
-app.use('/contact', require('./routes/contactRoutes'));
-app.use('/gallery', require('./routes/galleryRoutes'));
-app.use('/services', require('./routes/servicesRoutes'));
-app.use('/downloads', require('./routes/downloadRoutes'));
-app.use('/data-protection', require('./routes/dataProtectionRoutes'));
-app.use('/portals', require('./routes/portalRoutes'));
-app.use('/admin', authLimiter, require('./routes/adminRoutes'));
-app.use('/student', authLimiter, require('./routes/studentRoutes'));
+// Import route files
+const homeRoutes = require('./routes/homeRoutes');
+const contactRoutes = require('./routes/contactRoutes');
+const galleryRoutes = require('./routes/galleryRoutes');
+const servicesRoutes = require('./routes/servicesRoutes');
+const downloadRoutes = require('./routes/downloadRoutes');
+const dataProtectionRoutes = require('./routes/dataProtectionRoutes');
+const portalRoutes = require('./routes/portalRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const studentRoutes = require('./routes/studentRoutes');
 
-// Root route (kept from original, but homeRoutes should handle this)
-app.get('/', (req, res) => {
-    res.render('index', { title: 'Twoem | Home' });
-});
+// Apply routes
+app.use('/', homeRoutes);
+app.use('/contact', contactRoutes);
+app.use('/gallery', galleryRoutes);
+app.use('/services', servicesRoutes);
+app.use('/downloads', downloadRoutes);
+app.use('/data-protection', dataProtectionRoutes);
+app.use('/portals', portalRoutes);
+app.use('/admin', authLimiter, adminRoutes);
+app.use('/student', authLimiter, studentRoutes);
 
 // Error handling
 app.use((req, res) => {
-    res.status(404).render('404', { title: 'Page Not Found' });
+  res.status(404).render('404', { title: 'Page Not Found' });
 });
 
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).render('500', { title: 'Server Error' });
+  console.error(err.stack);
+  res.status(500).render('500', { title: 'Server Error' });
 });
 
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Website domain: ${process.env.WEBSITE_DOMAIN}`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Website domain: ${process.env.WEBSITE_DOMAIN}`);
 });
