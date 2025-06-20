@@ -1,0 +1,82 @@
+<%- include('../partials/header', {title: 'Twoem | Student Dashboard'}) %>
+
+<main class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold">Welcome, <%= student.fullName %></h1>
+        <a href="/student/logout" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</a>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-2">Your Registration</h3>
+            <p class="text-xl font-bold text-blue-600"><%= student.regNumber %></p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-2">Course Status</h3>
+            <p class="text-gray-600">Check your academic progress</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-2">Quick Actions</h3>
+            <div class="space-y-2">
+                <a href="/student/profile" class="block text-blue-600 hover:underline">Update Profile</a>
+                <a href="/student/academics" class="block text-blue-600 hover:underline">View Grades</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow mb-8">
+        <h2 class="text-xl font-semibold mb-4">Recent Notifications</h2>
+        <% if (notifications.length > 0) { %>
+            <div class="space-y-4">
+                <% notifications.forEach(notification => { %>
+                    <div class="border-b pb-4">
+                        <h3 class="font-medium text-lg"><%= notification.title %></h3>
+                        <p class="text-gray-600"><%= notification.message %></p>
+                        <p class="text-sm text-gray-500 mt-1">
+                            <%= notification.sentAt.toLocaleDateString() %>
+                        </p>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <p class="text-gray-600">No notifications available.</p>
+        <% } %>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">Quick Links</h2>
+            <ul class="space-y-3">
+                <li><a href="/student/academics" class="text-blue-600 hover:underline">Academic Records</a></li>
+                <li><a href="/student/fees" class="text-blue-600 hover:underline">Fee Statement</a></li>
+                <li><a href="/student/resources" class="text-blue-600 hover:underline">Learning Resources</a></li>
+                <li><a href="/student/notifications" class="text-blue-600 hover:underline">All Notifications</a></li>
+            </ul>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">WiFi Information</h2>
+            <div class="space-y-2">
+                <p><strong>SSID:</strong> TWOEM_STUDENT</p>
+                <p><strong>Password:</strong> <span id="wifi-password">********</span> 
+                   <button onclick="togglePassword()" class="text-blue-600 text-sm ml-2">Show</button></p>
+                <p class="text-sm text-gray-600 mt-2">Do not share with unauthorized users.</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function togglePassword() {
+        const element = document.getElementById('wifi-password');
+        if (element.textContent === '********') {
+            element.textContent = 'StudentPortal2023';
+        } else {
+            element.textContent = '********';
+        }
+    }
+</script>
+
+<%- include('../partials/footer') %>
