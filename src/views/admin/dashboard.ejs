@@ -1,0 +1,83 @@
+<%- include('../partials/header', {title: 'Twoem | Admin Dashboard'}) %>
+
+<main class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+        <a href="/admin/logout" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</a>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-2">Total Students</h3>
+            <p class="text-3xl font-bold text-blue-600"><%= studentCount %></p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-2">Recent Activity</h3>
+            <p class="text-gray-600">Check the latest updates</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-2">Quick Actions</h3>
+            <div class="space-y-2">
+                <a href="/admin/students/register" class="block text-blue-600 hover:underline">Register New Student</a>
+                <a href="/admin/notifications" class="block text-blue-600 hover:underline">Send Notification</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow mb-8">
+        <h2 class="text-xl font-semibold mb-4">Recently Registered Students</h2>
+        <% if (recentStudents.length > 0) { %>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="py-3 px-4 text-left">Reg Number</th>
+                            <th class="py-3 px-4 text-left">Name</th>
+                            <th class="py-3 px-4 text-left">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% recentStudents.forEach(student => { %>
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="py-3 px-4">
+                                    <a href="/admin/students/<%= student._id %>/edit" class="text-blue-600 hover:underline">
+                                        <%= student.regNumber %>
+                                    </a>
+                                </td>
+                                <td class="py-3 px-4"><%= student.fullName %></td>
+                                <td class="py-3 px-4"><%= student.enrollmentDate.toLocaleDateString() %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <p class="text-gray-600">No students registered yet.</p>
+        <% } %>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">Quick Links</h2>
+            <ul class="space-y-3">
+                <li><a href="/admin/students" class="text-blue-600 hover:underline">Manage Students</a></li>
+                <li><a href="/admin/fees" class="text-blue-600 hover:underline">Fees Management</a></li>
+                <li><a href="/admin/academics" class="text-blue-600 hover:underline">Academic Records</a></li>
+                <li><a href="/admin/resources" class="text-blue-600 hover:underline">Learning Resources</a></li>
+            </ul>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">System Information</h2>
+            <ul class="space-y-2">
+                <li><strong>Environment:</strong> <%= process.env.NODE_ENV %></li>
+                <li><strong>Website Domain:</strong> <%= process.env.WEBSITE_DOMAIN %></li>
+                <li><strong>Last Backup:</strong> Not yet performed</li>
+            </ul>
+        </div>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>
