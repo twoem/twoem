@@ -1,13 +1,12 @@
-{
+
+  {
   "name": "twoem-website",
   "version": "1.0.0",
-  "description": "Twoem Online Productions Website",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js",
-    "build:css": "tailwindcss build src/css/tailwind.css -o public/css/styles.css",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm install && npm run build:css",
+    "build:css": "tailwindcss build src/css/tailwind.css -o public/css/styles.css"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
