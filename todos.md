@@ -25,6 +25,7 @@
 * Admin Login
 * Contact
 * Data Protection
+* Gallerly Page, To show beautiful images and tags of our works
 * or any other relevant pages, 
 
 ---
@@ -172,25 +173,47 @@ Courses offered under basic computer training:
 Key Variables:
 
 ```env
-UPLOAD_DIR=./uploads
-MAX_FILE_SIZE=10485760
+# Backend Environment Variables
+# -----------------------------
+
+# General
+NODE_ENV=production
 PORT=10000
-NODE_ENV=development
-DATABASE_URL=...
-DEFAULT_STUDENT_PASSWORD=Student@Twoem2025
-SUPER_ADMIN_EMAIL=twoemcyber@gmail.com
-JWT_SECRET=...
+FRONTEND_URL=https://twoemcyberdemo2.onrender.com
+
+# Database
+DATABASE_URL=my database url will be here
+# JWT Authentication
+JWT_SECRET=REPLACE_WITH_YOUR_VERY_STRONG_RANDOM_JWT_SECRET_KEY
 JWT_EXPIRE=365d
+
+# Admin Credentials
+ADMIN1_EMAIL=twoemcyber@gmail.com
+ADMIN1_NAME="Twoem Online"
+ADMIN1_PASSWORD_HASH="Adm@Twom2025"
+ADMIN2_EMAIL=twoemcyber@gmail.com
+ADMIN2_NAME="Twoem Online"
+ADMIN2_PASSWORD="Adm@Twom2025"
+ADMIN3_EMAIL=twoemcyber@gmail.com
+ADMIN3_NAME="Twoem Online"
+ADMIN3_PASSWORD_HASH="Adm@Twom2025"
+
+# Email Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
 SMTP_USER=twoem.website@gmail.com
-SMTP_PASS=...
+SMTP_PASS="i will place my app password here"
+EMAIL_FROM_NAME="Twoem Online Productions"
 EMAIL_FROM="Twoem Online Productions <twoem.website@gmail.com>"
-DOWNLOAD_BASE_URL=https://drive.google.com/uc?export=download&id=
+CONTACT_RECEIVER_EMAIL=twoemcyber@gmail.com
+
+# Student Settings
+DEFAULT_STUDENT_PASSWORD=Student@Twoem2025
 FORCE_PASSWORD_CHANGE=true
 PASSWORD_MIN_LENGTH=8
+
+# Academic Settings
 PASSING_GRADE=60
-AUTO_BACKUP_ENABLED=true
-BACKUP_RETENTION_DAYS=30
-BACKUP_ENCRYPTION_KEY=twoem-backup-key
 
 ADD MORE RELEVANT LIKE ADMINS DETAILS TO LOG IN AND NAMES
 ```
