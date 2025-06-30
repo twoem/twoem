@@ -214,14 +214,28 @@ router.post(
 
 // List all internet customers
 router.get('/customers', authAdmin, customerAdminController.listCustomers);
+// View a specific internet customer's details (already added in previous step, ensuring it's correct)
+router.get('/customers/view/:id', authAdmin, customerAdminController.viewCustomerDetails);
+// Render form to edit a customer
+router.get('/customers/edit/:id', authAdmin, customerAdminController.renderEditCustomerForm);
+// Handle submission of customer edit form
+router.post(
+    '/customers/edit/:id',
+    authAdmin,
+    customerAdminValidators.validateUpdateCustomer,
+    customerAdminController.updateCustomerDetails
+);
+// Render page to manage payments for a specific customer
+router.get('/customers/:customerId/payments', authAdmin, customerAdminController.renderManageCustomerPaymentsPage);
+// Log a new manual payment for a customer
+router.post('/customers/:customerId/payments/log-manual', authAdmin, customerAdminController.logManualPayment); // Add validation later
+// Verify a pending customer-submitted payment
+router.post('/customers/:customerId/payments/verify/:paymentLogId', authAdmin, customerAdminController.verifyCustomerPayment);
+// Toggle customer active status
+router.post('/customers/:id/toggle-status', authAdmin, customerAdminController.toggleCustomerActiveStatus);
+
 
 // Placeholder for future routes related to customer management
-// router.get('/customers/:id', authAdmin, customerAdminController.viewCustomerDetails);
-// router.get('/customers/:id/edit', authAdmin, customerAdminController.renderEditCustomerForm);
-// router.post('/customers/:id/edit', authAdmin, /* validator, */ customerAdminController.updateCustomer);
-// router.get('/customers/:id/payments', authAdmin, customerAdminController.viewCustomerPayments);
-// router.post('/customers/:id/payments/log', authAdmin, /* validator, */ customerAdminController.logPayment);
-// router.post('/customers/:id/toggle-status', authAdmin, customerAdminController.toggleCustomerStatus);
 
 
 module.exports = router;

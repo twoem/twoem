@@ -1,0 +1,141 @@
+<%- include('../../../partials/header', { title: title, admin: admin }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0"><i class="fas fa-user-tie me-2"></i>Customer Details</h2>
+        <div>
+            <a href="/admin/customers" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> Back to Customer List
+            </a>
+            <a href="/admin/customers/edit/<%= customer.id %>" class="btn btn-warning btn-sm">
+                <i class="fas fa-edit me-1"></i> Edit Customer
+            </a>
+            <a href="/admin/customers/<%= customer.id %>/payments" class="btn btn-info btn-sm">
+                <i class="fas fa-money-check-alt me-1"></i> Manage Payments
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+                <%= customer.organisation_name ? customer.organisation_name : `${customer.first_name} ${customer.second_name || ''} ${customer.last_name}` %>
+                <% if (customer.organisation_name && customer.first_name) { %>
+                    <small class="d-block fw-normal">(Contact: <%= customer.first_name %> <%= customer.second_name || '' %> <%= customer.last_name %>)</small>
+                <% } %>
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-user-circle me-2"></i>Personal Information</h5>
+                    <p><strong>Full Name:</strong> <%= customer.first_name %> <%= customer.second_name || '' %> <%= customer.last_name %></p>
+                    <% if (customer.organisation_name) { %>
+                        <p><strong>Organisation:</strong> <%= customer.organisation_name %></p>
+                    <% } %>
+                    <p><strong>Email:</strong> <a href="mailto:<%= customer.email %>"><%= customer.email %></a></p>
+                    <p><strong>Phone:</strong> <a href="tel:<%= customer.phone_number %>"><%= customer.phone_number %></a></p>
+                    <p><strong>Location:</strong> <%= customer.location %></p>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-file-invoice-dollar me-2"></i>Account Information</h5>
+                    <p><strong>Account Number:</strong> <%= customer.account_number %></p>
+                    <p><strong>Installation Date:</strong> <%= new Date(customer.installation_date).toLocaleDateString() %></p>
+                    <p><strong>Monthly Payment:</strong> KES <%= customer.payment_per_month.toFixed(2) %></p>
+                    <p><strong>Current Balance:</strong>
+                        <span class="fw-bold <%= customer.current_balance > 0 ? 'text-danger' : (customer.current_balance < 0 ? 'text-success' : '') %>">
+                            KES <%= customer.current_balance.toFixed(2) %>
+                            <% if (customer.current_balance < 0) { %>(Credit)<% } else if (customer.current_balance > 0) { %>(Due)<% } %>
+                        </span>
+                    </p>
+                    <p><strong>Status:</strong>
+                        <% if (customer.is_active) { %>
+                            <span class="badge bg-success">Active</span>
+                        <% } else { %>
+                            <span class="badge bg-danger">Inactive</span>
+                        <% } %>
+                    </p>
+                    <% if (customer.grace_period_ends_at) { %>
+                        <p><strong>Grace Period Ends:</strong> <span class="text-warning"><%= new Date(customer.grace_period_ends_at).toLocaleDateString() %></span></p>
+                    <% } %>
+                    <% if (customer.disconnection_date) { %>
+                        <p><strong>Disconnection Date:</strong> <span class="text-danger"><%= new Date(customer.disconnection_date).toLocaleDateString() %></span></p>
+                    <% } %>
+                    <p class="small text-muted">Registered by Admin ID: <%= customer.registered_by_admin_id %></p>
+                    <p class="small text-muted">Profile Created: <%= new Date(customer.created_at).toLocaleString() %></p>
+                    <p class="small text-muted">Last Updated: <%= new Date(customer.updated_at).toLocaleString() %></p>
+                </div>
+            </div>
+             <hr>
+            <form action="/admin/customers/<%= customer.id %>/toggle-status" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-sm <%= customer.is_active ? 'btn-outline-danger' : 'btn-outline-success' %>">
+                    <i class="fas <%= customer.is_active ? 'fa-times-circle' : 'fa-check-circle' %> me-1"></i>
+                    <%= customer.is_active ? 'Deactivate' : 'Activate' %> Customer
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0"><i class="fas fa-history me-2"></i>Payment History</h4>
+        </div>
+        <div class="card-body">
+            <% if (paymentLogs && paymentLogs.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Payment Date</th>
+                                <th>Mode</th>
+                                <th class="text-end">Amount Paid (KES)</th>
+                                <th>Transaction Code</th>
+                                <th>Status</th>
+                                <th>Verified By/At</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% paymentLogs.forEach(log => { %>
+                                <tr>
+                                    <td><%= new Date(log.payment_date).toLocaleString() %></td>
+                                    <td><%= log.payment_mode %></td>
+                                    <td class="text-end"><%= typeof log.amount_paid === 'number' ? log.amount_paid.toFixed(2) : 'N/A' %></td>
+                                    <td><%= log.transaction_code || 'N/A' %></td>
+                                    <td>
+                                        <% if (log.verified_at) { %>
+                                            <span class="badge bg-success">Verified</span>
+                                        <% } else if (log.payment_mode && log.payment_mode.toLowerCase().includes('pending')) { %>
+                                            <span class="badge bg-warning text-dark">Pending Verification</span>
+                                        <% } else if (log.amount_paid > 0) { %>
+                                            <span class="badge bg-success">Completed</span> <%# For manually added verified payments %>
+                                        <% } else { %>
+                                             <span class="badge bg-secondary">Unknown</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (log.verified_by_admin_id) { %>
+                                            Admin ID: <%= log.verified_by_admin_id %><br>
+                                            <small class="text-muted"><%= new Date(log.verified_at).toLocaleString() %></small>
+                                        <% } else { %>
+                                            N/A
+                                        <% } %>
+                                    </td>
+                                    <td><%= log.notes_by_admin || 'N/A' %></td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="alert alert-light text-center">
+                    <i class="fas fa-info-circle me-2"></i>No payment history found for this customer.
+                    <a href="/admin/customers/<%= customer.id %>/payments" class="ms-2">Log a payment?</a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<%- include('../../../partials/footer') %>

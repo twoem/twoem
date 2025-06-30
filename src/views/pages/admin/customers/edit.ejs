@@ -1,0 +1,96 @@
+<%- include('../../../partials/header', { title: title, admin: admin }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0"><i class="fas fa-user-edit me-2"></i><%= title %></h2>
+        <a href="/admin/customers/view/<%= customer.id %>" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to Customer Details
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning">
+            <h4 class="mb-0">Editing Customer: <%= oldInput.firstName || customer.first_name %> <%= oldInput.lastName || customer.last_name %> (ID: <%= customer.id %>)</h4>
+        </div>
+        <div class="card-body">
+            <%- include('../../../partials/flash-messages') %>
+            <%- include('../../../partials/validation-errors', { errors: errors }) %>
+
+
+            <form action="/admin/customers/edit/<%= customer.id %>" method="POST">
+                <div class="row mb-3">
+                    <div class="col-md-4 form-group">
+                        <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="firstName" name="firstName" value="<%= oldInput.firstName || customer.first_name %>" required>
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label for="secondName" class="form-label">Second Name (Optional)</label>
+                        <input type="text" class="form-control" id="secondName" name="secondName" value="<%= oldInput.secondName || customer.second_name || '' %>">
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="lastName" name="lastName" value="<%= oldInput.lastName || customer.last_name %>" required>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="organisationName" class="form-label">Organisation's Name (If applicable)</label>
+                    <input type="text" class="form-control" id="organisationName" name="organisationName" value="<%= oldInput.organisationName || customer.organisation_name || '' %>">
+                </div>
+
+                <hr>
+
+                <div class="row mb-3">
+                    <div class="col-md-6 form-group">
+                        <label for="phoneNumber" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" value="<%= oldInput.phoneNumber || customer.phone_number %>" pattern="^(01|07)[0-9]{8}$" title="Phone number must be 10 digits and start with 01 or 07." required>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" value="<%= oldInput.email || customer.email %>" required>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="location" class="form-label">Location/Address <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="location" name="location" value="<%= oldInput.location || customer.location %>" required>
+                </div>
+
+                <hr>
+
+                <div class="row mb-3">
+                    <div class="col-md-6 form-group">
+                        <label for="installationDate" class="form-label">Installation Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="installationDate" name="installationDate" value="<%= oldInput.installationDate || customer.installation_date_formatted || new Date(customer.installation_date).toISOString().split('T')[0] %>" required>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label for="accountNumber" class="form-label">Account Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="accountNumber" name="accountNumber" value="<%= oldInput.accountNumber || customer.account_number %>" required>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="paymentPerMonth" class="form-label">Payment Per Month (KES) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="paymentPerMonth" name="paymentPerMonth" step="0.01" value="<%= typeof oldInput.paymentPerMonth !== 'undefined' ? oldInput.paymentPerMonth : customer.payment_per_month %>" required>
+                </div>
+
+                <p class="text-muted small">
+                    Note: Customer's current balance (KES <%= customer.current_balance.toFixed(2) %>) is managed via the payment logging system.
+                </p>
+
+                <hr>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/admin/customers/view/<%= customer.id %>" class="btn btn-secondary me-md-2">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<%- include('../../../partials/footer') %>

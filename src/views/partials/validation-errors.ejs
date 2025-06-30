@@ -1,0 +1,11 @@
+<% if (typeof errors !== 'undefined' && errors && errors.length > 0) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Validation Errors</h4>
+        <ul class="mb-0">
+            <% errors.forEach(function(error) { %>
+                <li><%= error.msg %></li>
+            <% }); %>
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<% } %>
