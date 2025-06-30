@@ -1,0 +1,90 @@
+<%- include('../../partials/header', { title: title, customer: customer }) %>
+
+<div class="container mt-4">
+    <%- include('../../partials/flash-messages') %>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0"><i class="fas fa-wifi me-2"></i><%= title %></h3>
+            <a href="/customer/dashboard" class="btn btn-light btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Account Overview</h4>
+                    <p><strong>Account Number:</strong> <%= accountDetails.account_number %></p>
+                    <p><strong>Current Balance:</strong>
+                        <span class="<%= accountDetails.current_balance > 0 ? 'text-danger fw-bold' : (accountDetails.current_balance < 0 ? 'text-success fw-bold' : '') %>">
+                            KES <%= accountDetails.current_balance.toFixed(2) %>
+                        </span>
+                        <% if (accountDetails.current_balance < 0) { %><small class="text-success ms-1">(Credit)</small><% } %>
+                        <% if (accountDetails.current_balance > 0) { %><small class="text-danger ms-1">(Due)</small><% } %>
+                    </p>
+                     <% if (accountDetails.grace_period_ends_at && new Date(accountDetails.grace_period_ends_at) >= new Date()) { %>
+                        <p class="text-warning"><strong>Grace Period Ends:</strong> <%= new Date(accountDetails.grace_period_ends_at).toLocaleDateString() %></p>
+                    <% } %>
+                    <% if (accountDetails.disconnection_date) { %>
+                        <p class="text-danger"><strong>Scheduled Disconnection:</strong> <%= new Date(accountDetails.disconnection_date).toLocaleDateString() %></p>
+                    <% } else if (accountDetails.current_balance <=0) { %>
+                         <p class="text-success"><strong>Status:</strong> Active</p>
+                    <% } %>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="/customer/make-payment" class="btn btn-success mt-3">
+                        <i class="fas fa-credit-card me-1"></i> Make a Payment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0"><i class="fas fa-history me-2"></i>Payment History</h4>
+        </div>
+        <div class="card-body">
+            <% if (paymentLogs && paymentLogs.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Payment Date</th>
+                                <th>Mode</th>
+                                <th class="text-end">Amount Paid (KES)</th>
+                                <th>Transaction Code</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% paymentLogs.forEach(log => { %>
+                                <tr>
+                                    <td><%= new Date(log.payment_date).toLocaleString() %></td>
+                                    <td><%= log.payment_mode %></td>
+                                    <td class="text-end"><%= typeof log.amount_paid === 'number' ? log.amount_paid.toFixed(2) : 'N/A' %></td>
+                                    <td><%= log.transaction_code || 'N/A' %></td>
+                                    <td>
+                                        <% if (log.verified_at) { %>
+                                            <span class="badge bg-success">Verified on <%= new Date(log.verified_at).toLocaleDateString() %></span>
+                                        <% } else if (log.payment_mode && log.payment_mode.includes('Pending')) { %>
+                                            <span class="badge bg-warning text-dark">Pending Verification</span>
+                                        <% } else { %>
+                                             <span class="badge bg-secondary">Unknown</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="alert alert-light text-center">
+                    <i class="fas fa-info-circle me-2"></i>No payment history found for this account.
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

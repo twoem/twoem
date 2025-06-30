@@ -1,0 +1,100 @@
+<%- include('../../partials/header', { title: title, customer: customer }) %>
+
+<div class="container mt-4 mb-4">
+    <%- include('../../partials/flash-messages') %>
+
+    <div class="row">
+        <!-- Customer Profile Card -->
+        <div class="col-lg-7 col-md-12 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-circle me-2"></i>Welcome, <%= profile.first_name %>!</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Account Holder</h5>
+                    <p class="card-text">
+                        <strong>Name:</strong>
+                        <%= profile.organisation_name ? profile.organisation_name : `${profile.first_name} ${profile.second_name || ''} ${profile.last_name}` %>
+                        <% if (profile.organisation_name && profile.first_name) { %>
+                            <br><small class="text-muted">(Contact: <%= profile.first_name %> <%= profile.second_name || '' %> <%= profile.last_name %>)</small>
+                        <% } %>
+                    </p>
+                    <p class="card-text"><strong>Account Number:</strong> <%= profile.account_number %></p>
+                    <p class="card-text"><strong>Phone:</strong> <%= profile.phone_number %></p>
+                    <p class="card-text"><strong>Email:</strong> <%= profile.email %></p>
+                    <p class="card-text"><strong>Location:</strong> <%= profile.location %></p>
+                    <p class="card-text"><strong>Installation Date:</strong> <%= new Date(profile.installation_date).toLocaleDateString() %></p>
+
+                    <hr>
+                    <!-- Placeholder for edit profile button -->
+                    <!-- <a href="/customer/profile/edit" class="btn btn-outline-secondary btn-sm"><i class="fas fa-edit me-1"></i> Edit My Details</a> -->
+                    <a href="/customer/profile/change-password" class="btn btn-outline-warning btn-sm"><i class="fas fa-key me-1"></i> Change Password</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Summary Card -->
+        <div class="col-lg-5 col-md-12 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Account Summary</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Current Balance</h5>
+                    <h3 class="display-6 <%= profile.current_balance > 0 ? 'text-danger' : (profile.current_balance < 0 ? 'text-success' : 'text-dark') %>">
+                        KES <%= profile.current_balance.toFixed(2) %>
+                        <% if (profile.current_balance < 0) { %><small class="text-success">(Credit)</small><% } %>
+                        <% if (profile.current_balance > 0) { %><small class="text-danger">(Due)</small><% } %>
+                    </h3>
+                    <p class="card-text"><strong>Monthly Subscription:</strong> KES <%= profile.payment_per_month.toFixed(2) %></p>
+
+                    <hr>
+
+                    <h5 class="card-title mt-3">Subscription Status</h5>
+                    <% if (profile.is_active) { %>
+                        <p class="text-success"><i class="fas fa-check-circle me-1"></i> Your account is currently <strong>Active</strong>.</p>
+                    <% } else { %>
+                        <p class="text-danger"><i class="fas fa-times-circle me-1"></i> Your account is currently <strong>Inactive/Disconnected</strong>.</p>
+                    <% } %>
+
+                    <% if (gracePeriodMessage) { %>
+                        <div class="alert alert-warning small p-2"><%= gracePeriodMessage %></div>
+                    <% } %>
+
+                    <% if (calculatedDisconnectionDate || profile.disconnection_date) { %>
+                        <p class="text-danger">
+                            <strong>Potential Disconnection Date:</strong>
+                            <%= new Date(calculatedDisconnectionDate || profile.disconnection_date).toLocaleDateString() %>
+                        </p>
+                    <% } %>
+                     <% if (profile.grace_period_ends_at && new Date(profile.grace_period_ends_at) >= new Date()) { %>
+                        <p class="text-warning">
+                            <strong>Grace Period Ends:</strong>
+                            <%= new Date(profile.grace_period_ends_at).toLocaleDateString() %>
+                        </p>
+                    <% } %>
+
+
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="/customer/make-payment" class="btn btn-success">
+                            <i class="fas fa-credit-card me-1"></i> Make a Payment
+                        </a>
+                        <a href="/customer/internet-subscription-status" class="btn btn-info">
+                            <i class="fas fa-history me-1"></i> View Payment History & Details
+                        </a>
+                    </div>
+                </div>
+                 <div class="card-footer text-center">
+                     <form action="/customer/logout" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-link text-danger btn-sm">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<%- include('../../partials/footer') %>

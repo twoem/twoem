@@ -176,5 +176,31 @@ router.post('/documents/delete/:id', authAdmin, adminController.deleteDocument);
 // Admin - View Action Logs Route
 router.get('/action-logs', authAdmin, adminController.viewActionLogs);
 
+// --- Internet Customer Management Routes (Admin Side) ---
+const customerAdminController = require('../controllers/customerAdminController');
+const customerAdminValidators = require('../middleware/validators/customerAdminValidators');
+
+// Render form to add a new internet customer
+router.get('/customers/register', authAdmin, customerAdminController.renderRegisterCustomerForm);
+
+// Handle submission of new internet customer form
+router.post(
+    '/customers/register',
+    authAdmin,
+    customerAdminValidators.validateRegisterCustomer,
+    customerAdminController.registerCustomer
+);
+
+// List all internet customers
+router.get('/customers', authAdmin, customerAdminController.listCustomers);
+
+// Placeholder for future routes related to customer management
+// router.get('/customers/:id', authAdmin, customerAdminController.viewCustomerDetails);
+// router.get('/customers/:id/edit', authAdmin, customerAdminController.renderEditCustomerForm);
+// router.post('/customers/:id/edit', authAdmin, /* validator, */ customerAdminController.updateCustomer);
+// router.get('/customers/:id/payments', authAdmin, customerAdminController.viewCustomerPayments);
+// router.post('/customers/:id/payments/log', authAdmin, /* validator, */ customerAdminController.logPayment);
+// router.post('/customers/:id/toggle-status', authAdmin, customerAdminController.toggleCustomerStatus);
+
 
 module.exports = router;

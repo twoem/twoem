@@ -257,6 +257,72 @@ function initializeDb() {
             else console.log("Student_notification_reads table checked/created.");
         });
 
+        // Internet Customers Table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                first_name TEXT NOT NULL,
+                second_name TEXT,
+                last_name TEXT NOT NULL,
+                organisation_name TEXT,
+                phone_number TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                location TEXT NOT NULL,
+                installation_date DATE NOT NULL,
+                payment_per_month REAL NOT NULL,
+                account_number TEXT UNIQUE NOT NULL,
+                current_balance REAL NOT NULL,
+                password_hash TEXT NOT NULL,
+                requires_password_change BOOLEAN DEFAULT TRUE,
+                disconnection_date DATE,
+                grace_period_ends_at DATE,
+                is_active BOOLEAN DEFAULT TRUE,
+                registered_by_admin_id TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `, (err) => {
+            if (err) console.error("Error creating customers table:", err.message);
+            else console.log("Customers table checked/created.");
+        });
+
+        // Customer Payment Logs Table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS customer_payment_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                payment_date DATETIME NOT NULL,
+                payment_mode TEXT NOT NULL,
+                amount_paid REAL NOT NULL,
+                transaction_code TEXT,
+                verified_by_admin_id TEXT,
+                verified_at DATETIME,
+                notes_by_admin TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+            )
+        `, (err) => {
+            if (err) console.error("Error creating customer_payment_logs table:", err.message);
+            else console.log("Customer_payment_logs table checked/created.");
+        });
+
+        // Customer Password Reset Tokens Table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS customer_password_reset_tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                otp_hash TEXT NOT NULL,
+                token_hash TEXT UNIQUE NOT NULL,
+                expires_at DATETIME NOT NULL,
+                used BOOLEAN DEFAULT FALSE,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+            )
+        `, (err) => {
+            if (err) console.error("Error creating customer_password_reset_tokens table:", err.message);
+            else console.log("Customer_password_reset_tokens table checked/created.");
+        });
+
     });
 }
 

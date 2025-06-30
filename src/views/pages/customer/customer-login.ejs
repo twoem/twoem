@@ -1,0 +1,107 @@
+<%- include('../../partials/header', { title: title, customer: null }) %> <%# Pass customer as null for login page %>
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center">
+                    <h2 class="mb-0">Customer Portal</h2>
+                </div>
+                <div class="card-body p-4">
+                    <%- include('../../partials/flash-messages') %>
+
+                    <ul class="nav nav-tabs nav-fill mb-3" id="loginTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link <%= activeTab === 'login-panel' ? 'active' : '' %>" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-panel" type="button" role="tab" aria-controls="login-panel" aria-selected="<%= activeTab === 'login-panel' ? 'true' : 'false' %>">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link <%= activeTab === 'forgot-password-panel' ? 'active' : '' %>" id="forgot-password-tab" data-bs-toggle="tab" data-bs-target="#forgot-password-panel" type="button" role="tab" aria-controls="forgot-password-panel" aria-selected="<%= activeTab === 'forgot-password-panel' ? 'true' : 'false' %>">
+                                <i class="fas fa-key me-2"></i>Forgot Password
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="loginTabsContent">
+                        <div class="tab-pane fade <%= activeTab === 'login-panel' ? 'show active' : '' %>" id="login-panel" role="tabpanel" aria-labelledby="login-tab">
+                            <h4 class="text-center mb-3">Login to Your Account</h4>
+                            <form action="/customer/login" method="POST">
+                                <div class="mb-3">
+                                    <label for="phoneNumberLogin" class="form-label">Phone Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="tel" class="form-control" id="phoneNumberLogin" name="phoneNumber" placeholder="07... or 01..." pattern="^(0[17])\\d{8}$" title="10 digits, starting with 01 or 07" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="passwordLogin" class="form-label">Password</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" class="form-control" id="passwordLogin" name="password" required>
+                                    </div>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-sign-in-alt me-1"></i> Login
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="tab-pane fade <%= activeTab === 'forgot-password-panel' ? 'show active' : '' %>" id="forgot-password-panel" role="tabpanel" aria-labelledby="forgot-password-tab">
+                            <h4 class="text-center mb-3">Reset Your Password</h4>
+                            <p class="text-muted text-center small">Enter your registered phone number and any of your names (First, Second, Last, or Organisation name) to receive an OTP and a reset link via email.</p>
+                            <form action="/customer/forgot-password" method="POST">
+                                <div class="mb-3">
+                                    <label for="phoneNumberForgot" class="form-label">Registered Phone Number</label>
+                                     <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="tel" class="form-control" id="phoneNumberForgot" name="phoneNumber" placeholder="07... or 01..." pattern="^(0[17])\\d{8}$" title="10 digits, starting with 01 or 07" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="anyNameForgot" class="form-label">Any Registered Name</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="anyNameForgot" name="anyName" placeholder="e.g., John, Doe, Acme Corp" required>
+                                    </div>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-warning btn-block">
+                                        <i class="fas fa-paper-plane me-1"></i> Send Reset Instructions
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center py-3">
+                    <small class="text-muted">New here or having trouble? Contact support.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Ensure correct tab is shown based on URL hash or query param if needed
+    document.addEventListener('DOMContentLoaded', function () {
+        var activeTabId = new URLSearchParams(window.location.search).get('activeTab');
+        if (activeTabId) {
+            var tabElement = document.getElementById(activeTabId + '-tab');
+            if (tabElement) {
+                var tab = new bootstrap.Tab(tabElement);
+                tab.show();
+            }
+        }
+        // If using hash instead:
+        // if (window.location.hash) {
+        //     var tabElement = document.querySelector('button[data-bs-target="' + window.location.hash + '"]');
+        //     if (tabElement) {
+        //         var tab = new bootstrap.Tab(tabElement);
+        //         tab.show();
+        //     }
+        // }
+    });
+</script>
+<%- include('../../partials/footer') %>

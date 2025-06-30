@@ -58,6 +58,9 @@ app.use('/', mainRoutes); // Mount main routes
 app.use('/admin', adminRoutes); // Mount admin routes under /admin prefix
 const studentRoutes = require('./src/routes/studentRoutes'); // Import student routes
 app.use('/student', studentRoutes); // Mount student routes under /student prefix
+const customerRoutes = require('./src/routes/customerRoutes'); // Import customer routes
+app.use('/customer', customerRoutes); // Mount customer routes under /customer prefix
+
 
 // Catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -66,7 +69,8 @@ app.use((req, res, next) => {
         url: req.originalUrl,
         // Pass a minimal user object if navbar expects it, or handle absence in navbar
         admin: req.admin || null,
-        student: req.student || null
+        student: req.student || null,
+        customer: req.customer || null // Also pass customer if available
     });
 });
 

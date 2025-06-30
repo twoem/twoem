@@ -66,7 +66,44 @@ const authStudent = (req, res, next) => {
     }
 };
 
+// Middleware to authenticate internet customers
+const authCustomer = (req, res, next) => {
+    console.log(`[AuthCustomer] Path: ${req.method} ${req.originalUrl}`);
+    console.log('[AuthCustomer] All Cookies:', req.cookies);
+    const token = req.cookies.customer_auth_token;
+
+    if (!token) {
+        console.log('[AuthCustomer] No customer_auth_token found in cookies.');
+        req.flash('error_msg', 'Authentication required. Please login.');
+        return res.status(401).redirect('/customer/login');
+    }
+
+    try {
+        console.log('[AuthCustomer] customer_auth_token found. Verifying...');
+        const decoded = jwt.verify(token, getJwtSecret()); // Use helper
+        console.log('[AuthCustomer] Token decoded successfully:', decoded.phoneNumber, 'isCustomer:', decoded.isCustomer);
+
+        if (!decoded.isCustomer) { // Check for isCustomer flag
+            console.log('[AuthCustomer] Token is not a valid customer token (isCustomer not true).');
+            req.flash('error_msg', 'Access denied. Invalid token type.');
+            return res.status(403).redirect('/customer/login');
+        }
+        req.customer = decoded; // Populate req.customer
+        console.log('[AuthCustomer] Customer authenticated:', req.customer.phoneNumber);
+        next();
+    } catch (err) {
+        console.error('[AuthCustomer] JWT verification error:', err.name, err.message);
+        let errorMsg = 'Invalid session. Please login again.';
+        if (err.name === 'TokenExpiredError') {
+            errorMsg = 'Session expired. Please login again.';
+        }
+        req.flash('error_msg', errorMsg);
+        return res.status(401).redirect('/customer/login');
+    }
+};
+
 module.exports = {
     authAdmin,
-    authStudent
+    authStudent,
+    authCustomer
 };

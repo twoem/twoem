@@ -1,0 +1,99 @@
+<%- include('../../partials/header', { title: title, admin: admin }) %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-user-plus me-2"></i><%= title %></h3>
+                </div>
+                <div class="card-body">
+                    <%- include('../../partials/flash-messages') %>
+
+                    <form action="/admin/customers/register" method="POST">
+                        <div class="row mb-3">
+                            <div class="col-md-4 form-group">
+                                <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="firstName" name="firstName" value="<%= oldInput.firstName || '' %>" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="secondName" class="form-label">Second Name (Optional)</label>
+                                <input type="text" class="form-control" id="secondName" name="secondName" value="<%= oldInput.secondName || '' %>">
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="lastName" name="lastName" value="<%= oldInput.lastName || '' %>" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="organisationName" class="form-label">Organisation's Name (If applicable)</label>
+                            <input type="text" class="form-control" id="organisationName" name="organisationName" value="<%= oldInput.organisationName || '' %>">
+                        </div>
+
+                        <hr>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6 form-group">
+                                <label for="phoneNumber" class="form-label">Phone Number <span class="text-danger">*</span> (e.g., 07... or 01...)</label>
+                                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" value="<%= oldInput.phoneNumber || '' %>" pattern="^(0[17])\d{8}$" title="Phone number must be 10 digits and start with 01 or 07." required>
+                                <small class="form-text text-muted">This will be the username for the customer.</small>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" value="<%= oldInput.email || '' %>" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="location" class="form-label">Location/Address <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="location" name="location" value="<%= oldInput.location || '' %>" required>
+                        </div>
+
+                        <hr>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6 form-group">
+                                <label for="installationDate" class="form-label">Installation Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="installationDate" name="installationDate" value="<%= oldInput.installationDate || new Date().toISOString().split('T')[0] %>" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="accountNumber" class="form-label">Account Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="accountNumber" name="accountNumber" value="<%= oldInput.accountNumber || '' %>" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6 form-group">
+                                <label for="paymentPerMonth" class="form-label">Payment Per Month (KES) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="paymentPerMonth" name="paymentPerMonth" step="0.01" value="<%= oldInput.paymentPerMonth || '' %>" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="initialBalance" class="form-label">Initial Account Balance (KES) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="initialBalance" name="initialBalance" step="0.01" value="<%= oldInput.initialBalance || '0' %>" required>
+                                <small class="form-text text-muted">Can be negative for credit, or positive for debt.</small>
+                            </div>
+                        </div>
+
+                        <p class="text-muted small">
+                            The customer will be registered with a default password: <strong>Mynet@2020</strong>.
+                            They will be required to change this password upon their first login.
+                        </p>
+
+                        <hr>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/admin/customers" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>Cancel & Back to List
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i>Register Customer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>
