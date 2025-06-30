@@ -1,0 +1,263 @@
+<%- include('../partials/header', { title: 'Gallery' }) %>
+<%- include('../partials/navbar') %>
+
+<!-- Modern Hero Section -->
+<div class="hero-section" style="min-height: 40vh;">
+    <div style="background: url('https://bti-global.transforms.svdcdn.com/production/insights-and-news/ella-don-I-g5aH9YU-unsplash-scaled.jpg?w=2048&h=1362&auto=compress%2Cformat&fit=crop&dm=1706102158&s=233c41498662b1a6bb1f8c68e6260d38') center/cover; position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.3; z-index: 1;"></div>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="hero-content animate-fade-in-up">
+                    <h1 class="hero-title">Our Digital Services Gallery</h1>
+                    <p class="hero-subtitle">Showcasing our modern cyber services, digital solutions, and technology excellence</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<main class="container section-padding">
+    <!-- Introduction -->
+    <div class="text-center mb-5 animate-fade-in-up">
+        <h2 class="gradient-text mb-4">Experience Our Digital Excellence</h2>
+        <p class="lead text-muted col-lg-8 mx-auto">
+            Explore our comprehensive range of digital services, from modern cyber cafe facilities to professional
+            printing solutions and cutting-edge computer education programs.
+        </p>
+    </div>
+
+    <!-- Gallery Grid -->
+    <div class="row g-4 mb-5">
+        <%
+        const galleryItems = [
+            {
+                imgPath: "https://www.thesmallbusinessexpo.com/media/chase-chappell-qRl0UjPhgYw-unsplash-scaled.jpg",
+                title: "Modern Digital Workspace",
+                tags: ["Digital Services", "Workspace", "Technology"],
+                description: "Professional digital workspace solutions with cutting-edge technology for maximum productivity and efficiency."
+            },
+            {
+                imgPath: "https://images.ctfassets.net/txbhe1wabmyx/5RP7XFq0ijzJfifvNRPcvF/1036c3624b2ee92966e4ff9cf50261e4/digital_banner.png",
+                title: "Computer Education Programs",
+                tags: ["Education", "Training", "Skills"],
+                description: "Comprehensive computer literacy programs designed to empower individuals with essential digital skills for the modern world."
+            },
+            {
+                imgPath: "https://www.axians.com/app/uploads/sites/11/2020/12/xps-4TBSG2Oqu0Q-unsplash-scaled.jpg",
+                title: "High-Speed Internet Access",
+                tags: ["Internet", "Connectivity", "WiFi"],
+                description: "Fast and reliable internet connectivity solutions for all your browsing, downloading, and communication needs."
+            },
+            {
+                imgPath: "https://www.minneapolismn.gov/media/-www-content-assets/images/stock-photos/typing-unsplash-Daniel-Thomas.png",
+                title: "Professional Typing Services",
+                tags: ["Typing", "Documents", "Office"],
+                description: "Expert typing and document preparation services for academic, business, and personal requirements."
+            },
+            {
+                imgPath: "https://www.marketingtechnews.net/wp-content/uploads/2025/02/patrick-tomasso-fMntI8HAAB8-unsplash-scaled-e1738910506194.jpg",
+                title: "Customer Service Excellence",
+                tags: ["Service", "Support", "Quality"],
+                description: "Dedicated customer service ensuring every client receives personalized attention and professional assistance."
+            },
+            {
+                imgPath: "https://www.securitymagazine.com/ext/resources/2024/04/29/Person-with-laptop-and-calculator-UNSPLASH.png?1714398013",
+                title: "Financial & Government Services",
+                tags: ["eCitizen", "KRA", "NHIF"],
+                description: "Comprehensive assistance with government services, tax returns, and official documentation processes."
+            },
+            {
+                imgPath: "https://bti-global.transforms.svdcdn.com/production/insights-and-news/ella-don-I-g5aH9YU-unsplash-scaled.jpg?w=2048&h=1362&auto=compress%2Cformat&fit=crop&dm=1706102158&s=233c41498662b1a6bb1f8c68e6260d38",
+                title: "Gaming & Entertainment",
+                tags: ["Gaming", "Entertainment", "Technology"],
+                description: "State-of-the-art gaming facilities with high-performance computers for recreational and competitive gaming."
+            },
+            {
+                imgPath: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2072&q=80",
+                title: "Collaborative Learning Spaces",
+                tags: ["Learning", "Collaboration", "Environment"],
+                description: "Modern collaborative spaces designed to facilitate group learning and team-based digital projects."
+            },
+            {
+                imgPath: "https://images.unsplash.com/photo-1594235048794-fae8583a5af5?fm=jpg&q=80&w=800&ixlib=rb-4.1.0",
+                title: "Modern Office Solutions",
+                tags: ["Office", "Professional", "Efficient"],
+                description: "Contemporary office environments equipped with the latest technology for maximum productivity."
+            },
+            {
+                imgPath: "https://images.unsplash.com/photo-1551434678-e076c223a692?fm=jpg&q=80&w=800&ixlib=rb-4.1.0",
+                title: "Digital Support Services",
+                tags: ["Support", "Technical", "Help"],
+                description: "Expert technical support and troubleshooting services for all your digital and technology needs."
+            },
+            {
+                imgPath: "https://plus.unsplash.com/premium_photo-1661299251279-117a49a32548?fm=jpg&q=80&w=800&ixlib=rb-4.1.0",
+                title: "Customer Consultation",
+                tags: ["Consultation", "Advisory", "Personal"],
+                description: "One-on-one consultation services to help you choose the best digital solutions for your specific needs."
+            },
+            {
+                imgPath: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?fm=jpg&q=80&w=800&ixlib=rb-4.1.0",
+                title: "Business Solutions",
+                tags: ["Business", "Solutions", "Growth"],
+                description: "Comprehensive business solutions including digital marketing, document management, and operational support."
+            }
+        ];
+        %>
+
+        <% galleryItems.forEach(function(item, index) { %>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 gallery-card animate-fade-in-up" style="animation-delay: <%= index * 0.1 %>s;">
+                    <div class="position-relative overflow-hidden" style="height: 250px;">
+                        <img src="<%= item.imgPath %>"
+                             class="card-img-top"
+                             alt="<%= item.title %>"
+                             style="height: 100%; width: 100%; object-fit: cover; transition: transform 0.3s ease;">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center opacity-0 gallery-overlay">
+                            <div class="text-center text-white">
+                                <i class="fas fa-search-plus fa-2x mb-2"></i>
+                                <p class="mb-0">View Details</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title gradient-text"><%= item.title %></h5>
+                        <p class="card-text text-muted flex-grow-1"><%= item.description %></p>
+                        <div class="mt-auto">
+                            <% item.tags.forEach(function(tag) { %>
+                                <span class="badge bg-primary bg-opacity-10 text-primary me-1 mb-1">
+                                    <i class="fas fa-tag me-1"></i><%= tag %>
+                                </span>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+
+    <!-- Services Stats -->
+    <div class="glass-card p-5 mb-5 text-center">
+        <h3 class="gradient-text mb-4">Our Digital Impact</h3>
+        <div class="row">
+            <div class="col-md-3 mb-4 mb-md-0">
+                <div class="contact-icon mx-auto mb-2" style="width: 60px; height: 60px;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h4 class="gradient-text mb-1">500+</h4>
+                <p class="text-muted mb-0">Happy Customers</p>
+            </div>
+            <div class="col-md-3 mb-4 mb-md-0">
+                <div class="contact-icon mx-auto mb-2" style="width: 60px; height: 60px;">
+                    <i class="fas fa-laptop"></i>
+                </div>
+                <h4 class="gradient-text mb-1">1000+</h4>
+                <p class="text-muted mb-0">Hours of Training</p>
+            </div>
+            <div class="col-md-3 mb-4 mb-md-0">
+                <div class="contact-icon mx-auto mb-2" style="width: 60px; height: 60px;">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h4 class="gradient-text mb-1">2000+</h4>
+                <p class="text-muted mb-0">Documents Processed</p>
+            </div>
+            <div class="col-md-3">
+                <div class="contact-icon mx-auto mb-2" style="width: 60px; height: 60px;">
+                    <i class="fas fa-star"></i>
+                </div>
+                <h4 class="gradient-text mb-1">98%</h4>
+                <p class="text-muted mb-0">Satisfaction Rate</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services Grid -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-6">
+            <div class="contact-card h-100 p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="contact-icon me-3">
+                        <i class="fas fa-print"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Digital Printing</h5>
+                        <p class="text-muted mb-0">Professional printing solutions</p>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">High-quality color and black & white printing, binding, lamination, and business card services.</p>
+                <a href="/services#digital-printing" class="btn btn-outline-primary">View Services</a>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="contact-card h-100 p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="contact-icon me-3">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Computer Training</h5>
+                        <p class="text-muted mb-0">Skill development programs</p>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Comprehensive computer education from basic skills to advanced MS Office proficiency and certification.</p>
+                <a href="/services#computer-education" class="btn btn-outline-primary">Enroll Now</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="text-center section-padding">
+        <h3 class="gradient-text mb-4">Ready to Experience Our Services?</h3>
+        <p class="lead text-muted mb-4">Visit our modern facility in Kagwe Town and discover how we can help you achieve your digital goals.</p>
+        <div class="row justify-content-center">
+            <div class="col-md-3 mb-3">
+                <a href="/contact" class="btn btn-primary w-100">
+                    <i class="fas fa-map-marker-alt me-1"></i>Visit Us
+                </a>
+            </div>
+            <div class="col-md-3 mb-3">
+                <a href="https://wa.me/254707330204" class="whatsapp-btn w-100 justify-content-center" target="_blank">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </a>
+            </div>
+            <div class="col-md-3 mb-3">
+                <a href="/services" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-list me-1"></i>All Services
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+.gallery-card {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.gallery-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-2xl);
+}
+
+.gallery-card:hover img {
+    transform: scale(1.1);
+}
+
+.gallery-overlay {
+    background: rgba(102, 126, 234, 0.8);
+    transition: opacity 0.3s ease;
+}
+
+.gallery-card:hover .gallery-overlay {
+    opacity: 1;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+    border-radius: var(--border-radius);
+}
+</style>
+
+<%- include('../partials/footer') %>

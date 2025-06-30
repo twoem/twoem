@@ -1,0 +1,84 @@
+<%- include('../../../partials/header', { title: 'Manage Student Enrollments' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/students">Manage Students</a></li>
+            <li class="breadcrumb-item"><a href="/admin/students/view/<%= student.id %>">View Student: <%= student.first_name %></a></li>
+            <li class="breadcrumb-item active" aria-current="page">Manage Enrollments</li>
+        </ol>
+    </nav>
+
+    <h2>Manage Enrollments for: <%= student.first_name %> (<%= student.registration_number %>)</h2>
+    <hr>
+
+    <% if (locals.success_msg) { %><div class="alert alert-success alert-dismissible fade show" role="alert"><%= success_msg %><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div><% } %>
+    <% if (locals.error_msg) { %><div class="alert alert-danger alert-dismissible fade show" role="alert"><%= error_msg %><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div><% } %>
+
+    <div class="row">
+        <div class="col-md-7">
+            <h4>Current Enrollments</h4>
+            <% if (currentEnrollments && currentEnrollments.length > 0) { %>
+                <ul class="list-group">
+                    <% currentEnrollments.forEach(function(enrollment) { %>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong><%= enrollment.course_name %></strong>
+                                <small class="d-block text-muted">Enrolled: <%= new Date(enrollment.enrollment_date).toLocaleDateString() %></small>
+                                <% if (enrollment.final_grade) { %>
+                                    <small class="d-block text-info">Grade: <%= enrollment.final_grade %></small>
+                                <% } else { %>
+                                     <small class="d-block text-warning">Status: In Progress</small>
+                                <% } %>
+                            </div>
+                            <div>
+                                <a href="/admin/enrollments/<%= enrollment.id %>/marks" class="btn btn-sm btn-outline-secondary me-2" title="Enter/Edit Marks">
+                                    <i class="fas fa-edit"></i> Marks
+                                </a>
+                                <form action="/admin/students/enrollments/remove/<%= enrollment.id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to unenroll this student from <%= enrollment.course_name %>?');">
+                                    <input type="hidden" name="studentId" value="<%= student.id %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Unenroll">
+                                        <i class="fas fa-times-circle"></i> Unenroll
+                                    </button>
+                                </form>
+                            </div>
+                        </li>
+                    <% }); %>
+                </ul>
+            <% } else { %>
+                <p class="text-muted">This student is not currently enrolled in any courses.</p>
+            <% } %>
+        </div>
+
+        <div class="col-md-5">
+            <h4>Enroll in New Course</h4>
+            <% if (availableCourses && availableCourses.length > 0) { %>
+                <form action="/admin/students/<%= student.id %>/enrollments/add" method="POST">
+                    <div class="mb-3">
+                        <label for="courseId" class="form-label">Select Course</label>
+                        <select class="form-select" id="courseId" name="courseId" required>
+                            <option value="" disabled selected>Choose a course...</option>
+                            <% availableCourses.forEach(function(course) { %>
+                                <option value="<%= course.id %>"><%= course.name %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i> Enroll Student
+                    </button>
+                </form>
+            <% } else { %>
+                <p class="text-muted">No new courses available for enrollment for this student, or all courses are already enrolled.</p>
+            <% } %>
+        </div>
+    </div>
+    <div class="mt-4">
+        <a href="/admin/students/view/<%= student.id %>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Student Details
+        </a>
+    </div>
+</main>
+
+<%- include('../../../partials/footer') %>

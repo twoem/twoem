@@ -1,0 +1,28 @@
+<%# This EJS file will be rendered within certificate-layout.ejs %>
+<%# Variables available: student_name, course_name, registration_number, completion_date %>
+
+<img src="/logo.png" alt="Twoem Online Productions Logo" class="logo">
+
+<h1>Certificate of Completion</h1>
+
+<p>This is to certify that</p>
+<p class="student-name"><%= student_name %></p>
+<p>(Registration Number: <%= registration_number %>)</p>
+
+<p>has successfully completed the course</p>
+<p class="course-name"><%= course_name %></p>
+
+<p>at Twoem Online Productions.</p>
+
+<p class="date-issued">Date of Completion: <%= completion_date %></p>
+
+<div class="footer-sig">
+    <div class="signature">
+        Authorized Signature
+        <br>
+        Twoem Online Productions
+    </div>
+    <div class="signature">
+        Date
+    </div>
+</div>

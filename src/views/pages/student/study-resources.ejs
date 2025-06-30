@@ -1,0 +1,55 @@
+<%- include('../../partials/header', { title: title }) %>
+<%- include('../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/student/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">My Study Resources</li>
+        </ol>
+    </nav>
+
+    <h2>My Study Resources</h2>
+    <p>Find study materials, documents, and helpful links related to your courses and general studies.</p>
+    <hr>
+
+    <%- include('../../partials/flash-messages') %>
+
+    <% if (groupedResources && Object.keys(groupedResources).length > 0) { %>
+        <% Object.keys(groupedResources).sort().forEach(function(courseKey) { %>
+            <div class="mb-4">
+                <h4>
+                    <% if (courseKey === 'General Resources') { %>
+                        <i class="fas fa-globe me-2 text-secondary"></i>General Resources
+                    <% } else { %>
+                        <i class="fas fa-book me-2 text-primary"></i><%= courseKey %>
+                    <% } %>
+                </h4>
+                <div class="list-group">
+                    <% groupedResources[courseKey].forEach(function(resource) { %>
+                        <a href="<%= resource.resource_url %>" class="list-group-item list-group-item-action" target="_blank" rel="noopener noreferrer">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1"><%= resource.title %></h5>
+                                <small class="text-muted">Added: <%= new Date(resource.created_at).toLocaleDateString() %></small>
+                            </div>
+                            <% if (resource.description) { %>
+                                <p class="mb-1 text-muted small"><%= resource.description %></p>
+                            <% } %>
+                            <small class="text-primary"><i class="fas fa-link me-1"></i><%= resource.resource_url %></small>
+                        </a>
+                    <% }); %>
+                </div>
+            </div>
+        <% }); %>
+    <% } else { %>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No study resources are currently available for you.
+        </div>
+    <% } %>
+
+    <div class="mt-4">
+        <a href="/student/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+</main>
+
+<%- include('../../partials/footer') %>

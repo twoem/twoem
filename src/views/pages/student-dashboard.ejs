@@ -1,0 +1,75 @@
+<%- include('../partials/header', { title: 'Student Dashboard' }) %>
+<%- include('../partials/navbar') %>
+
+<main class="container mt-5">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Student Dashboard</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <% if (locals.student && locals.student.firstName) { %>
+                <span class="me-3">Hello, <strong><%= student.firstName %></strong>!</span>
+            <% } else { %>
+                <span class="me-3">Hello, Student!</span>
+            <% } %>
+            <form action="/student/logout" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- First Login Tasks - these will be handled by redirects before reaching dashboard -->
+    <!-- This dashboard is shown AFTER initial setup is complete -->
+     <% if (locals.message) { %><div class="alert alert-success"><%= message %></div><% } %>
+     <% if (locals.error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+
+    <div class="row">
+        <div class="col-md-8">
+             <% if (locals.student && locals.student.firstName) { %>
+                <h4>Welcome, <%= student.firstName %>!</h4>
+            <% } else { %>
+                <h4>Welcome!</h4>
+            <% } %>
+            <p>This is your personal dashboard. Here you can view your academic progress, fee statements, important notifications, and access study resources.</p>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    Notifications
+                </div>
+                <div class="card-body">
+                    <p class="card-text">No new notifications at this time. (Placeholder)</p>
+                    <!-- List notifications here -->
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="list-group">
+                <a href="/student/my-academics" class="list-group-item list-group-item-action">
+                    <i class="fas fa-graduation-cap me-2"></i>View Academic Scores
+                </a>
+                <a href="/student/my-certificates" class="list-group-item list-group-item-action">
+                    <i class="fas fa-certificate me-2"></i>My Certificates
+                </a>
+                <a href="/student/my-fees" class="list-group-item list-group-item-action">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>Check Fees Balance
+                </a>
+                <a href="/student/notifications" class="list-group-item list-group-item-action">
+                    <i class="fas fa-bell me-2"></i>Read Notifications
+                </a>
+                <a href="/student/study-resources" class="list-group-item list-group-item-action">
+                    <i class="fas fa-book-open me-2"></i>Study Resources
+                </a>
+                <a href="/student/wifi-credentials" class="list-group-item list-group-item-action">
+                    <i class="fas fa-wifi me-2"></i>View WiFi Credentials
+                </a>
+                <a href="/student/profile/edit-nok" class="list-group-item list-group-item-action">
+                    <i class="fas fa-user-edit me-2"></i>Update Profile (Next of Kin)
+                </a>
+                <a href="/student/profile/change-password" class="list-group-item list-group-item-action">
+                    <i class="fas fa-key me-2"></i>Change Password
+                </a>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<%- include('../partials/footer') %>

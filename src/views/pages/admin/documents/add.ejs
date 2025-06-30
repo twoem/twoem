@@ -1,0 +1,32 @@
+<%- include('../../../partials/header', { title: 'Add Downloadable Document' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/documents">Manage Downloads</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Add New Document</li>
+        </ol>
+    </nav>
+
+    <h2>Add New Downloadable Document</h2>
+    <p>Configure entries for documents that will appear on the public "Downloads" page.</p>
+    <hr>
+
+    <%- include('../../../partials/flash-messages') %>
+
+    <form action="/admin/documents/add" method="POST">
+        <%- include('./form', {
+            document: undefined,
+            errors: locals.errors || [],
+            title_val: locals.title_val,
+            description_val: locals.description_val,
+            file_url_val: locals.file_url_val,
+            type_val: locals.type_val,
+            expiry_date_val: locals.expiry_date_val
+        }) %>
+    </form>
+</main>
+
+<%- include('../../../partials/footer') %>

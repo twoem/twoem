@@ -1,0 +1,35 @@
+<%- include('../../../partials/header', { title: 'Edit Downloadable Document' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/documents">Manage Downloads</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit Document: <%= document ? document.title : '...' %></li>
+        </ol>
+    </nav>
+
+    <h2>Edit Downloadable Document: <%= document ? document.title : 'Details' %></h2>
+    <hr>
+
+    <%- include('../../../partials/flash-messages') %>
+
+    <% if (document) { %>
+        <form action="/admin/documents/edit/<%= document.id %>" method="POST">
+            <%- include('./form', {
+                document: document,
+                errors: locals.errors || [],
+                title_val: locals.title_val, // For pre-filling on validation error
+                description_val: locals.description_val,
+                file_url_val: locals.file_url_val,
+                type_val: locals.type_val,
+                expiry_date_val: locals.expiry_date_val
+            }) %>
+        </form>
+    <% } else { %>
+        <div class="alert alert-warning">Document entry not found. <a href="/admin/documents">Return to document list.</a></div>
+    <% } %>
+</main>
+
+<%- include('../../../partials/footer') %>

@@ -1,0 +1,64 @@
+<%- include('../../../partials/header', { title: 'Manage Study Resources' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Manage Study Resources</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Manage Study Resources</h1>
+        <a href="/admin/study-resources/add" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Add New Resource
+        </a>
+    </div>
+
+    <%- include('../../../partials/flash-messages') %>
+
+    <% if (resources && resources.length > 0) { %>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">URL</th>
+                        <th scope="col">Course</th>
+                        <th scope="col">Uploaded By</th>
+                        <th scope="col">Date Added</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% resources.forEach(function(resource) { %>
+                        <tr>
+                            <td><%= resource.id %></td>
+                            <td><%= resource.title %></td>
+                            <td><a href="<%= resource.resource_url %>" target="_blank" rel="noopener noreferrer"><%= resource.resource_url.length > 50 ? resource.resource_url.substring(0, 47) + '...' : resource.resource_url %></a></td>
+                            <td><%= resource.course_name || 'General' %></td>
+                            <td><%= resource.uploaded_by_admin_id %></td> <% /* TODO: Show admin name */ %>
+                            <td><%= new Date(resource.created_at).toLocaleDateString() %></td>
+                            <td class="text-end">
+                                <a href="/admin/study-resources/edit/<%= resource.id %>" class="btn btn-sm btn-outline-secondary me-1" title="Edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <form action="/admin/study-resources/delete/<%= resource.id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this resource?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Resource">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    <% } else { %>
+        <div class="alert alert-info">No study resources found. <a href="/admin/study-resources/add">Add the first resource.</a></div>
+    <% } %>
+</main>
+
+<%- include('../../../partials/footer') %>

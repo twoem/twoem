@@ -1,0 +1,71 @@
+<%- include('../../../partials/header', { title: 'Enter/Edit Marks' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/students">Manage Students</a></li>
+            <% if (enrollment && student) { %>
+                <li class="breadcrumb-item"><a href="/admin/students/view/<%= student.id %>">View Student: <%= student.first_name %></a></li>
+                <li class="breadcrumb-item"><a href="/admin/students/<%= student.id %>/enrollments">Manage Enrollments</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Marks for <%= course ? course.name : 'Course' %></li>
+            <% } else { %>
+                <li class="breadcrumb-item active" aria-current="page">Enter/Edit Marks</li>
+            <% } %>
+        </ol>
+    </nav>
+
+    <% if (enrollment && student && course) { %>
+        <h2>Enter/Edit Marks for <%= student.first_name %> - <%= course.name %></h2>
+        <p>Coursework (30%), Main Exam (70%). Passing Grade: <%= process.env.PASSING_GRADE || 60 %>%. </p>
+        <hr>
+
+        <% if (locals.success_msg) { %><div class="alert alert-success alert-dismissible fade show" role="alert"><%= success_msg %><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div><% } %>
+        <% if (locals.error_msg) { %><div class="alert alert-danger alert-dismissible fade show" role="alert"><%= error_msg %><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div><% } %>
+        <% if (locals.errors && errors.length > 0) { %>
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    <% errors.forEach(function(error) { %>
+                        <li><%= error.msg || error %></li>
+                    <% }); %>
+                </ul>
+            </div>
+        <% } %>
+
+        <form action="/admin/enrollments/<%= enrollment.id %>/marks" method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="coursework_marks" class="form-label">Coursework Marks (out of 100, contributes 30%)</label>
+                    <input type="number" class="form-control" id="coursework_marks" name="coursework_marks" min="0" max="100" value="<%= locals.coursework_marks !== undefined ? locals.coursework_marks : (enrollment.coursework_marks || '') %>">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="main_exam_marks" class="form-label">Main Exam Marks (out of 100, contributes 70%)</label>
+                    <input type="number" class="form-control" id="main_exam_marks" name="main_exam_marks" min="0" max="100" value="<%= locals.main_exam_marks !== undefined ? locals.main_exam_marks : (enrollment.main_exam_marks || '') %>">
+                </div>
+            </div>
+
+            <% if (enrollment.final_grade) { %>
+                <div class="alert alert-info">
+                    Current Calculated Total: <strong>
+                        <%= ((enrollment.coursework_marks || 0) * 0.3 + (enrollment.main_exam_marks || 0) * 0.7).toFixed(2) %>%
+                    </strong><br>
+                    Current Final Grade: <strong><%= enrollment.final_grade %></strong>
+                </div>
+            <% } %>
+
+            <div class="d-flex justify-content-end">
+                <a href="/admin/students/<%= student.id %>/enrollments" class="btn btn-secondary me-2">
+                    <i class="fas fa-arrow-left"></i> Back to Enrollments
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Marks
+                </button>
+            </div>
+        </form>
+    <% } else { %>
+        <div class="alert alert-warning">Enrollment details not found. <a href="/admin/students">Return to student list.</a></div>
+    <% } %>
+</main>
+
+<%- include('../../../partials/footer') %>

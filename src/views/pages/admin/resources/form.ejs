@@ -1,0 +1,50 @@
+<%# Admin Study Resource Form Partial %>
+<%# Expects: resource (object, optional), courses (array of course objects), errors (array, optional) %>
+
+<div class="mb-3">
+    <label for="title" class="form-label">Resource Title</label>
+    <input type="text" class="form-control" id="title" name="title"
+           value="<%= typeof resource !== 'undefined' ? resource.title : (locals.title_val || '') %>" required>
+    <% if (locals.errors && errors.find(e => e.param === 'title')) { %>
+        <div class="text-danger small mt-1"><%= errors.find(e => e.param === 'title').msg %></div>
+    <% } %>
+</div>
+
+<div class="mb-3">
+    <label for="description" class="form-label">Description (Optional)</label>
+    <textarea class="form-control" id="description" name="description" rows="3"><%= typeof resource !== 'undefined' ? resource.description : (locals.description_val || '') %></textarea>
+</div>
+
+<div class="mb-3">
+    <label for="resource_url" class="form-label">Resource URL</label>
+    <input type="url" class="form-control" id="resource_url" name="resource_url"
+           value="<%= typeof resource !== 'undefined' ? resource.resource_url : (locals.resource_url_val || '') %>" required placeholder="https://example.com/document.pdf or https://youtu.be/videoID">
+    <div class="form-text">Enter the full URL to the study resource (e.g., PDF, Google Doc, YouTube video).</div>
+    <% if (locals.errors && errors.find(e => e.param === 'resource_url')) { %>
+        <div class="text-danger small mt-1"><%= errors.find(e => e.param === 'resource_url').msg %></div>
+    <% } %>
+</div>
+
+<div class="mb-3">
+    <label for="course_id" class="form-label">Link to Course (Optional)</label>
+    <select class="form-select" id="course_id" name="course_id">
+        <option value="">-- General Resource (No Specific Course) --</option>
+        <% if (locals.courses && courses.length > 0) { %>
+            <% courses.forEach(function(course) { %>
+                <option value="<%= course.id %>"
+                        <%= (typeof resource !== 'undefined' && resource.course_id == course.id) || (locals.course_id_val == course.id) ? 'selected' : '' %>>
+                    <%= course.name %>
+                </option>
+            <% }); %>
+        <% } %>
+    </select>
+    <div class="form-text">If this resource is specific to a course, select it here.</div>
+</div>
+
+<div class="d-flex justify-content-end">
+    <a href="/admin/study-resources" class="btn btn-secondary me-2">Cancel</a>
+    <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i>
+        <%= typeof resource !== 'undefined' && resource.id ? 'Update Resource' : 'Add Resource' %>
+    </button>
+</div>

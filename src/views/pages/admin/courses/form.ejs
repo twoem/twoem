@@ -1,0 +1,36 @@
+<%# Admin Course Form Partial %>
+<%# Expects: course (object, optional for add), errors (array, optional), csrfToken (if using CSRF) %>
+
+<div class="mb-3">
+    <label for="name" class="form-label">Course Name</label>
+    <input type="text" class="form-control" id="name" name="name" value="<%= typeof course !== 'undefined' ? course.name : (locals.name || '') %>" required>
+    <% if (locals.errors && errors.find(e => e.param === 'name')) { %>
+        <div class="text-danger small mt-1"><%= errors.find(e => e.param === 'name').msg %></div>
+    <% } %>
+</div>
+
+<div class="mb-3">
+    <label for="description" class="form-label">Description</label>
+    <textarea class="form-control" id="description" name="description" rows="5"><%= typeof course !== 'undefined' ? course.description : (locals.description || '') %></textarea>
+    <% if (locals.errors && errors.find(e => e.param === 'description')) { %>
+        <div class="text-danger small mt-1"><%= errors.find(e => e.param === 'description').msg %></div>
+    <% } %>
+</div>
+
+<%# Placeholder for course image upload if added later %>
+<!--
+<div class="mb-3">
+    <label for="courseImage" class="form-label">Course Image (Optional)</label>
+    <input type="file" class="form-control" id="courseImage" name="courseImage">
+    <% if (typeof course !== 'undefined' && course.image_url) { %>
+        <img src="<%= course.image_url %>" alt="<%= course.name %>" class="img-thumbnail mt-2" style="max-height: 100px;">
+    <% } %>
+</div>
+-->
+
+<div class="d-flex justify-content-end">
+    <a href="/admin/courses" class="btn btn-secondary me-2">Cancel</a>
+    <button type="submit" class="btn btn-primary">
+        <%= typeof course !== 'undefined' && course.id ? 'Update Course' : 'Add Course' %>
+    </button>
+</div>

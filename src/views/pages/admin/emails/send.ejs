@@ -1,0 +1,174 @@
+<%- include('../../../partials/header', { title: 'Send Bulk Email' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Send Bulk Email</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-envelope text-primary me-2"></i>Send Bulk Email</h1>
+        <a href="/admin/emails/test" class="btn btn-outline-primary">
+            <i class="fas fa-vial me-1"></i> Test Templates
+        </a>
+    </div>
+
+    <%- include('../../../partials/flash-messages') %>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-paper-plane me-2"></i>Compose Email</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/emails/send" method="POST">
+                        <!-- Subject -->
+                        <div class="mb-3">
+                            <label for="subject" class="form-label fw-bold">
+                                <i class="fas fa-tag text-primary me-1"></i>Subject <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="subject" name="subject"
+                                   value="<%= typeof subject !== 'undefined' ? subject : '' %>"
+                                   placeholder="Enter email subject..." required>
+                        </div>
+
+                        <!-- Recipients -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-users text-primary me-1"></i>Recipients <span class="text-danger">*</span>
+                            </label>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="recipient_type" id="all_students" value="all" onchange="toggleRecipientSelection()">
+                                    <label class="form-check-label fw-bold text-success" for="all_students">
+                                        <i class="fas fa-globe me-1"></i>Send to All Active Students (<%= students.length %> students)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="recipient_type" id="selected_students" value="selected" onchange="toggleRecipientSelection()" checked>
+                                    <label class="form-check-label fw-bold text-info" for="selected_students">
+                                        <i class="fas fa-hand-pointer me-1"></i>Send to Selected Students
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="student_selection" class="border rounded p-3 bg-light">
+                                <div class="mb-2">
+                                    <button type="button" class="btn btn-sm btn-outline-success me-2" onclick="selectAllStudents()">
+                                        <i class="fas fa-check-double me-1"></i>Select All
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="clearAllStudents()">
+                                        <i class="fas fa-times me-1"></i>Clear All
+                                    </button>
+                                </div>
+                                <div class="row" style="max-height: 200px; overflow-y: auto;">
+                                    <% students.forEach(function(student) { %>
+                                        <div class="col-md-6 col-lg-4 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input student-checkbox" type="checkbox" name="recipients" value="<%= student.id %>" id="student_<%= student.id %>">
+                                                <label class="form-check-label small" for="student_<%= student.id %>">
+                                                    <strong><%= student.first_name %></strong><br>
+                                                    <span class="text-muted"><%= student.email %></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message -->
+                        <div class="mb-3">
+                            <label for="message" class="form-label fw-bold">
+                                <i class="fas fa-comment text-primary me-1"></i>Message <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="message" name="message" rows="8"
+                                      placeholder="Enter your message..." required><%= typeof message !== 'undefined' ? message : '' %></textarea>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle text-info me-1"></i>
+                                Your message will be sent using the professional email template with Ha Ngacha Cyber branding.
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="/admin/dashboard" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane me-1"></i>Send Email
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Email Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong><i class="fas fa-user me-1 text-primary"></i>From:</strong><br>
+                        <small class="text-muted"><%= process.env.ADMIN_EMAIL_FROM_NAME %></small><br>
+                        <small class="text-muted"><%= process.env.ADMIN_EMAIL_FROM %></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong><i class="fas fa-reply me-1 text-success"></i>Reply To:</strong><br>
+                        <small class="text-muted"><%= process.env.REPLY_TO_EMAIL %></small>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong>Note:</strong> All emails will include the Ha Ngacha Cyber contact information and professional branding.
+                    </div>
+
+                    <div class="text-center">
+                        <a href="/admin/emails/test" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-vial me-1"></i>Test Email Templates
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+function toggleRecipientSelection() {
+    const allRadio = document.getElementById('all_students');
+    const selectionDiv = document.getElementById('student_selection');
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+
+    if (allRadio.checked) {
+        selectionDiv.style.display = 'none';
+        checkboxes.forEach(cb => cb.required = false);
+    } else {
+        selectionDiv.style.display = 'block';
+        checkboxes.forEach(cb => cb.required = false);
+    }
+}
+
+function selectAllStudents() {
+    document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = true);
+}
+
+function clearAllStudents() {
+    document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = false);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleRecipientSelection();
+});
+</script>
+
+<%- include('../../../partials/footer') %>

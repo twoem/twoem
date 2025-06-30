@@ -1,0 +1,247 @@
+<%- include('../../../partials/header', { title: 'Test Email Templates' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/emails/send">Email Management</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Test Templates</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-vial text-success me-2"></i>Test Email Templates</h1>
+        <div>
+            <a href="/admin/emails/send" class="btn btn-outline-primary me-2">
+                <i class="fas fa-paper-plane me-1"></i> Send Bulk Email
+            </a>
+            <a href="/admin/emails/logs" class="btn btn-outline-info">
+                <i class="fas fa-list me-1"></i> Email Logs
+            </a>
+        </div>
+    </div>
+
+    <%- include('../../../partials/flash-messages') %>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-flask me-2"></i>Send Test Email</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/emails/test" method="POST">
+                        <!-- Test Email Address -->
+                        <div class="mb-4">
+                            <label for="test_email" class="form-label fw-bold">
+                                <i class="fas fa-envelope text-success me-1"></i>Test Email Address <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" class="form-control" id="test_email" name="test_email"
+                                   value="<%= typeof testEmail !== 'undefined' ? testEmail : '' %>"
+                                   placeholder="Enter email address to receive test..." required>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle text-info me-1"></i>
+                                The test email will be sent to this address
+                            </div>
+                        </div>
+
+                        <!-- Template Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-templates text-success me-1"></i>Select Template to Test <span class="text-danger">*</span>
+                            </label>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-info template-card" onclick="selectTemplate('otp')">
+                                        <div class="card-body text-center">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="template_type" id="template_otp" value="otp" required>
+                                                <label class="form-check-label" for="template_otp">
+                                                    <i class="fas fa-key fa-2x text-info mb-2 d-block"></i>
+                                                    <strong>OTP Email</strong>
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">Password reset with verification code</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-primary template-card" onclick="selectTemplate('notification')">
+                                        <div class="card-body text-center">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="template_type" id="template_notification" value="notification" required>
+                                                <label class="form-check-label" for="template_notification">
+                                                    <i class="fas fa-bell fa-2x text-primary mb-2 d-block"></i>
+                                                    <strong>Notification Email</strong>
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">General notifications to students</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-warning template-card" onclick="selectTemplate('contact')">
+                                        <div class="card-body text-center">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="template_type" id="template_contact" value="contact" required>
+                                                <label class="form-check-label" for="template_contact">
+                                                    <i class="fas fa-envelope-open fa-2x text-warning mb-2 d-block"></i>
+                                                    <strong>Contact Form</strong>
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">Contact form submission notification</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Template Preview Info -->
+                        <div id="template_info" class="mb-4" style="display: none;">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle me-1"></i>Template Information:</h6>
+                                <div id="template_description"></div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="/admin/emails/send" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Email
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-paper-plane me-1"></i>Send Test Email
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="card-title mb-0"><i class="fas fa-lightbulb me-2"></i>Testing Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6><i class="fas fa-check-circle text-success me-1"></i>What This Tests:</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-dot-circle text-primary me-1"></i>Email template rendering</li>
+                            <li><i class="fas fa-dot-circle text-primary me-1"></i>SMTP configuration</li>
+                            <li><i class="fas fa-dot-circle text-primary me-1"></i>Logo and branding display</li>
+                            <li><i class="fas fa-dot-circle text-primary me-1"></i>Contact information</li>
+                            <li><i class="fas fa-dot-circle text-primary me-1"></i>Reply-to functionality</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong>Note:</strong> Test emails use sample data. The actual emails sent to students will contain their real information.
+                    </div>
+
+                    <div class="text-center">
+                        <a href="/admin/emails/logs" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-history me-1"></i>View Email History
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="card-title mb-0"><i class="fas fa-envelope me-2"></i>Email Settings</h6>
+                </div>
+                <div class="card-body small">
+                    <div class="mb-2">
+                        <strong>SMTP Host:</strong><br>
+                        <span class="text-muted"><%= process.env.SMTP_HOST %></span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>From Name:</strong><br>
+                        <span class="text-muted"><%= process.env.ADMIN_EMAIL_FROM_NAME %></span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>From Email:</strong><br>
+                        <span class="text-muted"><%= process.env.SMTP_USER %></span>
+                    </div>
+                    <div>
+                        <strong>Reply To:</strong><br>
+                        <span class="text-muted"><%= process.env.REPLY_TO_EMAIL %></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+function selectTemplate(type) {
+    // Clear all selections
+    document.querySelectorAll('.template-card').forEach(card => {
+        card.classList.remove('border-success');
+        card.style.backgroundColor = '';
+    });
+
+    // Select the clicked template
+    const radio = document.getElementById('template_' + type);
+    radio.checked = true;
+
+    // Highlight the selected card
+    radio.closest('.template-card').classList.add('border-success');
+    radio.closest('.template-card').style.backgroundColor = 'rgba(25, 135, 84, 0.05)';
+
+    // Show template information
+    const infoDiv = document.getElementById('template_info');
+    const descDiv = document.getElementById('template_description');
+
+    let description = '';
+    switch(type) {
+        case 'otp':
+            description = '<strong>OTP Email Template:</strong> Tests the password reset email with verification code. Includes Ha Ngacha Cyber branding, contact cards, and security messaging.';
+            break;
+        case 'notification':
+            description = '<strong>Notification Email Template:</strong> Tests general notification emails sent to students. Features modern design with action buttons and contact information.';
+            break;
+        case 'contact':
+            description = '<strong>Contact Form Template:</strong> Tests the email sent when someone submits the contact form. Includes sender details and reply-to functionality.';
+            break;
+    }
+
+    descDiv.innerHTML = description;
+    infoDiv.style.display = 'block';
+}
+
+// Add click handlers for template cards
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.template-card').forEach(card => {
+        card.style.cursor = 'pointer';
+        card.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('border-success')) {
+                this.style.backgroundColor = 'rgba(0, 123, 255, 0.05)';
+            }
+        });
+        card.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('border-success')) {
+                this.style.backgroundColor = '';
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.template-card {
+    transition: all 0.3s ease;
+}
+.template-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>
+
+<%- include('../../../partials/footer') %>

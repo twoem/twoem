@@ -1,0 +1,73 @@
+<%- include('../../partials/header', { title: title }) %>
+<%- include('../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/student/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">My Academic Records</li>
+        </ol>
+    </nav>
+
+    <h2>My Academic Records</h2>
+    <p>View your course enrollments, marks, and grades below. Passing grade is <%= PASSING_GRADE %>%. Coursework contributes 30% and Main Exam contributes 70% to the total score.</p>
+    <hr>
+
+    <% if (locals.success_msg) { %><div class="alert alert-success"><%= success_msg %></div><% } %>
+    <% if (locals.error_msg) { %><div class="alert alert-danger"><%= error_msg %></div><% } %>
+
+    <% if (enrollments && enrollments.length > 0) { %>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Course Name</th>
+                        <th scope="col">Enrollment Date</th>
+                        <th scope="col">Coursework Marks (/100)</th>
+                        <th scope="col">Main Exam Marks (/100)</th>
+                        <th scope="col">Total Score (/100)</th>
+                        <th scope="col">Final Grade</th>
+                        <!-- <th scope="col">Certificate</th> Placeholder for later -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <% enrollments.forEach(function(enrollment) { %>
+                        <tr>
+                            <td><%= enrollment.course_name %></td>
+                            <td><%= new Date(enrollment.enrollment_date).toLocaleDateString() %></td>
+                            <td><%= enrollment.coursework_marks !== null ? enrollment.coursework_marks : 'Pending' %></td>
+                            <td><%= enrollment.main_exam_marks !== null ? enrollment.main_exam_marks : 'Pending' %></td>
+                            <td>
+                                <% if (enrollment.coursework_marks !== null && enrollment.main_exam_marks !== null) { %>
+                                    <%= enrollment.total_score.toFixed(2) %>
+                                <% } else { %>
+                                    Pending
+                                <% } %>
+                            </td>
+                            <td>
+                                <% if (enrollment.final_grade) { %>
+                                    <span class="badge <%= enrollment.final_grade === 'Pass' ? 'bg-success' : 'bg-danger' %>">
+                                        <%= enrollment.final_grade %>
+                                    </span>
+                                <% } else { %>
+                                    <span class="badge bg-secondary">Pending</span>
+                                <% } %>
+                            </td>
+                            <!-- <td><%# enrollment.certificate_issued_at ? 'Download' : 'Not Yet Eligible/Issued' %></td> -->
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    <% } else { %>
+        <div class="alert alert-info">
+            You are not currently enrolled in any courses, or your academic records have not been updated yet.
+        </div>
+    <% } %>
+
+    <div class="mt-4">
+        <a href="/student/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+</main>
+
+<%- include('../../partials/footer') %>

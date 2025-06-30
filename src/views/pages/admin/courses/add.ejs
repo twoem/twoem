@@ -1,0 +1,38 @@
+<%- include('../../../partials/header', { title: 'Add New Course' }) %>
+<%- include('../../../partials/navbar') %> <%# Consider admin specific navbar/header later %>
+
+<main class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/courses">Manage Courses</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Add New Course</li>
+                </ol>
+            </nav>
+
+            <h2>Add New Course</h2>
+
+            <% if (locals.error_msg) { %>
+                <div class="alert alert-danger"><%= error_msg %></div>
+            <% } %>
+            <% if (locals.errors && locals.errors.length > 0 && !locals.errors.find(e => e.param)) { %>
+                 <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        <% errors.forEach(function(error) { %>
+                            <li><%= error.msg || error %></li>
+                        <% }); %>
+                    </ul>
+                </div>
+            <% } %>
+
+
+            <form action="/admin/courses/add" method="POST">
+                <%- include('./form', { course: undefined, errors: locals.errors || [] }) %>
+            </form>
+        </div>
+    </div>
+</main>
+
+<%- include('../../../partials/footer') %>

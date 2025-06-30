@@ -1,0 +1,73 @@
+<%# Admin Downloadable Document Form Partial %>
+<%# Expects: document (object, optional), errors (array, optional) %>
+
+<div class="mb-3">
+    <label for="title" class="form-label">Document Title</label>
+    <input type="text" class="form-control" id="title" name="title"
+           value="<%= typeof document !== 'undefined' ? document.title : (locals.title_val || '') %>" required>
+    <% if (locals.errors && errors.find(e => e.param === 'title')) { %>
+        <div class="text-danger small mt-1"><%= errors.find(e => e.param === 'title').msg %></div>
+    <% } %>
+</div>
+
+<div class="mb-3">
+    <label for="description" class="form-label">Description (Optional)</label>
+    <textarea class="form-control" id="description" name="description" rows="3"><%= typeof document !== 'undefined' ? document.description : (locals.description_val || '') %></textarea>
+</div>
+
+<div class="mb-3">
+    <label for="file_url" class="form-label">File URL</label>
+    <input type="url" class="form-control" id="file_url" name="file_url"
+           value="<%= typeof document !== 'undefined' ? document.file_url : (locals.file_url_val || '') %>" required placeholder="https://example.com/path/to/document.pdf">
+    <div class="form-text">Enter the full URL to the externally hosted file (e.g., Google Drive, Dropbox link). Ensure sharing settings are correct for public access if needed.</div>
+    <% if (locals.errors && errors.find(e => e.param === 'file_url')) { %>
+        <div class="text-danger small mt-1"><%= errors.find(e => e.param === 'file_url').msg %></div>
+    <% } %>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label for="type" class="form-label">Document Type</label>
+        <select class="form-select" id="type" name="type" required>
+            <option value="public" <%= (typeof document !== 'undefined' && document.type === 'public') || (locals.type_val === 'public') ? 'selected' : '' %>>Public Document</option>
+            <option value="eulogy" <%= (typeof document !== 'undefined' && document.type === 'eulogy') || (locals.type_val === 'eulogy') ? 'selected' : '' %>>Eulogy Document (Expires)</option>
+        </select>
+    </div>
+    <div class="col-md-6 mb-3" id="expiryDateGroup" style="<%= ((typeof document !== 'undefined' && document.type === 'eulogy') || locals.type_val === 'eulogy') ? '' : 'display: none;' %>">
+        <label for="expiry_date" class="form-label">Expiry Date (for Eulogy type)</label>
+        <input type="date" class="form-control" id="expiry_date" name="expiry_date"
+               value="<%= typeof document !== 'undefined' && document.expiry_date ? new Date(document.expiry_date).toISOString().split('T')[0] : (locals.expiry_date_val || '') %>">
+        <div class="form-text">Eulogy documents will automatically be hidden after 7 days from upload if no specific expiry is set, or on this date. Clear to remove specific expiry.</div>
+    </div>
+</div>
+
+
+<div class="d-flex justify-content-end">
+    <a href="/admin/documents" class="btn btn-secondary me-2">Cancel</a>
+    <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i>
+        <%= typeof document !== 'undefined' && document.id ? 'Update Document Entry' : 'Add Document Entry' %>
+    </button>
+</div>
+
+<script>
+    // Show/hide expiry date field based on document type
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('type');
+        const expiryDateGroup = document.getElementById('expiryDateGroup');
+        const expiryDateInput = document.getElementById('expiry_date');
+
+        function toggleExpiryField() {
+            if (typeSelect.value === 'eulogy') {
+                expiryDateGroup.style.display = 'block';
+                // expiryDateInput.required = true; // Not strictly required, can default to 7 days from creation
+            } else {
+                expiryDateGroup.style.display = 'none';
+                // expiryDateInput.required = false;
+                // expiryDateInput.value = ''; // Clear if switching away from eulogy
+            }
+        }
+        typeSelect.addEventListener('change', toggleExpiryField);
+        toggleExpiryField(); // Initial check
+    });
+</script>

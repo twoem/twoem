@@ -1,0 +1,35 @@
+<%- include('../../../partials/header', { title: 'Edit Study Resource' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/study-resources">Manage Study Resources</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit Resource: <%= resource ? resource.title : '...' %></li>
+        </ol>
+    </nav>
+
+    <h2>Edit Study Resource: <%= resource ? resource.title : 'Details' %></h2>
+    <hr>
+
+    <%- include('../../../partials/flash-messages') %>
+
+    <% if (resource) { %>
+        <form action="/admin/study-resources/edit/<%= resource.id %>" method="POST">
+            <%- include('./form', {
+                resource: resource,
+                courses: locals.courses || [],
+                errors: locals.errors || [],
+                title_val: locals.title_val,
+                description_val: locals.description_val,
+                resource_url_val: locals.resource_url_val,
+                course_id_val: locals.course_id_val
+            }) %>
+        </form>
+    <% } else { %>
+        <div class="alert alert-warning">Resource details not found. <a href="/admin/study-resources">Return to resource list.</a></div>
+    <% } %>
+</main>
+
+<%- include('../../../partials/footer') %>

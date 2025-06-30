@@ -1,0 +1,41 @@
+<%- include('../../../partials/header', { title: 'Edit Course' }) %>
+<%- include('../../../partials/navbar') %> <%# Consider admin specific navbar/header later %>
+
+<main class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/courses">Manage Courses</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit Course: <%= course ? course.name : '...' %></li>
+                </ol>
+            </nav>
+
+            <h2>Edit Course: <%= course ? course.name : 'Details' %></h2>
+
+            <% if (locals.error_msg) { %>
+                <div class="alert alert-danger"><%= error_msg %></div>
+            <% } %>
+            <% if (locals.errors && locals.errors.length > 0 && !locals.errors.find(e => e.param)) { %>
+                 <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        <% errors.forEach(function(error) { %>
+                            <li><%= error.msg || error %></li>
+                        <% }); %>
+                    </ul>
+                </div>
+            <% } %>
+
+            <% if (course) { %>
+                <form action="/admin/courses/edit/<%= course.id %>" method="POST">
+                    <%- include('./form', { course: course, errors: locals.errors || [] }) %>
+                </form>
+            <% } else { %>
+                <div class="alert alert-warning">Course details not found. <a href="/admin/courses">Return to course list.</a></div>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<%- include('../../../partials/footer') %>

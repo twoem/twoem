@@ -1,0 +1,72 @@
+<%- include('../../partials/header', { title: title }) %>
+<%- include('../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/student/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">My Fee Statement</li>
+        </ol>
+    </nav>
+
+    <h2>My Fee Statement</h2>
+    <hr>
+
+    <% if (locals.success_msg) { %><div class="alert alert-success"><%= success_msg %></div><% } %>
+    <% if (locals.error_msg) { %><div class="alert alert-danger"><%= error_msg %></div><% } %>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Fee Summary</h5>
+        </div>
+        <div class="card-body">
+            <h4>Overall Balance: Ksh <%= overallBalance.toFixed(2) %>
+                (<span class="fw-bold <%= overallBalance <= 0 ? 'text-success' : 'text-danger' %>">
+                    <%= overallBalance <= 0 ? (overallBalance < 0 ? 'Overpaid' : 'Cleared') : 'Owing' %>
+                </span>)
+            </h4>
+            <p class="text-muted">This summary reflects all charges and payments logged on your account.</p>
+        </div>
+    </div>
+
+
+    <% if (fees && fees.length > 0) { %>
+        <h4>Detailed Transactions</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Description</th>
+                        <th scope="col" class="text-end">Charge (Ksh)</th>
+                        <th scope="col" class="text-end">Payment (Ksh)</th>
+                        <th scope="col" class="text-end">Entry Balance (Ksh)</th>
+                        <th scope="col">Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% fees.forEach(function(fee) { %>
+                        <tr>
+                            <td><%= new Date(fee.payment_date || fee.created_at).toLocaleDateString() %></td>
+                            <td><%= fee.description %></td>
+                            <td class="text-end"><%= fee.total_amount > 0 ? fee.total_amount.toFixed(2) : '-' %></td>
+                            <td class="text-end"><%= fee.amount_paid > 0 ? fee.amount_paid.toFixed(2) : '-' %></td>
+                            <td class="text-end"><%= fee.balance.toFixed(2) %></td>
+                            <td><%= fee.notes || '-' %></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    <% } else { %>
+        <div class="alert alert-info">
+            No fee transactions found for your account.
+        </div>
+    <% } %>
+
+    <div class="mt-4">
+        <a href="/student/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+</main>
+
+<%- include('../../partials/footer') %>

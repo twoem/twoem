@@ -1,0 +1,252 @@
+<%- include('../partials/header', { title: 'Student Portal Login', page_styles: [{cssText: `
+    body {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Flex container for proper footer placement */
+    .content-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .login-wrapper {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    
+    .student-login-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .student-login-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .modern-tabs {
+        border: none;
+        background: transparent;
+        padding: 0;
+        margin-bottom: 2rem;
+    }
+    
+    .modern-tabs .nav-link {
+        border: none;
+        background: transparent;
+        color: #718096;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-right: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .modern-tabs .nav-link.active {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+    }
+    
+    .modern-tabs .nav-link:hover {
+        background: rgba(79, 172, 254, 0.1);
+        color: #4facfe;
+    }
+    
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .login-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .modern-tabs .nav-link {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .login-icon {
+            width: 70px;
+            height: 70px;
+            font-size: 1.8rem;
+        }
+    }
+`}] }) %>
+
+<%- include('../partials/navbar') %>
+
+<!-- Content Wrapper -->
+<div class="content-wrapper">
+    <!-- Login Section -->
+    <div class="login-wrapper">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-7 col-xl-6">
+                    <div class="card student-login-card">
+                        <div class="card-body p-4 p-md-5">
+                            <div class="login-header">
+                                <div class="login-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                                <h2 class="login-title">Student Portal</h2>
+                                <p class="login-subtitle">Access your learning dashboard</p>
+                            </div>
+
+                            <ul class="nav nav-tabs modern-tabs justify-content-center" id="studentLoginTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-panel" type="button" role="tab">
+                                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="forgot-password-tab" data-bs-toggle="tab" data-bs-target="#forgot-password-panel" type="button" role="tab">
+                                        <i class="fas fa-key me-2"></i>Reset Password
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="new-student-tab" data-bs-toggle="tab" data-bs-target="#new-student-panel" type="button" role="tab">
+                                        <i class="fas fa-user-plus me-2"></i>New Student
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content" id="studentLoginTabContent">
+                                <!-- Login Panel -->
+                                <div class="tab-pane fade show active" id="login-panel" role="tabpanel">
+                                    <form action="/student/login" method="POST" id="studentLoginForm">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="registrationNumber" name="registrationNumber" placeholder="Registration Number" required>
+                                            <label for="registrationNumber"><i class="fas fa-id-badge me-2"></i>Registration Number</label>
+                                        </div>
+
+                                        <div class="form-floating mb-4">
+                                            <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                                            <label for="password"><i class="fas fa-lock me-2"></i>Password</label>
+                                        </div>
+
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-primary login-btn">
+                                                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <!-- Forgot Password Panel -->
+                                <div class="tab-pane fade" id="forgot-password-panel" role="tabpanel">
+                                    <form action="/student/forgot-password" method="POST" id="forgotPasswordForm">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="forgotRegNum" name="registrationNumber" placeholder="Registration Number" required>
+                                            <label for="forgotRegNum"><i class="fas fa-id-badge me-2"></i>Registration Number</label>
+                                        </div>
+
+                                        <div class="form-floating mb-4">
+                                            <input type="email" class="form-control" id="forgotEmail" name="email" placeholder="Email Address" required>
+                                            <label for="forgotEmail"><i class="fas fa-envelope me-2"></i>Email Address</label>
+                                        </div>
+
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-warning login-btn">
+                                                <i class="fas fa-paper-plane me-2"></i>Send Reset Code
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <!-- New Student Panel -->
+                                <div class="tab-pane fade" id="new-student-panel" role="tabpanel">
+                                    <div class="text-center mb-4">
+                                        <p class="text-muted">If you've been registered but haven't received your login details, retrieve them here.</p>
+                                    </div>
+
+                                    <form action="/student/retrieve-credentials" method="POST" id="retrieveCredentialsForm">
+                                        <div class="form-floating mb-3">
+                                            <input type="email" class="form-control" id="newStudentEmail" name="email" placeholder="Email Address" required>
+                                            <label for="newStudentEmail"><i class="fas fa-envelope me-2"></i>Email Address</label>
+                                        </div>
+
+                                        <div class="form-floating mb-4">
+                                            <input type="text" class="form-control" id="newStudentFirstName" name="firstName" placeholder="First Name" required>
+                                            <label for="newStudentFirstName"><i class="fas fa-user me-2"></i>First Name</label>
+                                        </div>
+
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-info login-btn">
+                                                <i class="fas fa-search me-2"></i>Get My Login Details
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const activeTabId = "<%= locals.activeTab || 'login-panel' %>";
+    const tabButton = document.querySelector(`#${activeTabId}-tab`);
+    if (tabButton) {
+        var triggerEl = document.querySelector('#studentLoginTab button[data-bs-target="#' + activeTabId + '"]');
+        if(triggerEl) {
+            var tab = new bootstrap.Tab(triggerEl);
+            tab.show();
+        }
+    }
+
+    // Form submission handlers
+    document.getElementById('studentLoginForm')?.addEventListener('submit', function(e) {
+        const button = this.querySelector('button[type="submit"]');
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing In...';
+        button.disabled = true;
+    });
+
+    document.getElementById('forgotPasswordForm')?.addEventListener('submit', function(e) {
+        const button = this.querySelector('button[type="submit"]');
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+        button.disabled = true;
+    });
+
+    document.getElementById('retrieveCredentialsForm')?.addEventListener('submit', function(e) {
+        const button = this.querySelector('button[type="submit"]');
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Searching...';
+        button.disabled = true;
+    });
+});
+</script>
+
+<%- include('../partials/footer') %>

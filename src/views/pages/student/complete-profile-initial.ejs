@@ -1,0 +1,59 @@
+<%- include('../../partials/header', { title: 'Complete Your Profile' }) %>
+<%- include('../../partials/navbar') %>
+
+<main class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Complete Your Profile - Next of Kin Information</h4>
+                </div>
+                <div class="card-body">
+                    <p>Please provide your Next of Kin details to complete your profile setup.</p>
+
+                    <% if (locals.error) { %>
+                        <div class="alert alert-danger"><%= error %></div>
+                    <% } %>
+                     <% if (locals.success_msg) { %>
+                        <div class="alert alert-success"><%= success_msg %></div>
+                    <% } %>
+                    <% if (locals.errors && errors.length > 0) { %>
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                <% errors.forEach(function(error) { %>
+                                    <li><%= error.msg || error %></li>
+                                <% }); %>
+                            </ul>
+                        </div>
+                    <% } %>
+
+                    <form action="/student/complete-profile-initial" method="POST">
+                        <div class="mb-3">
+                            <label for="nokName" class="form-label">Next of Kin Full Name</label>
+                            <input type="text" class="form-control" id="nokName" name="nokName" required value="<%= locals.nokName || '' %>">
+                        </div>
+                        <div class="mb-3">
+                            <label for="nokRelationship" class="form-label">Relationship to You</label>
+                            <input type="text" class="form-control" id="nokRelationship" name="nokRelationship" required value="<%= locals.nokRelationship || '' %>">
+                             <div class="form-text">E.g., Parent, Guardian, Spouse, Sibling, etc.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nokPhone" class="form-label">Next of Kin Phone Number</label>
+                            <input type="tel" class="form-control" id="nokPhone" name="nokPhone" required value="<%= locals.nokPhone || '' %>">
+                        </div>
+                        <div class="mb-3">
+                            <label for="nokEmail" class="form-label">Next of Kin Email (Optional)</label>
+                            <input type="email" class="form-control" id="nokEmail" name="nokEmail" value="<%= locals.nokEmail || '' %>">
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Save Profile Information</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include('../../partials/footer') %>

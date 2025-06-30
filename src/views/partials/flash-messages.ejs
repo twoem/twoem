@@ -1,0 +1,85 @@
+<!-- Modern Popup Notifications Container -->
+<div id="notification-container" class="notification-container">
+</div>
+
+<!-- Check for Flash Messages and Create Popups -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('notification-container');
+
+    // Success Messages
+    <% if (locals.success_msg && locals.success_msg.length > 0) { %>
+        <% locals.success_msg.forEach(function(msg) { %>
+            createNotification('✅ <%= msg.replace(/'/g, "\\'") %>', 'success');
+        <% }); %>
+    <% } %>
+
+    // Error Messages
+    <% if (locals.error_msg && locals.error_msg.length > 0) { %>
+        <% locals.error_msg.forEach(function(msg) { %>
+            createNotification('❌ <%= msg.replace(/'/g, "\\'") %>', 'error');
+        <% }); %>
+    <% } %>
+
+    // Single Error Messages
+    <% if (locals.error && locals.error.length > 0) { %>
+        <% locals.error.forEach(function(msg) { %>
+            createNotification('⚠️ <%= msg.replace(/'/g, "\\'") %>', 'error');
+        <% }); %>
+    <% } %>
+
+    // Validation Errors
+    <% if (locals.errors && locals.errors.length > 0 && locals.errors.every(e => e.msg)) { %>
+        <% errors.forEach(function(error) { %>
+            createNotification('⚠️ <%= error.msg.replace(/'/g, "\\'") %>', 'error');
+        <% }); %>
+    <% } %>
+
+    // Check URL for error parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get('error');
+    if (errorParam) {
+        createNotification('❌ ' + decodeURIComponent(errorParam).replace(/\+/g, ' '), 'error');
+        // Clean URL without reloading
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    function createNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `modern-notification ${type} animate-slide-in`;
+
+        const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
+
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon">${icon}</span>
+                <span class="notification-message">${message}</span>
+                <button class="notification-close" onclick="removeNotification(this.parentElement.parentElement)">×</button>
+            </div>
+        `;
+
+        container.appendChild(notification);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                removeNotification(notification);
+            }
+        }, 5000);
+    }
+
+    window.removeNotification = function(notification) {
+        notification.classList.add('animate-slide-out');
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.parentElement.removeChild(notification);
+            }
+        }, 300);
+    }
+
+    // Function to show notification (can be called from anywhere)
+    window.showNotification = function(message, type = 'info') {
+        createNotification(message, type);
+    }
+});
+</script>

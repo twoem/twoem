@@ -1,0 +1,79 @@
+<%- include('../../../partials/header', { title: 'WiFi Settings Management' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">WiFi Settings</li>
+        </ol>
+    </nav>
+
+    <h2><i class="fas fa-wifi text-primary me-2"></i>Manage WiFi Settings</h2>
+    <p>Update the WiFi network name (SSID), password, and any disclaimer to be shown to students.</p>
+    <hr>
+
+    <%- include('../../../partials/flash-messages') %>
+
+    <form action="/admin/settings/wifi" method="POST">
+        <div class="mb-3">
+            <label for="wifi_ssid" class="form-label">WiFi Network Name (SSID)</label>
+            <input type="text" class="form-control" id="wifi_ssid" name="wifi_ssid"
+                   value="<%= settings.wifi_ssid || '' %>" required>
+            <% if (locals.errors && errors.find(e => e.param === 'wifi_ssid')) { %>
+                <div class="text-danger small mt-1"><%= errors.find(e => e.param === 'wifi_ssid').msg %></div>
+            <% } %>
+        </div>
+
+        <div class="mb-3">
+            <label for="wifi_password" class="form-label">WiFi Password</label>
+            <div class="input-group">
+                <input type="password" class="form-control" id="wifi_password" name="wifi_password"
+                       placeholder="Enter new password or leave blank to keep current">
+                <button class="btn btn-outline-secondary" type="button" id="togglePasswordVisibility">
+                    <i class="fas fa-eye" id="eyeIcon"></i>
+                </button>
+            </div>
+            <div class="form-text">
+                Current password is not displayed for security. Enter a new password to change it.
+                Leave blank if you do not wish to change the current password.
+            </div>
+             <% if (locals.errors && errors.find(e => e.param === 'wifi_password')) { %>
+                <div class="text-danger small mt-1"><%= errors.find(e => e.param === 'wifi_password').msg %></div>
+            <% } %>
+        </div>
+
+        <div class="mb-3">
+            <label for="wifi_disclaimer" class="form-label">WiFi Usage Disclaimer/Policy (Optional)</label>
+            <textarea class="form-control" id="wifi_disclaimer" name="wifi_disclaimer" rows="5"><%= settings.wifi_disclaimer || '' %></textarea>
+            <div class="form-text">This text will be displayed to students when they view WiFi credentials.</div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            <a href="/admin/dashboard" class="btn btn-secondary me-2">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save WiFi Settings
+            </button>
+        </div>
+    </form>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const togglePasswordButton = document.getElementById('togglePasswordVisibility');
+        const passwordInput = document.getElementById('wifi_password');
+        const eyeIcon = document.getElementById('eyeIcon');
+
+        if (togglePasswordButton && passwordInput && eyeIcon) {
+            togglePasswordButton.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                // Toggle eye icon
+                eyeIcon.classList.toggle('fa-eye');
+                eyeIcon.classList.toggle('fa-eye-slash');
+            });
+        }
+    });
+</script>
+
+<%- include('../../../partials/footer') %>

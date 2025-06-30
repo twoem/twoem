@@ -1,0 +1,34 @@
+<%- include('../../partials/header', { title: 'Page Not Found' }) %>
+<%- include('../../partials/navbar') %>
+
+<main class="container mt-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="py-5">
+                <h1 class="display-1 text-primary fw-bold">404</h1>
+                <h2 class="mb-4">Oops! Page Not Found.</h2>
+                <p class="lead text-muted mb-4">
+                    We're sorry, but the page you were looking for doesn't exist, might have been removed, had its name changed, or is temporarily unavailable.
+                </p>
+                <div class="d-flex justify-content-center">
+                    <a href="/" class="btn btn-primary btn-lg me-2">
+                        <i class="fas fa-home me-2"></i>Go to Homepage
+                    </a>
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-arrow-left me-2"></i>Go Back
+                    </a>
+                </div>
+            </div>
+
+            <!-- Optional: Simple graphic/SVG -->
+            <div class="mt-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="bi bi-compass text-muted" viewBox="0 0 16 16">
+                    <path d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016zm6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+                    <path d="m6.94 7.44 4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include('../../partials/footer') %>

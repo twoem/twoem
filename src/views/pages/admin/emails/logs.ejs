@@ -1,0 +1,264 @@
+<%- include('../../../partials/header', { title: 'Email Logs' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/emails/send">Email Management</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Email Logs</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-list text-info me-2"></i>Email Logs</h1>
+        <div>
+            <a href="/admin/emails/test" class="btn btn-outline-success me-2">
+                <i class="fas fa-vial me-1"></i> Test Templates
+            </a>
+            <a href="/admin/emails/send" class="btn btn-outline-primary">
+                <i class="fas fa-paper-plane me-1"></i> Send Email
+            </a>
+        </div>
+    </div>
+
+    <%- include('../../../partials/flash-messages') %>
+
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Email Activities</h6>
+                            <h4><%= emailLogs.length %></h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-envelope fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Bulk Emails</h6>
+                            <h4><%= emailLogs.filter(log => log.action_type === 'BULK_EMAIL_SENT').length %></h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-paper-plane fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Test Emails</h6>
+                            <h4><%= emailLogs.filter(log => log.action_type === 'EMAIL_TEST_SENT').length %></h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-vial fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Password Resets</h6>
+                            <h4><%= emailLogs.filter(log => log.action_type === 'PASSWORD_RESET_EMAIL_SENT').length %></h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-key fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-history me-2"></i>Email Activity History
+                <small class="text-muted">(Last 100 records)</small>
+            </h5>
+        </div>
+        <div class="card-body">
+            <% if (emailLogs && emailLogs.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">
+                                    <i class="fas fa-clock me-1"></i>Date & Time
+                                </th>
+                                <th scope="col">
+                                    <i class="fas fa-tag me-1"></i>Action Type
+                                </th>
+                                <th scope="col">
+                                    <i class="fas fa-info-circle me-1"></i>Description
+                                </th>
+                                <th scope="col">
+                                    <i class="fas fa-user me-1"></i>Admin
+                                </th>
+                                <th scope="col">
+                                    <i class="fas fa-globe me-1"></i>IP Address
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% emailLogs.forEach(function(log) { %>
+                                <tr>
+                                    <td>
+                                        <span class="fw-bold text-dark">
+                                            <%= new Date(log.created_at).toLocaleDateString() %>
+                                        </span><br>
+                                        <small class="text-muted">
+                                            <%= new Date(log.created_at).toLocaleTimeString() %>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <%
+                                        let badgeClass = 'bg-secondary';
+                                        let icon = 'fas fa-envelope';
+
+                                        switch(log.action_type) {
+                                            case 'BULK_EMAIL_SENT':
+                                                badgeClass = 'bg-success';
+                                                icon = 'fas fa-paper-plane';
+                                                break;
+                                            case 'EMAIL_TEST_SENT':
+                                                badgeClass = 'bg-info';
+                                                icon = 'fas fa-vial';
+                                                break;
+                                            case 'PASSWORD_RESET_EMAIL_SENT':
+                                                badgeClass = 'bg-warning';
+                                                icon = 'fas fa-key';
+                                                break;
+                                            case 'NOTIFICATION_EMAIL_SENT':
+                                                badgeClass = 'bg-primary';
+                                                icon = 'fas fa-bell';
+                                                break;
+                                        }
+                                        %>
+                                        <span class="badge <%= badgeClass %> d-flex align-items-center">
+                                            <i class="<%= icon %> me-1"></i>
+                                            <% if (log.action_type === 'BULK_EMAIL_SENT') { %>
+                                                Bulk Email
+                                            <% } else if (log.action_type === 'EMAIL_TEST_SENT') { %>
+                                                Test Email
+                                            <% } else if (log.action_type === 'PASSWORD_RESET_EMAIL_SENT') { %>
+                                                Password Reset
+                                            <% } else if (log.action_type === 'NOTIFICATION_EMAIL_SENT') { %>
+                                                Notification
+                                            <% } else { %>
+                                                <%= log.action_type %>
+                                            <% } %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="small">
+                                            <%= log.description %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold">Admin #<%= log.admin_id %></span>
+                                    </td>
+                                    <td>
+                                        <code class="small"><%= log.ip_address || 'N/A' %></code>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Email Activity Found</h5>
+                    <p class="text-muted">Email activities will appear here once you start sending emails.</p>
+                    <a href="/admin/emails/send" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i>Send Your First Email
+                    </a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <% if (emailLogs && emailLogs.length > 0) { %>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-chart-pie me-1"></i>Email Activity Breakdown
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="border-end">
+                                    <h4 class="text-success"><%= emailLogs.filter(log => log.action_type === 'BULK_EMAIL_SENT').length %></h4>
+                                    <small class="text-muted">Bulk Emails</small>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <h4 class="text-info"><%= emailLogs.filter(log => log.action_type === 'EMAIL_TEST_SENT').length %></h4>
+                                <small class="text-muted">Test Emails</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="border-end">
+                                    <h4 class="text-warning"><%= emailLogs.filter(log => log.action_type === 'PASSWORD_RESET_EMAIL_SENT').length %></h4>
+                                    <small class="text-muted">Password Resets</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-primary"><%= emailLogs.filter(log => log.action_type === 'NOTIFICATION_EMAIL_SENT').length %></h4>
+                                <small class="text-muted">Notifications</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-tools me-1"></i>Quick Actions
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/admin/emails/send" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i>Send New Bulk Email
+                            </a>
+                            <a href="/admin/emails/test" class="btn btn-outline-success">
+                                <i class="fas fa-vial me-1"></i>Test Email Templates
+                            </a>
+                            <a href="/admin/notifications" class="btn btn-outline-info">
+                                <i class="fas fa-bell me-1"></i>Manage Notifications
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } %>
+</main>
+
+<%- include('../../../partials/footer') %>

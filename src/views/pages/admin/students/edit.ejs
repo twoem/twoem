@@ -1,0 +1,87 @@
+<%- include('../../../partials/header', { title: 'Edit Student' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/students">Manage Students</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit Student: <%= student ? student.first_name : '...' %> (<%= student ? student.registration_number : '...' %>)</li>
+        </ol>
+    </nav>
+
+    <h2>Edit Student: <%= student ? student.first_name : 'Details' %></h2>
+
+    <% if (locals.error_msg) { %>
+        <div class="alert alert-danger"><%= error_msg %></div>
+    <% } %>
+    <% if (locals.errors && locals.errors.length > 0) { %>
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                <% errors.forEach(function(error) { %>
+                    <li><%= error.msg || error %></li>
+                <% }); %>
+            </ul>
+        </div>
+    <% } %>
+
+    <% if (student) { %>
+        <form action="/admin/students/edit/<%= student.id %>" method="POST">
+            <div class="row">
+                <div class="col-md-6">
+                    <fieldset disabled>
+                        <div class="mb-3">
+                            <label for="registrationNumber" class="form-label">Registration Number</label>
+                            <input type="text" class="form-control" id="registrationNumber" name="registrationNumber" value="<%= student.registration_number %>">
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="firstName" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="firstName" name="firstName" value="<%= locals.firstName !== undefined ? locals.firstName : student.first_name %>" required>
+                         <% if (locals.errors && errors.find(e => e.param === 'firstName')) { %><div class="text-danger small mt-1"><%= errors.find(e => e.param === 'firstName').msg %></div><% } %>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" value="<%= locals.email !== undefined ? locals.email : student.email %>" required>
+                        <% if (locals.errors && errors.find(e => e.param === 'email')) { %><div class="text-danger small mt-1"><%= errors.find(e => e.param === 'email').msg %></div><% } %>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <p class="form-text">
+                    Student Status: <strong><%= student.is_active ? 'Active' : 'Inactive' %></strong>.
+                    Password management for students is handled via student-initiated password resets or by specific admin "Reset Student Password" actions (to be implemented).
+                </p>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button type="submit" class="btn btn-primary">Update Student Details</button>
+                    <a href="/admin/students/view/<%= student.id %>" class="btn btn-secondary ms-2">Cancel</a>
+                </div>
+            </div>
+        </form>
+
+        <hr class="my-4">
+        <h5>Account Status</h5>
+        <form action="/admin/students/toggle-status/<%= student.id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to <%= student.is_active ? 'deactivate' : 'activate' %> this student account?');">
+            <p>Current status: <strong><%= student.is_active ? 'Active' : 'Inactive' %></strong></p>
+            <button type="submit" class="btn <%= student.is_active ? 'btn-warning' : 'btn-success' %>">
+                <i class="fas <%= student.is_active ? 'fa-user-slash' : 'fa-user-check' %>"></i>
+                <%= student.is_active ? 'Deactivate Student Account' : 'Activate Student Account' %>
+            </button>
+        </form>
+
+    <% } else { %>
+        <div class="alert alert-warning">Student details not found. <a href="/admin/students">Return to student list.</a></div>
+    <% } %>
+</main>
+
+<%- include('../../../partials/footer') %>

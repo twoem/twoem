@@ -1,0 +1,109 @@
+<%- include('../../../partials/header', { title: 'Create Notification' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/notifications">Manage Notifications</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Create New Notification</li>
+        </ol>
+    </nav>
+
+    <h2>Create New Notification</h2>
+    <hr>
+
+    <% if (locals.error_msg) { %><div class="alert alert-danger"><%= error_msg %></div><% } %>
+    <% if (locals.errors && errors.length > 0) { %>
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                <% errors.forEach(function(error) { %><li><%= error.msg || error %></li><% }); %>
+            </ul>
+        </div>
+    <% } %>
+
+    <form action="/admin/notifications/create" method="POST">
+        <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" value="<%= locals.title || '' %>" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="message" class="form-label">Message</label>
+            <textarea class="form-control" id="message" name="message" rows="5" required><%= locals.message || '' %></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="target_audience_type" class="form-label">Target Audience</label>
+            <select class="form-select" id="target_audience_type" name="target_audience_type">
+                <option value="all" <%= (locals.target_audience_type === 'all' || !locals.target_audience_type) ? 'selected' : '' %>>All Students</option>
+                <option value="student_id" <%= locals.target_audience_type === 'student_id' ? 'selected' : '' %>>Specific Student (by ID)</option>
+                <option value="course_id" <%= locals.target_audience_type === 'course_id' ? 'selected' : '' %>>Students in Specific Course (by Course ID)</option>
+            </select>
+        </div>
+
+        <div class="mb-3" id="targetIdentifierGroupStudent" style="<%= locals.target_audience_type === 'student_id' ? '' : 'display: none;' %>">
+            <label for="target_audience_identifier_student" class="form-label">Select Specific Student</label>
+            <select class="form-select" id="target_audience_identifier_student" name="target_audience_identifier_student">
+                <option value="">-- Select Student --</option>
+                <% if (locals.students && students.length > 0) { %>
+                    <% students.forEach(function(student) { %>
+                        <option value="<%= student.id %>" <%= (locals.target_audience_identifier_student == student.id) ? 'selected' : '' %>>
+                            <%= student.first_name %> (<%= student.registration_number %>)
+                        </option>
+                    <% }); %>
+                <% } %>
+            </select>
+        </div>
+
+        <div class="mb-3" id="targetIdentifierGroupCourse" style="<%= locals.target_audience_type === 'course_id' ? '' : 'display: none;' %>">
+            <label for="target_audience_identifier_course" class="form-label">Select Specific Course</label>
+            <select class="form-select" id="target_audience_identifier_course" name="target_audience_identifier_course">
+                <option value="">-- Select Course --</option>
+                 <% if (locals.courses && courses.length > 0) { %>
+                    <% courses.forEach(function(course) { %>
+                        <option value="<%= course.id %>" <%= (locals.target_audience_identifier_course == course.id) ? 'selected' : '' %>>
+                            <%= course.name %> (ID: <%= course.id %>)
+                        </option>
+                    <% }); %>
+                <% } %>
+            </select>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            <a href="/admin/notifications" class="btn btn-secondary me-2">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send Notification</button>
+        </div>
+    </form>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const targetTypeSelect = document.getElementById('target_audience_type');
+        const studentGroup = document.getElementById('targetIdentifierGroupStudent');
+        const courseGroup = document.getElementById('targetIdentifierGroupCourse');
+        const studentSelect = document.getElementById('target_audience_identifier_student');
+        const courseSelect = document.getElementById('target_audience_identifier_course');
+
+        function toggleTargetIdentifierVisibility() {
+            const selectedType = targetTypeSelect.value;
+            studentGroup.style.display = 'none';
+            studentSelect.required = false;
+            courseGroup.style.display = 'none';
+            courseSelect.required = false;
+
+            if (selectedType === 'student_id') {
+                studentGroup.style.display = 'block';
+                studentSelect.required = true;
+            } else if (selectedType === 'course_id') {
+                courseGroup.style.display = 'block';
+                courseSelect.required = true;
+            }
+        }
+
+        targetTypeSelect.addEventListener('change', toggleTargetIdentifierVisibility);
+        toggleTargetIdentifierVisibility(); // Call on load to set initial state
+    });
+</script>
+
+<%- include('../../../partials/footer') %>

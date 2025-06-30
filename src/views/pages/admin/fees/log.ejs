@@ -1,0 +1,92 @@
+<%- include('../../../partials/header', { title: 'Log Fee Payment/Charge' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/students">Manage Students</a></li>
+            <% if (student) { %>
+                <li class="breadcrumb-item"><a href="/admin/students/view/<%= student.id %>">View Student: <%= student.first_name %></a></li>
+                <li class="breadcrumb-item active" aria-current="page">Log Fee/Payment</li>
+            <% } else { %>
+                <li class="breadcrumb-item active" aria-current="page">Log Fee/Payment</li>
+            <% } %>
+        </ol>
+    </nav>
+
+    <% if (student) { %>
+        <h2>Log Fee Entry for: <%= student.first_name %> (<%= student.registration_number %>)</h2>
+    <% } else { %>
+        <h2>Log Fee Entry</h2>
+    <% } %>
+    <hr>
+
+    <% if (locals.success_msg) { %><div class="alert alert-success alert-dismissible fade show" role="alert"><%= success_msg %><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div><% } %>
+    <% if (locals.error_msg) { %><div class="alert alert-danger alert-dismissible fade show" role="alert"><%= error_msg %><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div><% } %>
+    <% if (locals.errors && errors.length > 0) { %>
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                <% errors.forEach(function(error) { %>
+                    <li><%= error.msg || error %></li>
+                <% }); %>
+            </ul>
+        </div>
+    <% } %>
+
+    <% if (student) { %>
+        <form action="/admin/students/<%= student.id %>/fees/log" method="POST">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label for="description" class="form-label">Description (e.g., Term 1 Fees, Exam Fee, Payment Received)</label>
+                    <input type="text" class="form-control" id="description" name="description" value="<%= locals.description || '' %>" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="total_amount" class="form-label">Charge Amount (Ksh)</label>
+                    <input type="number" step="0.01" class="form-control" id="total_amount" name="total_amount" value="<%= locals.total_amount || '0.00' %>" min="0">
+                    <div class="form-text">Enter the amount being charged to the student (e.g., course fee). Leave as 0 if only logging a payment.</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="amount_paid" class="form-label">Payment Amount (Ksh)</label>
+                    <input type="number" step="0.01" class="form-control" id="amount_paid" name="amount_paid" value="<%= locals.amount_paid || '0.00' %>" min="0">
+                    <div class="form-text">Enter the amount paid by the student for this entry. Leave as 0 if only logging a charge.</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="payment_date" class="form-label">Payment/Charge Date</label>
+                    <input type="date" class="form-control" id="payment_date" name="payment_date" value="<%= locals.payment_date || new Date().toISOString().split('T')[0] %>" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="payment_method" class="form-label">Payment Method (if applicable)</label>
+                    <select class="form-select" id="payment_method" name="payment_method">
+                        <option value="" <%= !(locals.payment_method) ? 'selected' : '' %>>N/A (e.g. for a charge)</option>
+                        <option value="Cash" <%= (locals.payment_method === 'Cash') ? 'selected' : '' %>>Cash</option>
+                        <option value="M-Pesa" <%= (locals.payment_method === 'M-Pesa') ? 'selected' : '' %>>M-Pesa</option>
+                        <option value="Bank Transfer" <%= (locals.payment_method === 'Bank Transfer') ? 'selected' : '' %>>Bank Transfer</option>
+                        <option value="Other" <%= (locals.payment_method === 'Other') ? 'selected' : '' %>>Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="notes" class="form-label">Notes (Optional)</label>
+                <textarea class="form-control" id="notes" name="notes" rows="3"><%= locals.notes || '' %></textarea>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <a href="/admin/students/view/<%= student.id %>" class="btn btn-secondary me-2">
+                    <i class="fas fa-arrow-left"></i> Cancel & Back to Student
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Log Fee Entry
+                </button>
+            </div>
+        </form>
+    <% } else { %>
+        <div class="alert alert-warning">Student not found. <a href="/admin/students">Return to student list.</a></div>
+    <% } %>
+</main>
+
+<%- include('../../../partials/footer') %>

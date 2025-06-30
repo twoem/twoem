@@ -1,0 +1,100 @@
+<%- include('../partials/header', { title: 'Admin Dashboard' }) %>
+<%- include('../partials/navbar') %>
+
+<main class="container mt-5">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Admin Dashboard</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <% if (typeof admin !== 'undefined' && admin && admin.name) { %>
+                <span class="me-3">Hello, <strong><%= admin.name %></strong>!</span>
+            <% } else { %>
+                <span class="me-3">Hello, Admin!</span>
+            <% } %>
+            <form action="/admin/logout" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <p>Welcome to the admin control panel. From here you can manage all aspects of the Twoem Online Productions website and student services.</p>
+
+    <% if (typeof admin !== 'undefined' && admin && admin.email) { %>
+        <p class="small text-muted">Logged in as: <%= admin.email %></p>
+    <% } %>
+    <p class="small text-muted">Last student/fees update by: [Admin Name] on [Date] (Placeholder - to be implemented)</p>
+
+    <div class="row mt-4 g-4">
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title"><i class="fas fa-users me-2"></i>Student Management</h5>
+                    <p class="card-text small text-muted flex-grow-1">Register new students, view list, edit details, manage enrollments, marks, and fees.</p>
+                    <a href="/admin/register-student" class="btn btn-sm btn-primary mt-auto mb-2 d-block">Register New Student</a>
+                    <a href="/admin/students" class="btn btn-sm btn-info d-block">View All Students</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title"><i class="fas fa-book me-2"></i>Course Management</h5>
+                    <p class="card-text small text-muted flex-grow-1">Define and manage all courses offered by Twoem Online.</p>
+                    <a href="/admin/courses" class="btn btn-sm btn-primary mt-auto d-block">Manage Courses</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title"><i class="fas fa-bullhorn me-2"></i>Notifications</h5>
+                    <p class="card-text small text-muted flex-grow-1">Create and manage notifications for students.</p>
+                    <a href="/admin/notifications" class="btn btn-sm btn-primary mt-auto d-block">Manage Notifications</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm border-primary">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title"><i class="fas fa-envelope me-2 text-primary"></i>Email Management</h5>
+                    <p class="card-text small text-muted flex-grow-1">Send bulk emails, test templates, and manage email settings.</p>
+                    <a href="/admin/emails/send" class="btn btn-sm btn-primary mt-auto d-block mb-2">Send Bulk Email</a>
+                    <a href="/admin/emails/test" class="btn btn-sm btn-outline-primary d-block mb-2">Test Email Templates</a>
+                    <a href="/admin/emails/logs" class="btn btn-sm btn-info d-block">Email Logs</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title"><i class="fas fa-book-reader me-2"></i>Study Resources</h5>
+                    <p class="card-text small text-muted flex-grow-1">Upload and manage study materials and links for students.</p>
+                    <a href="/admin/study-resources" class="btn btn-sm btn-primary mt-auto d-block">Manage Resources</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title"><i class="fas fa-file-alt me-2"></i>Content Management</h5>
+                    <p class="card-text small text-muted flex-grow-1">Manage public downloads and other site content like the gallery.</p>
+                    <a href="/admin/documents" class="btn btn-sm btn-primary d-block mb-2">Manage Downloads</a>
+                    <a href="#" class="btn btn-sm btn-secondary disabled d-block mt-auto">Manage Gallery (Soon)</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title"><i class="fas fa-cogs me-2"></i>System & Site Settings</h5>
+                    <p class="card-text small text-muted flex-grow-1">Manage WiFi, view admin action logs, and handle site backups.</p>
+                    <a href="/admin/settings/wifi" class="btn btn-sm btn-primary mb-2 d-block">Manage WiFi Settings</a>
+                    <a href="/admin/action-logs" class="btn btn-sm btn-info d-block mb-2">View Action Logs</a>
+                    <a href="#" class="btn btn-sm btn-secondary disabled d-block mt-auto">Upload Backup (Soon)</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<%- include('../partials/footer') %>
