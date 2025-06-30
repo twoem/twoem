@@ -1,0 +1,56 @@
+<%- include('../../partials/customerHeader', { title: title, customer: customer }) %>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-credit-card me-2"></i>Make a Payment</h4>
+                </div>
+                <div class="card-body">
+                    <% if (messages && messages.error) { %>
+                        <div class="alert alert-danger" role="alert"><%- messages.error %></div>
+                    <% } %>
+                    <% if (messages && messages.success) { %>
+                        <div class="alert alert-success" role="alert"><%- messages.success %></div>
+                    <% } %>
+                     <% if (messages && messages.info) { %>
+                        <div class="alert alert-info" role="alert"><%- messages.info %></div>
+                    <% } %>
+
+                    <h5>Payment Instructions:</h5>
+                    <div class="alert alert-info">
+                        <p class="mb-1"><strong>1. Go to Mpesa App / *334# / SIM Toolkit</strong></p>
+                        <p class="mb-1"><strong>2. Select Lipa na Mpesa</strong></p>
+                        <p class="mb-1"><strong>3. Select Paybill</strong></p>
+                        <p class="mb-1"><strong>4. Enter Business Number:</strong> <strong class="text-danger"><%= BUSINESS_NO ? BUSINESS_NO : 'NOT_CONFIGURED' %></strong></p>
+                        <p class="mb-0"><strong>5. Enter Account Number:</strong> <strong class="text-danger"><%= customer.accountNumber %></strong></p>
+                        <p class="mt-2">After making the payment, please submit the Mpesa transaction code/message below for verification.</p>
+                    </div>
+
+                    <hr>
+
+                    <h5>Submit Your Mpesa Transaction Code:</h5>
+                    <form action="/portal/customer/pay/submit-code" method="POST">
+                        <div class="mb-3">
+                            <label for="transactionCode" class="form-label">Mpesa Transaction Code / Message <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="transactionCode" name="transactionCode" rows="3" required placeholder="Enter the full Mpesa confirmation message or just the transaction code (e.g., RFH7GXXXXX)"><%= formData && formData.transactionCode ? formData.transactionCode : '' %></textarea>
+                            <div class="form-text">Please enter the Mpesa code (e.g., RFH7GXXXXX) or the full confirmation message you received.</div>
+                        </div>
+
+                        <div class="alert alert-warning small">
+                            <strong>Note:</strong> Submitting this form notifies our team to verify your payment. Your account balance will be updated once the payment is confirmed by an administrator. This might take some time.
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="/portal/customer/subscription" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Back to Subscription</a>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Transaction Code</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/customerFooter') %>

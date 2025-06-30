@@ -1,0 +1,167 @@
+<%- include('../../partials/adminHeader') %>
+
+<div class="container-fluid mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/customers">Manage Customers</a></li>
+            <li class="breadcrumb-item active" aria-current="page">View/Edit Customer: <%= customer.firstName %> <%= customer.lastName %></li>
+        </ol>
+    </nav>
+
+    <h3>Customer Details: <%= customer.firstName %> <%= customer.lastName %> (#<%= customer.accountNumber %>)</h3>
+    <hr>
+
+    <% if (messages && messages.error) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <%- messages.error %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
+    <% if (messages && messages.success) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <%- messages.success %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
+
+    <div class="row">
+        <!-- Edit Customer Details Form -->
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-edit"></i> Edit Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/customers/<%= customer._id %>/edit" method="POST">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="firstName" name="firstName" value="<%= currentFormData.firstName || customer.firstName %>" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="secondName" class="form-label">Second Name</label>
+                                <input type="text" class="form-control" id="secondName" name="secondName" value="<%= currentFormData.secondName || customer.secondName || '' %>">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="lastName" name="lastName" value="<%= currentFormData.lastName || customer.lastName %>" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="organisationName" class="form-label">Organisation's Name</label>
+                            <input type="text" class="form-control" id="organisationName" name="organisationName" value="<%= currentFormData.organisationName || customer.organisationName || '' %>">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phoneNumber" class="form-label">Phone Number (07.../01...) <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" value="<%= currentFormData.phoneNumber || customer.phoneNumber %>" pattern="^(0[17])\d{8}$" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" value="<%= currentFormData.email || customer.email %>" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="location" name="location" value="<%= currentFormData.location || customer.location %>" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="installationDate" class="form-label">Installation Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="installationDate" name="installationDate" value="<%= customer.installationDate ? new Date(customer.installationDate).toISOString().split('T')[0] : '' %>" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="paymentPerMonth" class="form-label">Payment Per Month (KES) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="paymentPerMonth" name="paymentPerMonth" value="<%= currentFormData.paymentPerMonth || customer.paymentPerMonth %>" min="0" required>
+                            </div>
+                        </div>
+                         <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="accountNumber" class="form-label">Account Number</label>
+                                <input type="text" class="form-control" id="accountNumber" name="accountNumber" value="<%= customer.accountNumber %>" readonly disabled>
+                                <small class="form-text text-muted">Account number cannot be changed.</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="initialAccountBalance" class="form-label">Initial Account Balance (KES)</label>
+                                <input type="number" class="form-control" id="initialAccountBalance" name="initialAccountBalance" value="<%= currentFormData.initialAccountBalance || customer.initialAccountBalance %>" step="any">
+                                <small class="form-text text-muted">Adjust with caution. Current balance is managed via payments.</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                             <label for="currentBalanceInfo" class="form-label">Current Balance (KES)</label>
+                             <input type="text" class="form-control" id="currentBalanceInfo" value="<%= customer.currentBalance ? customer.currentBalance.toFixed(2) : '0.00' %>" readonly disabled>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Customer Details</button>
+                    </form>
+                    <hr>
+                    <form action="/admin/customers/<%= customer._id %>/toggle-status" method="POST" class="mt-2">
+                        <button type="submit" class="btn btn-<%= customer.isActive ? 'warning' : 'success' %>">
+                            <i class="fas fa-<%= customer.isActive ? 'times-circle' : 'check-circle' %>"></i>
+                            <%= customer.isActive ? 'Deactivate' : 'Activate' %> Customer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Payment Form & Payment History -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-money-check-alt"></i> Log New Payment</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/customers/<%= customer._id %>/payments" method="POST">
+                        <div class="mb-3">
+                            <label for="paymentDate" class="form-label">Payment Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="paymentDate" name="paymentDate" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="paymentMode" class="form-label">Payment Mode <span class="text-danger">*</span></label>
+                            <select class="form-select" id="paymentMode" name="mode" required>
+                                <option value="Mpesa" selected>Mpesa</option>
+                                <option value="Bank">Bank Transfer</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="paymentAmount" class="form-label">Amount (KES) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="paymentAmount" name="amount" min="0.01" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transactionCode" class="form-label">Transaction Code/Reference</label>
+                            <input type="text" class="form-control" id="transactionCode" name="transactionCode">
+                        </div>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-plus-circle"></i> Add Payment</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Payment History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <% if (customer.paymentLogs && customer.paymentLogs.length > 0) { %>
+                        <ul class="list-group list-group-flush">
+                            <% customer.paymentLogs.sort((a,b) => new Date(b.paymentDate) - new Date(a.paymentDate)).forEach(log => { %>
+                                <li class="list-group-item">
+                                    <strong><%= new Date(log.paymentDate).toLocaleDateString() %>:</strong> KES <%= log.amount.toFixed(2) %> (<%= log.mode %>)
+                                    <% if (log.transactionCode) { %><br><small class="text-muted">Ref: <%= log.transactionCode %></small><% } %>
+                                    <br><small class="text-muted">Logged by: <%= log.approvedBy ? (log.approvedBy.name || 'Admin') : 'N/A' %> on <%= log.approvalDate ? new Date(log.approvalDate).toLocaleDateString() : new Date(log.paymentDate).toLocaleDateString() %></small>
+                                </li>
+                            <% }); %>
+                        </ul>
+                    <% } else { %>
+                        <p class="p-3 text-muted">No payment logs found for this customer.</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/adminFooter') %>

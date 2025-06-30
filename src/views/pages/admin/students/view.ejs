@@ -19,10 +19,13 @@
                 <h4>Personal Information</h4>
                 <dl class="row">
                     <dt class="col-sm-4">Full Name:</dt>
-                    <dd class="col-sm-8"><%= student.first_name %></dd>
+                    <dd class="col-sm-8"><%= student.first_name %> <%= student.second_name ? student.second_name + ' ' : '' %><%= student.surname %></dd>
 
                     <dt class="col-sm-4">Email:</dt>
                     <dd class="col-sm-8"><a href="mailto:<%= student.email %>"><%= student.email %></a></dd>
+
+                    <dt class="col-sm-4">Phone Number:</dt>
+                    <dd class="col-sm-8"><%= student.phone_number ? student.phone_number : 'N/A' %></dd>
 
                     <dt class="col-sm-4">Registration #:</dt>
                     <dd class="col-sm-8"><%= student.registration_number %></dd>
@@ -38,6 +41,12 @@
 
                     <dt class="col-sm-4">Profile Complete:</dt>
                     <dd class="col-sm-8"><%= student.is_profile_complete ? 'Yes' : 'No (Next of Kin pending)' %></dd>
+
+                    <dt class="col-sm-4">Enrolled Date:</dt>
+                    <dd class="col-sm-8"><%= student.enrolled_date ? new Date(student.enrolled_date).toLocaleDateString() : 'N/A' %></dd>
+
+                    <dt class="col-sm-4">Course Fee (KES):</dt>
+                    <dd class="col-sm-8"><%= student.course_fee ? student.course_fee.toFixed(2) : 'N/A' %></dd>
                 </dl>
 
                 <% if (student.next_of_kin_details) {

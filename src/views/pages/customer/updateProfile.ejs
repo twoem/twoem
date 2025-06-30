@@ -1,0 +1,75 @@
+<%- include('../../partials/customerHeader', { title: title, customer: customer }) %>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-edit me-2"></i>Update Your Profile</h4>
+                </div>
+                <div class="card-body">
+                    <% if (messages && messages.error) { %>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%- messages.error %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+                    <% if (messages && messages.success) { %>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <%- messages.success %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+
+                    <form action="/portal/customer/profile/edit" method="POST">
+                        <div class="mb-3">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="firstName" name="firstName" value="<%= customer.firstName %>" readonly disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="lastName" name="lastName" value="<%= customer.lastName %>" readonly disabled>
+                        </div>
+                         <% if (customer.organisationName) { %>
+                            <div class="mb-3">
+                                <label for="organisationName" class="form-label">Organisation Name</label>
+                                <input type="text" class="form-control" id="organisationName" name="organisationName" value="<%= customer.organisationName %>" readonly disabled>
+                            </div>
+                        <% } %>
+                        <div class="mb-3">
+                            <label for="accountNumber" class="form-label">Account Number</label>
+                            <input type="text" class="form-control" id="accountNumber" name="accountNumber" value="<%= customer.accountNumber %>" readonly disabled>
+                        </div>
+
+                        <hr>
+                        <p class="text-muted">You can update the following details:</p>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" value="<%= formData && formData.email ? formData.email : customer.email %>" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phoneNumber" class="form-label">Phone Number (07... or 01...) <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber"
+                                   value="<%= formData && formData.phoneNumber ? formData.phoneNumber : customer.phoneNumber %>"
+                                   pattern="^(0[17])\d{8}$" title="Phone number must be 10 digits and start with 01 or 07." required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="location" name="location" value="<%= formData && formData.location ? formData.location : customer.location %>" required>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="/portal/customer/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/customerFooter') %>

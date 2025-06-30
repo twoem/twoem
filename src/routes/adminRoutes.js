@@ -176,5 +176,15 @@ router.post('/documents/delete/:id', authAdmin, adminController.deleteDocument);
 // Admin - View Action Logs Route
 router.get('/action-logs', authAdmin, adminController.viewActionLogs);
 
+// Admin - Internet Customer Management Routes
+router.get('/customers/add', authAdmin, adminController.renderAddCustomerForm);
+router.post('/customers/add', authAdmin, adminController.registerCustomer);
+router.get('/customers', authAdmin, adminController.listCustomers); // Page to list all customers
+
+// Routes for managing a single customer
+router.get('/customers/:id/view', authAdmin, adminController.renderViewCustomerDetailsPage); // View/Edit form
+router.post('/customers/:id/edit', authAdmin, adminController.updateCustomerDetails);
+router.post('/customers/:id/payments', authAdmin, adminController.logCustomerPayment);
+router.post('/customers/:id/toggle-status', authAdmin, adminController.toggleCustomerStatus);
 
 module.exports = router;

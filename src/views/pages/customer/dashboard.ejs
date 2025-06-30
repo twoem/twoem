@@ -1,0 +1,113 @@
+<%- include('../partials/customerHeader', { title: title, customer: customer }) %>
+
+<div class="container mt-4">
+    <% if (messages && messages.success) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <%- messages.success %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
+    <% if (messages && messages.info) { %>
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <%- messages.info %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Welcome Back, <%= customer.firstName %>!</h4>
+                </div>
+                <div class="card-body">
+                    <p>This is your Mynet Customer Portal. Manage your internet subscription, view payment history, and update your details.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Customer Details Card -->
+        <div class="col-md-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Your Account Details</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Full Name:</dt>
+                        <dd class="col-sm-8"><%= customer.firstName %> <%= customer.secondName ? customer.secondName + ' ' : '' %><%= customer.lastName %></dd>
+
+                        <% if (customer.organisationName) { %>
+                            <dt class="col-sm-4">Organisation:</dt>
+                            <dd class="col-sm-8"><%= customer.organisationName %></dd>
+                        <% } %>
+
+                        <dt class="col-sm-4">Account Number:</dt>
+                        <dd class="col-sm-8"><%= customer.accountNumber %></dd>
+
+                        <dt class="col-sm-4">Phone Number:</dt>
+                        <dd class="col-sm-8"><%= customer.phoneNumber %></dd>
+
+                        <dt class="col-sm-4">Email Address:</dt>
+                        <dd class="col-sm-8"><%= customer.email %></dd>
+
+                        <dt class="col-sm-4">Location:</dt>
+                        <dd class="col-sm-8"><%= customer.location %></dd>
+
+                        <dt class="col-sm-4">Installation Date:</dt>
+                        <dd class="col-sm-8"><%= new Date(customer.installationDate).toLocaleDateString() %></dd>
+
+                        <dt class="col-sm-4">Current Balance:</dt>
+                        <dd class="col-sm-8">KES <%= customer.currentBalance ? customer.currentBalance.toFixed(2) : '0.00' %></dd>
+
+                        <dt class="col-sm-4">Monthly Payment:</dt>
+                        <dd class="col-sm-8">KES <%= customer.paymentPerMonth ? customer.paymentPerMonth.toFixed(2) : '0.00' %></dd>
+                    </dl>
+                    <a href="/portal/customer/profile/edit" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i> Update Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions/Subscription Status Summary -->
+        <div class="col-md-5">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-wifi me-2"></i>Subscription Overview</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Status:</strong> <span class="badge bg-<%= customer.isActive && (!customer.disconnectionDate || new Date(customer.disconnectionDate) > new Date()) ? 'success' : 'danger' %>">
+                        <%= customer.isActive && (!customer.disconnectionDate || new Date(customer.disconnectionDate) > new Date()) ? 'Active' : 'Disconnected/Pending' %>
+                    </span></p>
+                    <% if (customer.disconnectionDate && new Date(customer.disconnectionDate) > new Date()) { %>
+                        <p class="text-warning"><strong>Disconnection Due:</strong> <%= new Date(customer.disconnectionDate).toLocaleDateString() %></p>
+                    <% } else if (customer.disconnectionDate && new Date(customer.disconnectionDate) <= new Date()) { %>
+                         <p class="text-danger"><strong>Account Disconnected On:</strong> <%= new Date(customer.disconnectionDate).toLocaleDateString() %></p>
+                    <% } %>
+                    <a href="/portal/customer/subscription" class="btn btn-info btn-sm mb-2 d-block"><i class="fas fa-file-invoice-dollar"></i> View Subscription & Payments</a>
+                    <a href="/portal/customer/pay" class="btn btn-success btn-sm d-block"><i class="fas fa-credit-card"></i> Make Payment</a>
+                </div>
+            </div>
+             <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Payments</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <% if (customer.paymentLogs && customer.paymentLogs.length > 0) { %>
+                        <% customer.paymentLogs.slice(0, 3).forEach(log => { %> <!-- Show last 3 -->
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><%= new Date(log.paymentDate).toLocaleDateString() %> - <%= log.mode %></span>
+                                <span class="badge bg-secondary rounded-pill">KES <%= log.amount.toFixed(2) %></span>
+                            </li>
+                        <% }); %>
+                    <% } else { %>
+                        <li class="list-group-item">No payment history found.</li>
+                    <% } %>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/customerFooter') %>

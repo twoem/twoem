@@ -1,0 +1,94 @@
+<%- include('../partials/adminHeader') %>
+
+<div class="container mt-4">
+    <h2><i class="fas fa-user-plus"></i> Add New Internet Customer</h2>
+    <hr>
+
+    <% if (typeof messages !== 'undefined' && messages.error) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <%= messages.error %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
+    <% if (typeof messages !== 'undefined' && messages.success) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <%= messages.success %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
+
+    <form action="/admin/customers/add" method="POST">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="firstName" name="firstName" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="secondName" class="form-label">Second Name (Optional)</label>
+                <input type="text" class="form-control" id="secondName" name="secondName">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="lastName" name="lastName" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="organisationName" class="form-label">Organisation's Name (Optional)</label>
+                <input type="text" class="form-control" id="organisationName" name="organisationName">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="phoneNumber" class="form-label">Phone Number (07... or 01...) <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" pattern="^(0[17])\d{8}$" title="Phone number must be 10 digits and start with 01 or 07." required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="location" name="location" required>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="installationDate" class="form-label">Installation Date <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="installationDate" name="installationDate" value="<%= new Date().toISOString().split('T')[0] %>" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="paymentPerMonth" class="form-label">Payment Per Month (KES) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="paymentPerMonth" name="paymentPerMonth" min="0" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="accountNumber" class="form-label">Account Number <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="accountNumber" name="accountNumber" required>
+                <small class="form-text text-muted">Assign a unique account number for the customer.</small>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="initialAccountBalance" class="form-label">Initial Account Balance (KES) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="initialAccountBalance" name="initialAccountBalance" step="any" required>
+                <small class="form-text text-muted">Can be negative, 0, or positive.</small>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Default Password</label>
+            <input type="text" class="form-control" id="password" name="password" value="<%= process.env.DEFAULT_CUSTOMER_PASSWORD || 'Mynet@2020' %>" readonly>
+            <small class="form-text text-muted">Customer will be required to change this on first login.</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Register Customer</button>
+        <a href="/admin/dashboard" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<%- include('../partials/adminFooter') %>

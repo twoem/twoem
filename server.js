@@ -59,6 +59,13 @@ app.use('/admin', adminRoutes); // Mount admin routes under /admin prefix
 const studentRoutes = require('./src/routes/studentRoutes'); // Import student routes
 app.use('/student', studentRoutes); // Mount student routes under /student prefix
 
+// Customer Portal Routes
+const customerAuthRoutes = require('./src/routes/customer/customerAuthRoutes');
+const customerDashboardRoutes = require('./src/routes/customer/customerDashboardRoutes'); // Assuming this will be for protected routes
+app.use('/portal/customer', customerAuthRoutes); // Handles /portal/customer/login, /portal/customer/logout etc.
+app.use('/portal/customer', customerDashboardRoutes); // Handles /portal/customer/dashboard etc.
+
+
 // Catch 404 and forward to error handler
 app.use((req, res, next) => {
     res.status(404).render('pages/errors/404', {

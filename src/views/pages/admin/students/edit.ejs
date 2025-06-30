@@ -40,21 +40,51 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="firstName" class="form-label">First Name</label>
-                        <input type="text" class="form-control" id="firstName" name="firstName" value="<%= locals.firstName !== undefined ? locals.firstName : student.first_name %>" required>
-                         <% if (locals.errors && errors.find(e => e.param === 'firstName')) { %><div class="text-danger small mt-1"><%= errors.find(e => e.param === 'firstName').msg %></div><% } %>
+                        <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="firstName" name="firstName" value="<%= formData.firstName !== undefined ? formData.firstName : student.first_name %>" required>
+                    </div>
+                </div>
+                 <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="secondName" class="form-label">Second Name (Optional)</label>
+                        <input type="text" class="form-control" id="secondName" name="secondName" value="<%= formData.secondName !== undefined ? formData.secondName : (student.second_name || '') %>">
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="surname" class="form-label">Surname <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="surname" name="surname" value="<%= formData.surname !== undefined ? formData.surname : student.surname %>" required>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="phoneNumber" class="form-label">Phone Number (07.../01...) <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" value="<%= formData.phoneNumber !== undefined ? formData.phoneNumber : student.phone_number %>" pattern="^(0[17])\d{8}$" title="Phone number must be 10 digits and start with 01 or 07." required>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="email" name="email" value="<%= locals.email !== undefined ? locals.email : student.email %>" required>
-                        <% if (locals.errors && errors.find(e => e.param === 'email')) { %><div class="text-danger small mt-1"><%= errors.find(e => e.param === 'email').msg %></div><% } %>
+                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" value="<%= formData.email !== undefined ? formData.email : student.email %>" required>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                 <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="enrolledDate" class="form-label">Enrolled Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="enrolledDate" name="enrolledDate" value="<%= formData.enrolledDate !== undefined ? formData.enrolledDate : (student.enrolled_date ? new Date(student.enrolled_date).toISOString().split('T')[0] : '') %>" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="courseFee" class="form-label">Course Fee (KES) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="courseFee" name="courseFee" value="<%= formData.courseFee !== undefined ? formData.courseFee : student.course_fee %>" min="0" step="any" required>
                     </div>
                 </div>
             </div>
 
-            <div class="mb-3">
+            <div class="mb-3 mt-3">
                 <p class="form-text">
                     Student Status: <strong><%= student.is_active ? 'Active' : 'Inactive' %></strong>.
                     Password management for students is handled via student-initiated password resets or by specific admin "Reset Student Password" actions (to be implemented).

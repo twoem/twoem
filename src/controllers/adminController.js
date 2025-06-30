@@ -1,10 +1,14 @@
 const bcrypt = require('bcryptjs');
-const db = require('../config/database');
+const db = require('../config/database'); // For existing SQLite operations
 const { randomBytes } = require('crypto');
 const { body, validationResult } = require('express-validator');
+const validator = require('validator'); // Added for email validation
+const Customer = require('../models/customerModel'); // Import Mongoose Customer model
+const mongoose = require('mongoose'); // Required for ObjectId.isValid if used for admin ID logging
 
-async function logAdminAction(admin_id, action_type, description, target_entity_type, target_entity_id, ip_address) { /* ... Full function from previous state ... */
+async function logAdminAction(admin_id, action_type, description, target_entity_type, target_entity_id, ip_address) {
     try {
+        // Ensure admin_id is in a format compatible with the database schema for action_logs
         await db.runAsync(
             `INSERT INTO action_logs (admin_id, action_type, description, target_entity_type, target_entity_id, ip_address)
              VALUES (?, ?, ?, ?, ?, ?)`,
@@ -15,27 +19,76 @@ async function logAdminAction(admin_id, action_type, description, target_entity_
     }
 }
 
-const renderRegisterStudentForm = (req, res) => { /* ... Full function from previous state ... */
+const renderRegisterStudentForm = (req, res) => {
+    // Pass flashed form data and errors to the view
+    const formData = req.flash('formData')[0] || {};
+    const errors = req.flash('error') || []; // Assuming error is an array of messages or an empty one
+
     res.render('pages/admin/register-student', {
         title: 'Register New Student',
-        admin: req.admin, firstName: '', email: '',
+        admin: req.admin,
+        formData: formData, // For repopulating the form
+        errors: errors, // Pass errors to display
+        // Provide default empty strings for fields not in formData to avoid undefined errors in EJS
+        firstName: formData.firstName || '',
+        secondName: formData.secondName || '',
+        surname: formData.surname || '',
+        phoneNumber: formData.phoneNumber || '',
+        email: formData.email || '',
+        enrolledDate: formData.enrolledDate || new Date().toISOString().split('T')[0], // Default to today
+        courseFee: formData.courseFee || ''
     });
 };
 
-const registerStudent = async (req, res) => { /* ... Full function from previous state ... */
-    const { firstName, email } = req.body;
+const registerStudent = async (req, res) => {
+    const {
+        firstName, secondName, surname, phoneNumber,
+        email, enrolledDate, courseFee
+    } = req.body;
     const admin = req.admin;
-    let errors = [];
-    if (!firstName || !email) errors.push({ msg: 'Please fill in all fields.' });
-    if (errors.length > 0) {
-        return res.status(400).render('pages/admin/register-student', { title: 'Register New Student', admin, errors, firstName, email });
+
+    let formErrors = []; // Renamed to avoid conflict with flash 'errors'
+
+    // --- Enhanced Validation ---
+    if (!firstName || !surname || !phoneNumber || !email || !enrolledDate || !courseFee) {
+        formErrors.push('First Name, Surname, Phone Number, Email, Enrolled Date, and Course Fee are required.');
     }
+    if (email && !validator.isEmail(email)) {
+        formErrors.push('Please provide a valid email address.');
+    }
+    if (phoneNumber && !/^(0[17])\d{8}$/.test(phoneNumber)) {
+        formErrors.push('Phone number must be 10 digits and start with 01 or 07.');
+    }
+    if (courseFee && isNaN(parseFloat(courseFee))) {
+        formErrors.push('Course Fee must be a valid number.');
+    }
+    // Validate enrolledDate format if necessary, though type="date" helps
     try {
-        const existingStudent = await db.getAsync("SELECT * FROM students WHERE email = ?", [email.toLowerCase()]);
-        if (existingStudent) {
-            errors.push({ msg: 'A student with this email address already exists.' });
-            return res.status(400).render('pages/admin/register-student', { title: 'Register New Student', admin, errors, firstName, email });
+        if (enrolledDate) new Date(enrolledDate).toISOString(); // Basic check
+    } catch (e) {
+        formErrors.push('Invalid Enrolled Date format.');
+    }
+    // --- End of Enhanced Validation ---
+
+    req.flash('formData', req.body); // Flash all input back
+
+    if (formErrors.length > 0) {
+        req.flash('error', formErrors);
+        return res.redirect('/admin/register-student');
+    }
+
+    try {
+        const existingStudentEmail = await db.getAsync("SELECT id FROM students WHERE email = ?", [email.toLowerCase()]);
+        if (existingStudentEmail) {
+            req.flash('error', 'A student with this email address already exists.');
+            return res.redirect('/admin/register-student');
         }
+        const existingStudentPhone = await db.getAsync("SELECT id FROM students WHERE phone_number = ?", [phoneNumber]);
+        if (existingStudentPhone) {
+            req.flash('error', 'A student with this phone number already exists.');
+            return res.redirect('/admin/register-student');
+        }
+
         let registrationNumber;
         let isUnique = false;
         while (!isUnique) {
@@ -45,26 +98,322 @@ const registerStudent = async (req, res) => { /* ... Full function from previous
             const existingReg = await db.getAsync("SELECT id FROM students WHERE registration_number = ?", [registrationNumber]);
             if (!existingReg) isUnique = true;
         }
+
         const defaultPassword = process.env.DEFAULT_STUDENT_PASSWORD;
         if (!defaultPassword) {
             console.error("DEFAULT_STUDENT_PASSWORD is not set in .env");
-            req.flash('error_msg', 'Server configuration error: Default password not set.');
+            req.flash('error', 'Server configuration error: Default password not set.');
             return res.redirect('/admin/register-student');
         }
         const passwordHash = await bcrypt.hash(defaultPassword, 10);
-        const sql = `INSERT INTO students (registration_number, email, first_name, password_hash, requires_password_change, is_profile_complete, is_active)
-                     VALUES (?, ?, ?, ?, TRUE, FALSE, TRUE)`;
-        const result = await db.runAsync(sql, [registrationNumber, email.toLowerCase(), firstName, passwordHash]);
-        logAdminAction(req.admin.id, 'STUDENT_REGISTERED', `Admin ${admin.name} registered student: ${firstName} (${email}), RegNo: ${registrationNumber}`, 'student', result.lastID, req.ip);
-        req.flash('success_msg', `Student ${firstName} (${email}) registered successfully with Registration Number: ${registrationNumber}.`);
+
+        // Ensure the 'students' table has columns: second_name, surname, phone_number, enrolled_date, course_fee
+        const sql = `INSERT INTO students (
+                        registration_number, email, first_name, second_name, surname,
+                        phone_number, enrolled_date, course_fee,
+                        password_hash, requires_password_change, is_profile_complete, is_active
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE, TRUE)`;
+
+        const params = [
+            registrationNumber, email.toLowerCase(), firstName,
+            secondName || null, // Handle optional secondName
+            surname, phoneNumber, new Date(enrolledDate).toISOString().split('T')[0], // Store date as YYYY-MM-DD
+            parseFloat(courseFee), passwordHash
+        ];
+
+        const result = await db.runAsync(sql, params);
+
+        logAdminAction(
+            req.admin.id,
+            'STUDENT_REGISTERED',
+            `Admin ${admin.name} registered student: ${firstName} ${surname} (${email}), RegNo: ${registrationNumber}`,
+            'student',
+            result.lastID,
+            req.ip
+        );
+
+        req.flash('formData', {}); // Clear flashed form data on success
+        req.flash('success_msg', `Student ${firstName} ${surname} (${email}) registered successfully with Registration Number: ${registrationNumber}.`);
         res.redirect('/admin/register-student');
+
     } catch (err) {
         console.error("Error registering student:", err);
-        req.flash('error_msg', 'An error occurred while registering the student.');
+        req.flash('error', 'An error occurred while registering the student: ' + err.message);
         res.redirect('/admin/register-student');
     }
 };
 
+const renderViewCustomerDetailsPage = async (req, res) => {
+    try {
+        const customerId = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(customerId)) {
+            req.flash('error', 'Invalid customer ID format.');
+            return res.redirect('/admin/customers');
+        }
+        const customer = await Customer.findById(customerId)
+            .populate('paymentLogs.approvedBy', 'name email') // Populate admin details for logs
+            .lean();
+
+        if (!customer) {
+            req.flash('error', 'Customer not found.');
+            return res.redirect('/admin/customers');
+        }
+
+        // Ensure paymentLogs is sorted if needed, or handle in view
+        if (customer.paymentLogs) {
+            customer.paymentLogs.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
+        }
+
+        const errorMessages = req.flash('error');
+        const successMessages = req.flash('success');
+        const currentFormData = req.flash('formData');
+
+
+        res.render('pages/admin/viewCustomerDetails', {
+            title: `View Customer: ${customer.firstName} ${customer.lastName}`,
+            admin: req.admin,
+            customer: customer,
+            currentFormData: currentFormData.length > 0 ? currentFormData[0] : {},
+            messages: {
+                error: errorMessages.length > 0 ? errorMessages.join('<br>') : null,
+                success: successMessages.length > 0 ? successMessages.join('<br>') : null
+            }
+        });
+    } catch (err) {
+        console.error('Error rendering view customer details page:', err);
+        req.flash('error', 'Failed to load customer details.');
+        res.redirect('/admin/customers');
+    }
+};
+
+const updateCustomerDetails = async (req, res) => {
+    const customerId = req.params.id;
+    req.flash('formData', req.body); // For repopulating form on error
+
+    const {
+        firstName, secondName, lastName, organisationName,
+        phoneNumber, email, location, installationDate,
+        paymentPerMonth, initialAccountBalance
+    } = req.body;
+
+    // Basic validation
+    const errors = [];
+    if (!firstName || !lastName || !phoneNumber || !email || !location || !installationDate || !paymentPerMonth) {
+        errors.push('Please fill in all required fields (First Name, Last Name, Phone, Email, Location, Install Date, Monthly Payment).');
+    }
+    if (phoneNumber && !/^(0[17])\d{8}$/.test(phoneNumber)) {
+        errors.push('Invalid phone number format. Must be 10 digits starting with 01 or 07.');
+    }
+    if (email && !validator.isEmail(email)) {
+        errors.push('Invalid email format.');
+    }
+    if (paymentPerMonth && isNaN(parseFloat(paymentPerMonth))) {
+        errors.push('Payment per month must be a number.');
+    }
+     if (initialAccountBalance && initialAccountBalance.trim() !== '' && isNaN(parseFloat(initialAccountBalance))) {
+        errors.push('Initial account balance must be a number if provided.');
+    }
+
+
+    if (errors.length > 0) {
+        req.flash('error', errors.join('<br>'));
+        return res.redirect(`/admin/customers/${customerId}/view`);
+    }
+
+    try {
+        const customer = await Customer.findById(customerId);
+        if (!customer) {
+            req.flash('error', 'Customer not found.');
+            return res.redirect('/admin/customers');
+        }
+
+        // Check for uniqueness if email or phone number changed
+        if (email.toLowerCase() !== customer.email) {
+            const existingEmail = await Customer.findOne({ email: email.toLowerCase(), _id: { $ne: customerId } });
+            if (existingEmail) {
+                req.flash('error', 'This email address is already in use by another customer.');
+                return res.redirect(`/admin/customers/${customerId}/view`);
+            }
+        }
+        if (phoneNumber !== customer.phoneNumber) {
+            const existingPhone = await Customer.findOne({ phoneNumber: phoneNumber, _id: { $ne: customerId } });
+            if (existingPhone) {
+                req.flash('error', 'This phone number is already in use by another customer.');
+                return res.redirect(`/admin/customers/${customerId}/view`);
+            }
+        }
+
+        customer.firstName = firstName;
+        customer.secondName = secondName || undefined;
+        customer.lastName = lastName;
+        customer.organisationName = organisationName || undefined;
+        customer.phoneNumber = phoneNumber;
+        customer.email = email.toLowerCase();
+        customer.location = location;
+        customer.installationDate = new Date(installationDate);
+        customer.paymentPerMonth = parseFloat(paymentPerMonth);
+
+        // Only update initialAccountBalance if provided and different.
+        // Changing initialAccountBalance might require recalculating currentBalance if not handled carefully.
+        // For now, we allow its update. The impact on currentBalance should be an admin consideration.
+        if (initialAccountBalance && initialAccountBalance.trim() !== '' && parseFloat(initialAccountBalance) !== customer.initialAccountBalance) {
+            customer.initialAccountBalance = parseFloat(initialAccountBalance);
+            // Potentially adjust currentBalance here if business logic dictates, e.g.,
+            // customer.currentBalance += (newInitial - oldInitial);
+            // Or, this change implies a reset/correction where currentBalance should also be set.
+            // For simplicity, direct update of initialBalance. Admin must be aware.
+        }
+
+        await customer.save();
+
+        await logAdminAction(req.admin.id, 'CUSTOMER_UPDATED_BY_ADMIN', `Admin ${req.admin.name} updated details for customer ${customer.firstName} ${customer.lastName} (Acc: ${customer.accountNumber})`, 'customer', customer._id.toString(), req.ip);
+        req.flash('success', 'Customer details updated successfully.');
+        req.flash('formData', {}); // Clear flashed form data
+        res.redirect(`/admin/customers/${customerId}/view`);
+
+    } catch (err) {
+        console.error('Error updating customer details by admin:', err);
+        let errorMsg = 'An error occurred while updating customer details.';
+        if (err.name === 'ValidationError') {
+            errorMsg = Object.values(err.errors).map(e => e.message).join('<br>');
+        } else if (err.code === 11000) {
+            errorMsg = 'The email or phone number you entered is already associated with another account.';
+        }
+        req.flash('error', errorMsg);
+        res.redirect(`/admin/customers/${customerId}/view`);
+    }
+};
+
+const logCustomerPayment = async (req, res) => {
+    const customerId = req.params.id;
+    const { paymentDate, mode, amount, transactionCode } = req.body;
+
+    if (!paymentDate || !mode || !amount) {
+        req.flash('error', 'Payment date, mode, and amount are required.');
+        return res.redirect(`/admin/customers/${customerId}/view`);
+    }
+    if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+        req.flash('error', 'Invalid payment amount.');
+        return res.redirect(`/admin/customers/${customerId}/view`);
+    }
+
+    try {
+        const customer = await Customer.findById(customerId);
+        if (!customer) {
+            req.flash('error', 'Customer not found.');
+            return res.redirect('/admin/customers');
+        }
+
+        const paymentAmount = parseFloat(amount);
+        customer.paymentLogs.push({
+            paymentDate: new Date(paymentDate),
+            mode: mode,
+            amount: paymentAmount,
+            transactionCode: transactionCode || undefined,
+            approvedBy: req.admin.id, // Assuming admin ID from req.admin (Mongoose ObjectId)
+            approvalDate: new Date()
+        });
+
+        customer.currentBalance -= paymentAmount;
+
+        // Recalculate disconnectionDate based on new balance
+        if (customer.currentBalance < 0 && customer.isActive) {
+            const gracePeriodDays = 7;
+            // If lastBillingDate is in the future (e.g. manually set or from a future-dated installation)
+            // or not set, use today as base for disconnection. Otherwise, use lastBillingDate.
+            const baseDateForDisconnect = (customer.lastBillingDate && new Date(customer.lastBillingDate) < new Date())
+                                          ? new Date(customer.lastBillingDate)
+                                          : new Date();
+            baseDateForDisconnect.setHours(0,0,0,0); // Ensure it's start of day for calculation
+
+            let disconnect = new Date(baseDateForDisconnect);
+            // If the last billing date was, for example, June 1st, and they become negative,
+            // disconnection is June 1st + 7 days.
+            disconnect.setDate(disconnect.getDate() + gracePeriodDays);
+            customer.disconnectionDate = disconnect;
+        } else {
+            // If balance is zero or positive, or account is inactive, clear disconnection date
+            customer.disconnectionDate = null;
+        }
+
+        await customer.save();
+        await logAdminAction(req.admin.id, 'CUSTOMER_PAYMENT_LOGGED', `Admin ${req.admin.name} logged payment of KES ${paymentAmount} for ${customer.firstName} ${customer.lastName} (Acc: ${customer.accountNumber})`, 'customer_payment', customer._id.toString(), req.ip);
+
+        req.flash('success', `Payment of KES ${paymentAmount} logged successfully. New balance: KES ${customer.currentBalance.toFixed(2)}.`);
+        res.redirect(`/admin/customers/${customerId}/view`);
+
+    } catch (err) {
+        console.error('Error logging customer payment:', err);
+        req.flash('error', 'Failed to log payment.');
+        res.redirect(`/admin/customers/${customerId}/view`);
+    }
+};
+
+const toggleCustomerStatus = async (req, res) => {
+    const customerId = req.params.id;
+    try {
+        const customer = await Customer.findById(customerId);
+        if (!customer) {
+            req.flash('error', 'Customer not found.');
+            return res.redirect('/admin/customers');
+        }
+
+        customer.isActive = !customer.isActive;
+
+        // If deactivating, clear disconnection date. If activating and balance is negative, recalculate it.
+        if (!customer.isActive) {
+            customer.disconnectionDate = null;
+        } else {
+            if (customer.currentBalance < 0) {
+                const gracePeriodDays = 7;
+                const baseDateForDisconnect = (customer.lastBillingDate && new Date(customer.lastBillingDate) < new Date())
+                                              ? new Date(customer.lastBillingDate)
+                                              : new Date();
+                baseDateForDisconnect.setHours(0,0,0,0);
+                let disconnect = new Date(baseDateForDisconnect);
+                disconnect.setDate(disconnect.getDate() + gracePeriodDays);
+                customer.disconnectionDate = disconnect;
+            } else {
+                customer.disconnectionDate = null;
+            }
+        }
+
+        await customer.save();
+        const action = customer.isActive ? 'ACTIVATED' : 'DEACTIVATED';
+        await logAdminAction(req.admin.id, `CUSTOMER_STATUS_${action}`, `Admin ${req.admin.name} ${action.toLowerCase()} customer: ${customer.firstName} ${customer.lastName} (Acc: ${customer.accountNumber})`, 'customer', customer._id.toString(), req.ip);
+
+        req.flash('success', `Customer account has been ${action.toLowerCase()}.`);
+        res.redirect(`/admin/customers/${customerId}/view`);
+    } catch (err) {
+        console.error('Error toggling customer status:', err);
+        req.flash('error', 'Failed to toggle customer status.');
+        res.redirect(`/admin/customers/${customerId}/view`);
+    }
+};
+
+
+const listCustomers = async (req, res) => {
+    try {
+        const customers = await Customer.find({}).sort({ createdAt: -1 }).lean(); // Fetch all customers
+
+        const errorMessages = req.flash('error');
+        const successMessages = req.flash('success');
+
+        res.render('pages/admin/manageCustomers', {
+            title: 'Manage Internet Customers',
+            admin: req.admin,
+            customers: customers,
+            messages: {
+                 error: errorMessages.length > 0 ? errorMessages.join('<br>') : null,
+                 success: successMessages.length > 0 ? successMessages.join('<br>') : null
+            }
+        });
+    } catch (err) {
+        console.error('Error listing customers:', err);
+        req.flash('error', 'Failed to retrieve customer list.');
+        res.redirect('/admin/dashboard'); // Or an appropriate error page
+    }
+};
 const listCourses = async (req, res) => { /* ... Full function from previous state ... */
     try {
         const courses = await db.allAsync("SELECT * FROM courses ORDER BY created_at DESC");
@@ -203,42 +552,116 @@ const renderEditStudentForm = async (req, res) => { /* ... Full function from pr
             req.flash('error_msg', 'Student not found.');
             return res.redirect('/admin/students');
         }
-        res.render('pages/admin/students/edit', { title: 'Edit Student', admin: req.admin, student, errors: [], firstName: student.first_name, email: student.email });
+        // Ensure all fields, including new ones, are passed to the view
+        // And handle flashed form data for repopulation on error
+        const formData = req.flash('formData')[0] || {};
+        const errors = req.flash('error') || [];
+
+        res.render('pages/admin/students/edit', {
+            title: 'Edit Student',
+            admin: req.admin,
+            student: student, // Original student data
+            formData: formData, // Flashed form data if any
+            errors: errors,   // Flashed errors if any
+            // For initial load or if no flashed data, use student's current values
+            firstName: formData.firstName !== undefined ? formData.firstName : student.first_name,
+            secondName: formData.secondName !== undefined ? formData.secondName : student.second_name,
+            surname: formData.surname !== undefined ? formData.surname : student.surname,
+            phoneNumber: formData.phoneNumber !== undefined ? formData.phoneNumber : student.phone_number,
+            email: formData.email !== undefined ? formData.email : student.email,
+            enrolledDate: formData.enrolledDate !== undefined ? formData.enrolledDate : (student.enrolled_date ? new Date(student.enrolled_date).toISOString().split('T')[0] : ''),
+            courseFee: formData.courseFee !== undefined ? formData.courseFee : student.course_fee
+        });
     } catch (err) {
         console.error("Error fetching student for edit:", err);
         req.flash('error_msg', 'Failed to load student details for editing.');
         res.redirect('/admin/students');
     }
 };
-const updateStudent = [ /* ... Full function from previous state ... */
+const updateStudent = [
+    // Keep existing express-validator checks if they were there, or add new ones
     body('firstName').trim().notEmpty().withMessage('First name is required.'),
+    body('surname').trim().notEmpty().withMessage('Surname is required.'),
     body('email').trim().isEmail().withMessage('Valid email is required.'),
+    body('phoneNumber').trim().notEmpty().withMessage('Phone number is required.')
+        .matches(/^(0[17])\d{8}$/).withMessage('Phone number must be 10 digits and start with 01 or 07.'),
+    body('enrolledDate').isISO8601().withMessage('Valid enrolled date is required.'),
+    body('courseFee').isFloat({ gt: 0 }).withMessage('Course fee must be a positive number.'),
+    body('secondName').trim().optional(),
+
     async (req, res) => {
         const studentId = req.params.id;
         const errors = validationResult(req);
-        const { firstName, email } = req.body;
-        const studentForForm = await db.getAsync("SELECT * FROM students WHERE id = ?", [studentId]);
-        if (!studentForForm) {
-            req.flash('error_msg', 'Student not found.');
-            return res.redirect('/admin/students');
-        }
+        req.flash('formData', req.body); // Flash input data
+
         if (!errors.isEmpty()) {
-            return res.status(400).render('pages/admin/students/edit', { title: 'Edit Student', admin: req.admin, errors: errors.array(), student: studentForForm, firstName, email });
+            req.flash('error', errors.array().map(e => e.msg));
+            return res.redirect(`/admin/students/edit/${studentId}`);
         }
+
+        const {
+            firstName, secondName, surname, phoneNumber,
+            email, enrolledDate, courseFee
+        } = req.body;
+
         try {
-            if (email.toLowerCase() !== studentForForm.email.toLowerCase()) {
+            const student = await db.getAsync("SELECT * FROM students WHERE id = ?", [studentId]);
+            if (!student) {
+                req.flash('error', 'Student not found.');
+                return res.redirect('/admin/students');
+            }
+
+            // Check for uniqueness of email if changed
+            if (email.toLowerCase() !== student.email) {
                 const existingEmailStudent = await db.getAsync("SELECT id FROM students WHERE email = ? AND id != ?", [email.toLowerCase(), studentId]);
                 if (existingEmailStudent) {
-                    return res.status(400).render('pages/admin/students/edit', { title: 'Edit Student', admin: req.admin, errors: [{ msg: 'This email address is already in use by another student.' }], student: studentForForm, firstName, email });
+                    req.flash('error', 'This email address is already in use by another student.');
+                    return res.redirect(`/admin/students/edit/${studentId}`);
                 }
             }
-            await db.runAsync("UPDATE students SET first_name = ?, email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [firstName, email.toLowerCase(), studentId]);
-            logAdminAction(req.admin.id, 'STUDENT_UPDATED', `Admin ${req.admin.name} updated details for student ID: ${studentId}`, 'student', studentId, req.ip);
+            // Check for uniqueness of phone number if changed
+            if (phoneNumber !== student.phone_number) {
+                const existingPhoneStudent = await db.getAsync("SELECT id FROM students WHERE phone_number = ? AND id != ?", [phoneNumber, studentId]);
+                if (existingPhoneStudent) {
+                    req.flash('error', 'This phone number is already in use by another student.');
+                    return res.redirect(`/admin/students/edit/${studentId}`);
+                }
+            }
+
+            const sql = `UPDATE students SET
+                            first_name = ?,
+                            second_name = ?,
+                            surname = ?,
+                            phone_number = ?,
+                            email = ?,
+                            enrolled_date = ?,
+                            course_fee = ?,
+                            updated_at = CURRENT_TIMESTAMP
+                         WHERE id = ?`;
+
+            const params = [
+                firstName, secondName || null, surname, phoneNumber,
+                email.toLowerCase(), new Date(enrolledDate).toISOString().split('T')[0],
+                parseFloat(courseFee), studentId
+            ];
+
+            await db.runAsync(sql, params);
+
+            logAdminAction(
+                req.admin.id,
+                'STUDENT_UPDATED',
+                `Admin ${req.admin.name} updated details for student ${firstName} ${surname} (ID: ${studentId})`,
+                'student',
+                studentId,
+                req.ip
+            );
+            req.flash('formData', {}); // Clear form data on success
             req.flash('success_msg', 'Student details updated successfully.');
             res.redirect(`/admin/students/view/${studentId}`);
+
         } catch (err) {
             console.error("Error updating student:", err);
-            req.flash('error_msg', 'Failed to update student details. ' + err.message);
+            req.flash('error', 'Failed to update student details: ' + err.message);
             res.redirect(`/admin/students/edit/${studentId}`);
         }
     }
@@ -1037,6 +1460,124 @@ const viewEmailLogs = async (req, res) => {
     }
 };
 
+// ================================
+// CUSTOMER MANAGEMENT FUNCTIONS (ADMIN)
+// ================================
+
+const renderAddCustomerForm = (req, res) => {
+    // Retrieve flashed data, if any
+    const formData = req.flash('formData');
+    const errorMessages = req.flash('error'); // Changed from messages.error to align with controller
+    const successMessages = req.flash('success');
+
+    res.render('pages/admin/addCustomer', {
+        title: 'Add New Internet Customer',
+        admin: req.admin,
+        messages: {
+            error: errorMessages.length > 0 ? errorMessages.join('<br>') : null,
+            success: successMessages.length > 0 ? successMessages.join('<br>') : null
+        },
+        formData: formData.length > 0 ? formData[0] : {}, // Use first item if array, else empty object
+        DEFAULT_CUSTOMER_PASSWORD: process.env.DEFAULT_CUSTOMER_PASSWORD || 'Mynet@2020'
+    });
+};
+
+const registerCustomer = async (req, res) => {
+    const {
+        firstName, secondName, lastName, organisationName,
+        phoneNumber, email, location, installationDate,
+        paymentPerMonth, accountNumber, initialAccountBalance
+    } = req.body;
+
+    // Store original body for repopulating form
+    req.flash('formData', req.body);
+
+    // Server-side validation complementing Mongoose
+    const formErrors = [];
+    if (!firstName || !lastName || !phoneNumber || !email || !location || !installationDate || !paymentPerMonth || !accountNumber || initialAccountBalance === undefined || initialAccountBalance === null || initialAccountBalance === '') {
+        formErrors.push('Please fill in all required fields.');
+    }
+    if (phoneNumber && !/^(0[17])\d{8}$/.test(phoneNumber)) {
+        formErrors.push('Phone number must be 10 digits and start with 01 or 07.');
+    }
+    if (email && !validator.isEmail(email)) { // validator is imported
+         formErrors.push('Please provide a valid email address.');
+    }
+    if (paymentPerMonth && (isNaN(parseFloat(paymentPerMonth)) || parseFloat(paymentPerMonth) < 0) ) {
+        formErrors.push('Payment per month must be a valid non-negative number.');
+    }
+    if (initialAccountBalance && isNaN(parseFloat(initialAccountBalance))) { // Can be negative
+        formErrors.push('Initial account balance must be a valid number.');
+    }
+
+    if (formErrors.length > 0) {
+        req.flash('error', formErrors); // Flash as an array or joined string
+        return res.redirect('/admin/customers/add');
+    }
+
+    try {
+        const existingCustomer = await Customer.findOne({
+            $or: [{ email: email.toLowerCase() }, { phoneNumber }, { accountNumber }]
+        });
+
+        if (existingCustomer) {
+            let message = 'A customer with this ';
+            if (existingCustomer.email === email.toLowerCase()) message += `email (${email}) `;
+            if (existingCustomer.phoneNumber === phoneNumber) message += `phone number (${phoneNumber}) `;
+            if (existingCustomer.accountNumber === accountNumber) message += `account number (${accountNumber}) `;
+            message += 'already exists.';
+            req.flash('error', message);
+            return res.redirect('/admin/customers/add');
+        }
+
+        const newCustomer = new Customer({
+            firstName,
+            secondName: secondName || undefined,
+            lastName,
+            organisationName: organisationName || undefined,
+            phoneNumber,
+            email: email.toLowerCase(),
+            location,
+            installationDate: new Date(installationDate),
+            paymentPerMonth: parseFloat(paymentPerMonth),
+            accountNumber,
+            initialAccountBalance: parseFloat(initialAccountBalance),
+            password: process.env.DEFAULT_CUSTOMER_PASSWORD || 'Mynet@2020',
+        });
+
+        await newCustomer.save(); // Mongoose validation will run here
+
+        const adminIdForLog = (req.admin && req.admin.id) ? req.admin.id.toString() : 'SYSTEM_ADMIN_CUSTOMER_REG';
+        const adminNameForLog = (req.admin && req.admin.name) ? req.admin.name : 'Admin';
+
+        await logAdminAction(
+            adminIdForLog,
+            'CUSTOMER_REGISTERED',
+            `Admin ${adminNameForLog} registered internet customer: ${newCustomer.firstName} ${newCustomer.lastName} (Acc: ${newCustomer.accountNumber})`,
+            'customer',
+            newCustomer._id.toString(),
+            req.ip
+        );
+
+        req.flash('formData', {}); // Clear form data on success
+        req.flash('success', `Customer ${newCustomer.firstName} ${newCustomer.lastName} registered successfully! Account Number: ${newCustomer.accountNumber}`);
+        res.redirect('/admin/customers/add');
+
+    } catch (err) {
+        console.error("Error registering customer:", err);
+        let errorMsg = 'An error occurred. Please check details and try again.';
+        if (err.name === 'ValidationError') {
+            errorMsg = Object.values(err.errors).map(e => e.message).join('<br>');
+        } else if (err.code === 11000) {
+             errorMsg = 'A customer with the provided Email, Phone Number, or Account Number already exists.';
+        }
+        req.flash('error', errorMsg);
+        // formData is already flashed from the top of the function
+        res.redirect('/admin/customers/add');
+    }
+};
+
+
 module.exports = {
     renderRegisterStudentForm, registerStudent,
     listCourses, renderAddCourseForm, addCourse, renderEditCourseForm, updateCourse, deleteCourse,
@@ -1050,5 +1591,14 @@ module.exports = {
     listDownloadableDocuments, renderCreateDocumentForm, createDocument, renderEditDocumentForm, updateDocument, deleteDocument,
     viewActionLogs, adminResetStudentPassword,
     // Email Management Functions
-    renderSendEmailForm, sendBulkEmail, renderEmailTestPage, testEmailTemplate, viewEmailLogs
+    renderSendEmailForm, sendBulkEmail, renderEmailTestPage, testEmailTemplate, viewEmailLogs,
+
+    // Customer Management (New) - Ensure these are correctly referenced in module.exports
+    renderAddCustomerForm,
+    registerCustomer,
+    listCustomers,
+    renderViewCustomerDetailsPage,
+    updateCustomerDetails,
+    logCustomerPayment,
+    toggleCustomerStatus
 };

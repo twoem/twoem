@@ -21,17 +21,43 @@
                     <%- include('../../partials/flash-messages') %>
 
                     <form action="/admin/register-student" method="POST">
-                <div class="mb-3">
-                    <label for="firstName" class="form-label">First Name</label>
-                    <input type="text" class="form-control" id="firstName" name="firstName" required value="<%= locals.firstName || '' %>">
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input type="email" class="form-control" id="email" name="email" required value="<%= locals.email || '' %>">
-                    <div class="form-text">The student will use this email for communication and password recovery.</div>
-                </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="firstName" name="firstName" required value="<%= formData.firstName || '' %>">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="secondName" class="form-label">Second Name (Optional)</label>
+                                <input type="text" class="form-control" id="secondName" name="secondName" value="<%= formData.secondName || '' %>">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="surname" class="form-label">Surname <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="surname" name="surname" required value="<%= formData.surname || '' %>">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phoneNumber" class="form-label">Phone Number (07.../01...) <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" required value="<%= formData.phoneNumber || '' %>" pattern="^(0[17])\d{8}$" title="Phone number must be 10 digits and start with 01 or 07.">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" required value="<%= formData.email || '' %>">
+                                <div class="form-text">Used for communication and password recovery.</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="enrolledDate" class="form-label">Enrolled Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="enrolledDate" name="enrolledDate" required value="<%= formData.enrolledDate || new Date().toISOString().split('T')[0] %>">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="courseFee" class="form-label">Course Fee (KES) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="courseFee" name="courseFee" required value="<%= formData.courseFee || '' %>" min="0" step="any">
+                            </div>
+                        </div>
 
-                <p class="text-muted small">
+                        <p class="text-muted small mt-3">
                     A unique Registration Number will be automatically generated.
                     The student will be assigned the default password: <strong><%= process.env.DEFAULT_STUDENT_PASSWORD %></strong>.
                     They will be required to change this password upon their first login.
