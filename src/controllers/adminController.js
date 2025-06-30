@@ -50,7 +50,7 @@ const registerStudent = async (req, res) => {
         // Sequential Registration Number
         await db.runAsync("UPDATE app_sequences SET last_value = last_value + 1 WHERE sequence_name = 'student_registration'");
         const seq = await db.getAsync("SELECT last_value FROM app_sequences WHERE sequence_name = 'student_registration'");
-        const newRegNum = `TWOEM${seq.last_value.toString().padStart(6, '0')}`; // Pad to 6 digits e.g. TWOEM000001
+        const newRegNum = `TWOEM-${seq.last_value.toString().padStart(4, '0')}`; // Format: TWOEM-XXXX
 
         const defaultPassword = process.env.DEFAULT_STUDENT_PASSWORD;
         if (!defaultPassword) {
