@@ -42,10 +42,14 @@ const loginAdmin = async (req, res) => {
     }
 
     if (!authenticatedAdmin) {
-        return res.status(401).render('pages/admin-login', {
-            title: 'Admin Login',
-            error: 'Invalid credentials.'
-        });
+        // Using flash message for login failure
+        req.flash('error_msg', '⚠️Oops! The Username or password seems incorrect. 🧐');
+        return res.redirect('/admin/login');
+        // Old render way:
+        // return res.status(401).render('pages/admin-login', {
+        //     title: 'Admin Login',
+        //     error: 'Invalid credentials.' // This would be picked up by locals.error in flash-messages
+        // });
     }
 
     try {
@@ -67,15 +71,19 @@ const loginAdmin = async (req, res) => {
             path: '/',
             sameSite: 'Lax' // Explicitly set SameSite
         });
-
+        // Setting login success message
+        req.flash('success_msg', '🎉 Welcome Back! 🎉 You’ve successfully logged in🌟');
         res.redirect('/admin/dashboard');
 
     } catch (jwtError) {
         console.error('Error generating JWT for admin:', jwtError);
-        return res.status(500).render('pages/admin-login', {
-            title: 'Admin Login',
-            error: 'Login failed due to a server error. Please try again later.'
-        });
+        req.flash('error_msg', '❌ Operation Failed! ❌ Something went wrong. Please try again. 😔');
+        return res.redirect('/admin/login');
+        // Old render way:
+        // return res.status(500).render('pages/admin-login', {
+        //     title: 'Admin Login',
+        //     error: 'Login failed due to a server error. Please try again later.'
+        // });
     }
 };
 
@@ -88,7 +96,8 @@ const logoutAdmin = (req, res) => {
         path: '/',
         sameSite: 'Lax' // Explicitly set SameSite
     });
-    req.flash('success_msg', 'You have been logged out successfully.');
+    // Using a generic success message for logout
+    req.flash('success_msg', '✨ Success! ✨ You have been logged out successfully! 🎉');
     res.redirect('/admin/login');
 };
 

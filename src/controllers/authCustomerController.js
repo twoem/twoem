@@ -27,32 +27,25 @@ const loginCustomer = async (req, res) => {
     const { phoneNumber, password } = req.body;
 
     if (!phoneNumber || !password) {
-        req.flash('error_msg', 'Phone number and password are required.');
+        req.flash('error_msg', '⚠️ Phone number and password are required.');
         return res.redirect('/customer/login');
     }
 
-    // Validate phone number format (basic check, more robust in validator if used)
     if (!/^(0[17])\d{8}$/.test(phoneNumber)) {
-        req.flash('error_msg', 'Invalid phone number format. Must be 10 digits starting with 01 or 07.');
+        req.flash('error_msg', '⚠️ Invalid phone number format. Must be 10 digits starting with 01 or 07.');
         return res.redirect('/customer/login');
     }
 
     try {
         const customer = await db.getAsync("SELECT * FROM customers WHERE phone_number = ?", [phoneNumber]);
 
-        if (!customer) {
-            req.flash('error_msg', 'Invalid phone number or password.');
+        if (!customer || !(await bcrypt.compare(password, customer.password_hash))) {
+            req.flash('error_msg', '⚠️Oops! The Username or password seems incorrect. 🧐');
             return res.redirect('/customer/login');
         }
 
         if (!customer.is_active) {
-            req.flash('error_msg', 'Your account is inactive. Please contact support.');
-            return res.redirect('/customer/login');
-        }
-
-        const isMatch = await bcrypt.compare(password, customer.password_hash);
-        if (!isMatch) {
-            req.flash('error_msg', 'Invalid phone number or password.');
+            req.flash('error_msg', '⚠️ Your account is inactive. Please contact support.');
             return res.redirect('/customer/login');
         }
 
@@ -76,8 +69,10 @@ const loginCustomer = async (req, res) => {
             sameSite: 'Lax'
         });
 
+        req.flash('success_msg', '🎉 Welcome Back! 🎉 You’ve successfully logged in🌟');
+
         if (customer.requires_password_change) {
-            req.flash('info_msg', 'Please change your default password to continue.');
+            req.flash('info_msg', 'Please change your default password to continue.'); // This is an instructional message, not an error/success
             return res.redirect('/customer/change-password-initial');
         }
 
@@ -85,7 +80,7 @@ const loginCustomer = async (req, res) => {
 
     } catch (err) {
         console.error("Customer login error:", err);
-        req.flash('error_msg', 'An error occurred during login. Please try again.');
+        req.flash('error_msg', '❌ Operation Failed! ❌ An error occurred during login. Please try again. 😔');
         res.redirect('/customer/login');
     }
 };
@@ -99,7 +94,7 @@ const logoutCustomer = (req, res) => {
         path: '/',
         sameSite: 'Lax'
     });
-    req.flash('success_msg', 'You have been logged out successfully.');
+    req.flash('success_msg', '✨ Success! ✨ You have been logged out successfully! 🎉');
     res.redirect('/customer/login');
 };
 
@@ -121,6 +116,7 @@ const handleChangePasswordInitial = async (req, res) => {
     const defaultPassword = process.env.DEFAULT_CUSTOMER_PASSWORD || "Mynet@2020";
     const minLength = parseInt(process.env.CUSTOMER_PASSWORD_MIN_LENGTH || 8, 10);
 
+    // Specific validation errors will get ⚠️ prepended by flash-messages.ejs
     if (currentPassword !== defaultPassword) {
         req.flash('error_msg', 'Incorrect current default password.');
         return res.redirect('/customer/change-password-initial');
@@ -144,11 +140,12 @@ const handleChangePasswordInitial = async (req, res) => {
             "UPDATE customers SET password_hash = ?, requires_password_change = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
             [newPasswordHash, customerId]
         );
-        req.flash('success_msg', 'Password changed successfully. You can now access your dashboard.');
+        req.flash('success_msg', '✨ Update Successful! ✨ Password changed successfully! 🎉');
+        // info_msg for profile completion is handled by login controller if still needed
         res.redirect('/customer/dashboard');
     } catch (err) {
         console.error("Error changing initial customer password:", err);
-        req.flash('error_msg', 'An error occurred while changing password.');
+        req.flash('error_msg', '❌ Operation Failed! ❌ An error occurred while changing password. 😔');
         res.redirect('/customer/change-password-initial');
     }
 };
@@ -169,7 +166,7 @@ const handleForgotPassword = async (req, res) => {
     const errorRedirectUrl = '/customer/login?activeTab=forgot-password-panel#forgot-password-panel';
 
     if (!phoneNumber || !anyName) {
-        req.flash('error_msg', 'Phone number and one of your names are required.');
+        req.flash('error_msg', '⚠️ Phone number and one of your names are required.');
         return res.redirect(errorRedirectUrl);
     }
 
@@ -183,7 +180,7 @@ const handleForgotPassword = async (req, res) => {
         );
 
         if (!customer) {
-            req.flash('error_msg', 'No account found matching the provided phone number and name.');
+            req.flash('error_msg', '⚠️ No account found matching the provided phone number and name.');
             return res.redirect(errorRedirectUrl);
         }
 
@@ -216,21 +213,17 @@ const handleForgotPassword = async (req, res) => {
                 templateName: 'customer-otp-email', // Ensure this template exists
                 data: emailData
             });
-            req.flash('success_msg', 'If your account exists, an OTP and reset link have been sent to your email.');
+            req.flash('success_msg', '✅ Email Sent Successfully! 📩 If your account exists, an OTP and reset link have been sent to your email. 🎉');
         } catch (emailError) {
             console.error("Failed to send OTP email to customer:", emailError);
-            // Don't block user flow if email fails, but log it.
-            // Admin might need to intervene or user might need to try again later.
-            // Or, if email is critical, redirect with a specific error.
-            // For now, we'll flash a generic success message as the token is still generated.
-            req.flash('success_msg', 'Password reset initiated. Check your email (if registered and found) for OTP and link.');
+            req.flash('error_msg', '❌ Failed to Send Email ⚠️ Oops! Something went wrong. Password reset initiated, but email failed. Try again Later or contact support. 😔');
         }
 
-        res.redirect(`/customer/reset-password-form?phone=${encodeURIComponent(customer.phone_number)}`); // Redirect to a form to enter OTP
+        res.redirect(`/customer/reset-password-form?phone=${encodeURIComponent(customer.phone_number)}`);
 
     } catch (err) {
         console.error("Forgot password error (customer):", err);
-        req.flash('error_msg', 'An error occurred. Please try again.');
+        req.flash('error_msg', '❌ Operation Failed! ❌ Something went wrong. Please try again. 😔');
         res.redirect(errorRedirectUrl);
     }
 };
@@ -257,6 +250,7 @@ const handleResetPassword = async (req, res) => {
     const errorRedirectUrl = `/customer/reset-password-form?phone=${encodeURIComponent(phoneNumber || '')}&token=${encodeURIComponent(urlToken || '')}`;
     const minLength = parseInt(process.env.CUSTOMER_PASSWORD_MIN_LENGTH || 8, 10);
 
+    // Specific validation errors will get ⚠️ prepended by flash-messages.ejs
     if (!otp || !newPassword || !confirmNewPassword || !phoneNumber) {
         req.flash('error_msg', 'All fields (Phone, OTP, New Password, Confirm Password) are required.');
         return res.redirect(errorRedirectUrl);
@@ -273,7 +267,7 @@ const handleResetPassword = async (req, res) => {
     try {
         const customer = await db.getAsync("SELECT id, password_hash, requires_password_change FROM customers WHERE phone_number = ?", [phoneNumber]);
         if (!customer) {
-            req.flash('error_msg', 'Invalid phone number.');
+            req.flash('error_msg', '⚠️ Invalid phone number.'); // Specific error
             return res.redirect(errorRedirectUrl);
         }
 
@@ -307,21 +301,20 @@ const handleResetPassword = async (req, res) => {
         }
 
         if (!tokenRecord) {
-            req.flash('error_msg', 'Invalid or expired OTP/token. Please request a new one.');
+            req.flash('error_msg', '⚠️ Invalid or expired OTP/token. Please request a new one.');
             return res.redirect(errorRedirectUrl);
         }
 
-        // Now explicitly check OTP if we found record via urlToken, or if it was the primary lookup key
         const isOtpMatch = await bcrypt.compare(otp, tokenRecord.otp_hash);
         if (!isOtpMatch) {
-            req.flash('error_msg', 'Invalid OTP.');
+            req.flash('error_msg', '⚠️ Invalid OTP.');
             return res.redirect(errorRedirectUrl);
         }
 
         // Check if new password is the same as default password (if they were on default)
         const defaultPassword = process.env.DEFAULT_CUSTOMER_PASSWORD || "Mynet@2020";
         if (customer.requires_password_change && newPassword === defaultPassword) {
-             req.flash('error_msg', 'New password cannot be the default password if you are resetting from it.');
+             req.flash('error_msg', '⚠️ New password cannot be the default password if you are resetting from it.');
              return res.redirect(errorRedirectUrl);
         }
 
@@ -332,12 +325,12 @@ const handleResetPassword = async (req, res) => {
         );
         await db.runAsync("UPDATE customer_password_reset_tokens SET used = TRUE WHERE id = ?", [tokenRecord.id]);
 
-        req.flash('success_msg', 'Password reset successfully. You can now login with your new password.');
+        req.flash('success_msg', '✨ Update Successful! ✨ Password reset successfully. You can now login with your new password. 🎉');
         res.redirect('/customer/login');
 
     } catch (err) {
         console.error("Error resetting customer password:", err);
-        req.flash('error_msg', 'An error occurred. Please try again.');
+        req.flash('error_msg', '❌ Operation Failed! ❌ An error occurred. Please try again. 😔');
         res.redirect(errorRedirectUrl);
     }
 };

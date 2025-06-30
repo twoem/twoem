@@ -165,6 +165,11 @@ router.post('/study-resources/delete/:id', authAdmin, adminController.deleteReso
 router.get('/settings/wifi', authAdmin, adminController.renderWifiSettingsForm);
 router.post('/settings/wifi', authAdmin, adminController.updateWifiSettings); // updateWifiSettings includes validation
 
+// Admin - Database Management Routes
+router.get('/settings/database/backup', authAdmin, adminController.downloadDatabaseBackup);
+// router.get('/settings/database/restore-page', authAdmin, adminController.renderRestoreDatabasePage); // For restore page
+// router.post('/settings/database/restore', authAdmin, /* upload.single('dbfile'), */ adminController.restoreDatabase); // For restore action
+
 // Admin - Downloadable Documents Management Routes
 router.get('/documents', authAdmin, adminController.listDownloadableDocuments);
 router.get('/documents/add', authAdmin, adminController.renderCreateDocumentForm);

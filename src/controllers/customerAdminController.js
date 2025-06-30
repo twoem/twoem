@@ -46,11 +46,16 @@ const registerCustomer = async (req, res) => {
             else if (existingCustomer.email === email) conflictField = 'Email';
             else if (existingCustomer.account_number === accountNumber) conflictField = 'Account Number';
 
-            req.flash('error_msg', `${conflictField} already exists.`);
+            // Specific user-facing error, flash-messages.ejs will add ⚠️ if this is passed as error_msg
+            const specificErrorMsg = `⚠️ ${conflictField} already exists.`;
+            req.flash('error_msg', specificErrorMsg);
+            // It's better to redirect on POST error to avoid form resubmission issues,
+            // but if rendering, ensure errors are displayed.
+            // For now, keeping the render to show oldInput and specific errors directly.
             return res.status(400).render('pages/admin/customer-register', {
                 title: 'Register New Internet Customer',
                 admin: req.admin,
-                errors: [{ msg: `${conflictField} already exists.` }],
+                errors: [{ msg: specificErrorMsg }], // Pass it to errors array for the view
                 oldInput: req.body
             });
         }
@@ -73,19 +78,22 @@ const registerCustomer = async (req, res) => {
             ]
         );
 
-        // TODO: Add action log
-        req.flash('success_msg', `Customer ${firstName} ${lastName} registered successfully with ID ${result.lastID}.`);
-        res.redirect('/admin/customers'); // Redirect to the list of customers
+        // TODO: Add action log for customer registration
+        req.flash('success_msg', `✨ Success! ✨ Customer ${firstName} ${lastName} registered successfully with ID ${result.lastID}. 🎉`);
+        res.redirect('/admin/customers');
 
     } catch (err) {
         console.error("Error registering customer:", err);
-        req.flash('error_msg', 'Server error while registering customer. Please try again.');
-        res.status(500).render('pages/admin/customer-register', {
-            title: 'Register New Internet Customer',
-            admin: req.admin,
-            errors: [{ msg: 'Server error. Please try again.' }],
-            oldInput: req.body
-        });
+        req.flash('error_msg', `❌ Operation Failed! ❌ Server error while registering customer. ${err.message} 😔`);
+        // Redirecting is generally better for POST errors
+        res.redirect('/admin/customers/register');
+        // Old render way:
+        // res.status(500).render('pages/admin/customer-register', {
+        //     title: 'Register New Internet Customer',
+        //     admin: req.admin,
+        //     errors: [{ msg: `❌ Operation Failed! ❌ Server error. Please try again. 😔` }],
+        //     oldInput: req.body
+        // });
     }
 };
 
@@ -97,13 +105,13 @@ const listCustomers = async (req, res) => {
             title: 'Manage Internet Customers',
             admin: req.admin,
             customers: customers,
-            success_msg: req.flash('success_msg'), // Pass flash messages
+            success_msg: req.flash('success_msg'),
             error_msg: req.flash('error_msg')
         });
     } catch (err) {
         console.error("Error listing customers:", err);
-        req.flash('error_msg', 'Failed to retrieve customers.');
-        res.redirect('/admin/dashboard'); // Or an error page
+        req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t retrieve customers. ${err.message} 😔`);
+        res.redirect('/admin/dashboard');
     }
 };
 

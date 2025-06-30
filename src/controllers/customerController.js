@@ -8,7 +8,7 @@ const renderDashboard = async (req, res) => {
         const customer = await db.getAsync("SELECT id, first_name, second_name, last_name, organisation_name, phone_number, email, location, installation_date, payment_per_month, account_number, current_balance, disconnection_date, grace_period_ends_at FROM customers WHERE id = ?", [customerId]);
 
         if (!customer) {
-            req.flash('error_msg', 'Customer profile not found.');
+            req.flash('error_msg', '⚠️ Customer profile not found.');
             return res.redirect('/customer/login');
         }
 
@@ -45,8 +45,8 @@ const renderDashboard = async (req, res) => {
         });
     } catch (err) {
         console.error("Error rendering customer dashboard:", err);
-        req.flash('error_msg', 'Failed to load dashboard information.');
-        res.redirect('/customer/login');
+        req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load dashboard information. ${err.message} 😔`);
+        res.redirect('/customer/login'); // Redirect to login, as dashboard is critical
     }
 };
 
@@ -58,8 +58,8 @@ const renderSubscriptionStatus = async (req, res) => {
         const paymentLogs = await db.allAsync("SELECT payment_date, payment_mode, amount_paid, transaction_code, verified_at FROM customer_payment_logs WHERE customer_id = ? ORDER BY payment_date DESC", [customerId]);
 
         if (!customer) {
-            req.flash('error_msg', 'Customer profile not found.');
-            return res.redirect('/customer/login');
+            req.flash('error_msg', '⚠️ Customer profile not found.');
+            return res.redirect('/customer/login'); // Or dashboard if more appropriate contextually
         }
 
         // Similar logic for disconnection date as in dashboard can be applied here or refined.
@@ -73,7 +73,7 @@ const renderSubscriptionStatus = async (req, res) => {
         });
     } catch (err) {
         console.error("Error rendering subscription status:", err);
-        req.flash('error_msg', 'Failed to load subscription details.');
+        req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load subscription details. ${err.message} 😔`);
         res.redirect('/customer/dashboard');
     }
 };
@@ -85,7 +85,7 @@ const renderMakePaymentPage = async (req, res) => {
         const customer = await db.getAsync("SELECT account_number, current_balance, first_name, last_name, phone_number FROM customers WHERE id = ?", [customerId]);
 
         if (!customer) {
-            req.flash('error_msg', 'Customer profile not found.');
+            req.flash('error_msg', '⚠️ Customer profile not found.');
             return res.redirect('/customer/dashboard');
         }
 
@@ -96,10 +96,9 @@ const renderMakePaymentPage = async (req, res) => {
             businessNo: process.env.BUSINESS_NO || 'YOUR_PAYBILL_HERE', // From .env
             // errors: []
         });
-    } catch (err)
-    {
+    } catch (err) {
         console.error("Error rendering make payment page:", err);
-        req.flash('error_msg', 'Failed to load payment page.');
+        req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load payment page. ${err.message} 😔`);
         res.redirect('/customer/dashboard');
     }
 };
@@ -110,14 +109,14 @@ const handlePaymentNotification = async (req, res) => {
     const customerId = req.customer.id;
 
     if (!transactionCode) {
-        req.flash('error_msg', 'M-PESA transaction code is required.');
+        req.flash('error_msg', '⚠️ M-PESA transaction code is required.');
         return res.redirect('/customer/make-payment');
     }
 
     try {
         const customer = await db.getAsync("SELECT first_name, last_name, phone_number, email, account_number, current_balance FROM customers WHERE id = ?", [customerId]);
         if (!customer) {
-            req.flash('error_msg', 'Customer not found.');
+            req.flash('error_msg', '⚠️ Customer not found.'); // Should ideally not happen if logged in
             return res.redirect('/customer/make-payment');
         }
 
@@ -165,21 +164,21 @@ Please log in to the admin portal to verify this payment.
                     text: emailTextBody,
                     html: emailHtmlBody
                 });
-                req.flash('success_msg', 'Transaction code submitted. Your payment will be reflected once verified by an administrator.');
+                req.flash('success_msg', '✅ Email Sent Successfully! 📩 Transaction code submitted. Your payment will be reflected once verified by an administrator. 🎉');
             } catch (emailError) {
                 console.error("Failed to send payment notification email to admin:", emailError);
-                req.flash('info_msg', 'Transaction code submitted. Verification will be processed (email to admin failed).');
+                req.flash('error_msg', `❌ Failed to Send Email ⚠️ Transaction code submitted, but notification to admin failed. Please contact support if your payment isn't reflected soon. 😔`);
             }
         } else {
             console.warn('Admin email for payment notification (ADMIN_EMAIL_RECIPIENT) not configured in .env.');
-            req.flash('info_msg', 'Transaction code submitted. Verification will be processed.');
+            req.flash('info_msg', 'ℹ️ Transaction code submitted. Verification will be processed. (Admin email not configured for immediate notification).');
         }
 
         res.redirect('/customer/internet-subscription-status');
 
     } catch (err) {
         console.error("Error handling payment notification:", err);
-        req.flash('error_msg', 'Failed to submit payment notification. Please try again.');
+        req.flash('error_msg', `❌ Operation Failed! ❌ Failed to submit payment notification. ${err.message} 😔`);
         res.redirect('/customer/make-payment');
     }
 };
