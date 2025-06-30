@@ -29,11 +29,47 @@ router.get('/login', (req, res) => {
 router.post('/login', authAdminController.loginAdmin);
 
 // GET Admin dashboard (protected)
-router.get('/dashboard', authAdmin, (req, res) => {
-    res.render('pages/admin-dashboard', {
-        title: 'Admin Dashboard',
-        admin: req.admin // req.admin is populated by authAdmin middleware
-    });
+router.get('/dashboard', authAdmin, async (req, res) => {
+    try {
+        // Quick stats for dashboard cards - ideally move this to a controller function
+        const db = require('../config/database'); // Direct DB access for now
+        const totalStudents = await db.getAsync("SELECT COUNT(*) as count FROM students");
+        const totalCourses = await db.getAsync("SELECT COUNT(*) as count FROM courses");
+        const totalCustomers = await db.getAsync("SELECT COUNT(*) as count FROM customers");
+
+        const viewData = {
+            title: 'Admin Dashboard',
+            admin: req.admin, // req.admin is populated by authAdmin middleware
+            studentStats: { totalStudents: totalStudents.count },
+            courseStats: { totalCourses: totalCourses.count },
+            customerStats: { totalCustomers: totalCustomers.count },
+            // Add any other data admin-dashboard.ejs might need
+        };
+
+        res.render('layouts/admin_layout', {
+            title: 'Admin Dashboard', // Title for the layout itself
+            bodyView: 'pages/admin-dashboard', // Path to the actual page content
+            admin: req.admin, // Pass admin to layout for header/sidebar if needed
+            viewData: viewData // Data specific to the bodyView
+        });
+    } catch (error) {
+        console.error("Error rendering admin dashboard:", error);
+        req.flash('error_msg', "❌ Error loading dashboard data.");
+        // Fallback render or redirect
+        res.render('layouts/admin_layout', {
+            title: 'Admin Dashboard Error',
+            bodyView: 'pages/admin-dashboard', // still render the structure
+            admin: req.admin,
+            viewData: {
+                title: 'Admin Dashboard',
+                admin: req.admin,
+                studentStats: { totalStudents: 'N/A' },
+                courseStats: { totalCourses: 'N/A' },
+                customerStats: { totalCustomers: 'N/A' },
+                errorLoadingData: true
+            }
+        });
+    }
 });
 
 // POST Admin logout

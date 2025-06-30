@@ -1,0 +1,16 @@
+<%- include('../partials/header', { title: typeof title !== 'undefined' ? title : 'Admin Area' }) %>
+
+<div class="admin-layout-container d-flex">
+    <%- include('../partials/admin_sidebar') %>
+
+    <main class="admin-main-content flex-grow-1 p-4">
+        <%- include('../partials/flash-messages') %> <%# Moved flash messages here to be within the main content scroll %>
+        <% if (typeof bodyView !== 'undefined' && bodyView) { %>
+            <%- include(`../${bodyView}`, typeof viewData !== 'undefined' ? viewData : {}) %>
+        <% } else { %>
+            <p class="text-danger">Error: bodyView not specified for admin_layout.</p>
+        <% } %>
+    </main>
+</div>
+
+<%- include('../partials/footer') %>

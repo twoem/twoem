@@ -642,3 +642,80 @@ h6 { font-size: 1rem; }
         font-size: 14px;
     }
 }
+
+/* Admin Layout Styles */
+.admin-layout-container {
+    min-height: 100vh; /* Ensure it takes full viewport height */
+}
+
+.admin-sidebar {
+    width: 280px; /* Fixed width for the sidebar */
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
+    height: 100vh; /* Full height */
+    position: sticky; /* Sticky sidebar */
+    top: 0;
+    overflow-y: auto; /* Allow scrolling if content overflows */
+    background-color: #f8f9fa; /* A light background */
+}
+
+.admin-sidebar .sidebar-header {
+    background-color: rgba(255, 255, 255, 0.7); /* Slight transparency */
+    backdrop-filter: blur(5px);
+}
+
+.admin-sidebar .nav-link {
+    color: var(--text-muted); /* Softer text color */
+    padding: 0.65rem 1rem; /* Adjust padding */
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.admin-sidebar .nav-link:hover {
+    color: var(--primary-color);
+    background-color: rgba(102, 126, 234, 0.1); /* Light primary on hover */
+}
+
+.admin-sidebar .nav-link.active {
+    color: var(--primary-color);
+    font-weight: 600;
+    background-color: rgba(102, 126, 234, 0.15); /* Slightly darker for active */
+}
+
+.admin-sidebar .nav-link i.fas,
+.admin-sidebar .nav-link i.fab {
+    width: 20px; /* Fixed width for icons */
+    text-align: center;
+}
+
+
+.admin-sidebar .nav-heading {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.admin-sidebar ul.nav.flex-column.ms-3 .nav-link {
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    font-size: 0.85rem;
+}
+
+
+.admin-main-content {
+    background-color: #ffffff; /* White background for content area */
+    /* Add transition for potential sidebar toggle animation later */
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* Responsive: On smaller screens, you might want to hide sidebar or make it toggleable */
+@media (max-width: 992px) { /* Bootstrap's lg breakpoint */
+    /* Example: Hide sidebar and make content full width */
+    /* .admin-sidebar {
+        display: none;
+    }
+    .admin-main-content {
+        margin-left: 0;
+    } */
+    /* For now, let's keep it simple and let it stack or overflow */
+}

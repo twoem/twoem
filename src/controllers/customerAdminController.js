@@ -4,11 +4,17 @@ const { body, validationResult } = require('express-validator');
 
 // Render the form to register a new internet customer
 const renderRegisterCustomerForm = (req, res) => {
-    res.render('pages/admin/customer-register', { // Assuming view will be at views/pages/admin/customer-register.ejs
+    const viewData = {
         title: 'Register New Internet Customer',
         admin: req.admin,
-        errors: [],
-        oldInput: {}
+        errors: req.flash('validation_errors') || [],
+        oldInput: req.flash('oldInput')[0] || {} // Flash stores arrays, get first item or empty obj
+    };
+    res.render('layouts/admin_layout', {
+        title: 'Register New Internet Customer', // For <title> tag
+        bodyView: 'pages/admin/customers/register', // Corrected path
+        admin: req.admin,
+        viewData: viewData
     });
 };
 
@@ -17,12 +23,9 @@ const registerCustomer = async (req, res) => {
     // Input validation rules (will be more specific later)
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).render('pages/admin/customer-register', {
-            title: 'Register New Internet Customer',
-            admin: req.admin,
-            errors: errors.array(),
-            oldInput: req.body
-        });
+        req.flash('validation_errors', JSON.stringify(errors.array()));
+        req.flash('oldInput', req.body);
+        return res.redirect('/admin/customers/register'); // Redirect to GET which handles layout
     }
 
     const {
@@ -51,13 +54,9 @@ const registerCustomer = async (req, res) => {
             req.flash('error_msg', specificErrorMsg);
             // It's better to redirect on POST error to avoid form resubmission issues,
             // but if rendering, ensure errors are displayed.
-            // For now, keeping the render to show oldInput and specific errors directly.
-            return res.status(400).render('pages/admin/customer-register', {
-                title: 'Register New Internet Customer',
-                admin: req.admin,
-                errors: [{ msg: specificErrorMsg }], // Pass it to errors array for the view
-                oldInput: req.body
-            });
+            req.flash('validation_errors', JSON.stringify([{ msg: specificErrorMsg }]));
+            req.flash('oldInput', req.body);
+            return res.redirect('/admin/customers/register'); // Redirect to GET
         }
 
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
@@ -100,18 +99,36 @@ const registerCustomer = async (req, res) => {
 // List all internet customers
 const listCustomers = async (req, res) => {
     try {
-        const customers = await db.allAsync("SELECT id, first_name, last_name, organisation_name, phone_number, email, account_number, current_balance, is_active FROM customers ORDER BY created_at DESC");
-        res.render('pages/admin/customers-list', { // Assuming view will be at views/pages/admin/customers-list.ejs
+        const customers = await db.allAsync("SELECT id, first_name, last_name, organisation_name, phone_number, email, account_number, current_balance, is_active, disconnection_date, grace_period_ends_at FROM customers ORDER BY created_at DESC");
+        const viewData = {
             title: 'Manage Internet Customers',
             admin: req.admin,
-            customers: customers,
-            success_msg: req.flash('success_msg'),
-            error_msg: req.flash('error_msg')
+            customers: customers
+            // Flash messages (success_msg, error_msg) are handled by the layout
+        };
+        res.render('layouts/admin_layout', {
+            title: 'Manage Internet Customers', // For <title> tag
+            bodyView: 'pages/admin/customers/index', // Corrected path
+            admin: req.admin,
+            viewData: viewData
         });
     } catch (err) {
         console.error("Error listing customers:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t retrieve customers. ${err.message} 😔`);
-        res.redirect('/admin/dashboard');
+        // Attempt to render the page with an error state within the layout
+        const errorViewData = {
+            title: 'Manage Internet Customers - Error',
+            admin: req.admin,
+            customers: [],
+            errorLoading: true,
+            errorMessage: err.message
+        };
+        res.status(500).render('layouts/admin_layout', {
+            title: 'Error Loading Customers',
+            bodyView: 'pages/admin/customers/index', // Corrected path
+            admin: req.admin,
+            viewData: errorViewData
+        });
     }
 };
 

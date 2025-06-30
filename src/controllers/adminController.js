@@ -18,9 +18,19 @@ async function logAdminAction(admin_id, action_type, description, target_entity_
 }
 
 const renderRegisterStudentForm = (req, res) => {
-    res.render('pages/admin/register-student', {
-        title: 'Register New Student',
-        admin: req.admin, errors: [], firstName: '', email: '', // Pass errors for consistency
+    const viewData = {
+        title: 'Register New Student', // This title is for the content page
+        admin: req.admin,
+        errors: req.flash('validation_errors') || [], // Use flashed errors if available
+        firstName: req.flash('firstName') || '', // Persist input on error
+        email: req.flash('email') || '', // Persist input on error
+        // Add other fields here for persistence if needed for the new form
+    };
+    res.render('layouts/admin_layout', {
+        title: 'Register New Student', // This is for the <title> tag in the layout
+        bodyView: 'pages/admin/register-student',
+        admin: req.admin, // For the layout's own needs (e.g. sidebar)
+        viewData: viewData
     });
 };
 
@@ -29,22 +39,18 @@ const registerStudent = async (req, res) => {
     const admin = req.admin;
     // Validation should ideally be done using express-validator for consistency
     if (!firstName || !email) {
-        req.flash('error_msg', '⚠️ First Name and Email are required.');
-        return res.status(400).render('pages/admin/register-student', {
-            title: 'Register New Student', admin,
-            errors: [{msg: 'First Name and Email are required.'}], // For view display
-            firstName, email
-        });
+        req.flash('validation_errors', JSON.stringify([{param: 'firstName', msg: 'First Name and Email are required.'}]));
+        req.flash('firstName', firstName);
+        req.flash('email', email);
+        return res.redirect('/admin/register-student'); // Redirect to GET which handles layout
     }
     try {
         const existingStudent = await db.getAsync("SELECT * FROM students WHERE email = ?", [email.toLowerCase()]);
         if (existingStudent) {
-            req.flash('error_msg', '⚠️ A student with this email address already exists.');
-            return res.status(400).render('pages/admin/register-student', {
-                title: 'Register New Student', admin,
-                errors: [{msg: 'A student with this email address already exists.'}],
-                firstName, email
-            });
+            req.flash('validation_errors', JSON.stringify([{param: 'email', msg: 'A student with this email address already exists.'}]));
+            req.flash('firstName', firstName);
+            req.flash('email', email);
+            return res.redirect('/admin/register-student'); // Redirect to GET
         }
 
         // Sequential Registration Number
@@ -86,15 +92,50 @@ const registerStudent = async (req, res) => {
 const listCourses = async (req, res) => {
     try {
         const courses = await db.allAsync("SELECT * FROM courses ORDER BY created_at DESC");
-        res.render('pages/admin/courses/index', { title: 'Manage Courses', admin: req.admin, courses });
+        const viewData = {
+            title: 'Manage Courses', // For the content page heading
+            admin: req.admin,
+            courses: courses
+        };
+        res.render('layouts/admin_layout', {
+            title: 'Manage Courses', // For the <title> tag in layout
+            bodyView: 'pages/admin/courses/index',
+            admin: req.admin,
+            viewData: viewData
+        });
     } catch (err) {
         console.error("Error fetching courses:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t retrieve courses. ${err.message} 😔`);
-        res.redirect('/admin/dashboard');
+        // Attempt to render the page with an error state within the layout
+        const errorViewData = {
+            title: 'Manage Courses - Error',
+            admin: req.admin,
+            courses: [],
+            errorLoading: true,
+            errorMessage: err.message
+        };
+        res.status(500).render('layouts/admin_layout', {
+            title: 'Error Loading Courses',
+            bodyView: 'pages/admin/courses/index', // Render the same page structure
+            admin: req.admin,
+            viewData: errorViewData
+        });
     }
 };
 const renderAddCourseForm = (req, res) => {
-    res.render('pages/admin/courses/add', { title: 'Add New Course', admin: req.admin, errors: [], name: '', description: '' });
+    const viewData = {
+        title: 'Add New Course',
+        admin: req.admin,
+        errors: [], // Or req.flash('validation_errors')
+        name: '', // Or req.flash('name')
+        description: '' // Or req.flash('description')
+    };
+    res.render('layouts/admin_layout', {
+        title: 'Add New Course',
+        bodyView: 'pages/admin/courses/add',
+        admin: req.admin,
+        viewData: viewData
+    });
 };
 const addCourse = [
     body('name').trim().notEmpty().withMessage('Course name is required.').isLength({ min: 3 }).withMessage('Course name must be at least 3 characters long.'),
@@ -103,7 +144,10 @@ const addCourse = [
         const errors = validationResult(req);
         const { name, description } = req.body;
         if (!errors.isEmpty()) {
-            return res.status(400).render('pages/admin/courses/add', { title: 'Add New Course', admin: req.admin, errors: errors.array(), name, description });
+            req.flash('validation_errors', JSON.stringify(errors.array()));
+            req.flash('name', name);
+            req.flash('description', description);
+            return res.redirect('/admin/courses/add'); // Redirect to GET which handles layout
         }
         try {
             const result = await db.runAsync("INSERT INTO courses (name, description, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)", [name, description]);

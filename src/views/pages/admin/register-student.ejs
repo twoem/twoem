@@ -1,51 +1,60 @@
-<%- include('../../partials/header', { title: 'Register New Student' }) %>
-<%- include('../../partials/navbar') %> <% /* Assuming admin navbar might be different or conditional later */ %>
-<%# Or use a specific admin partial: include('../../partials/admin-header') %>
+<%# This page is rendered within layouts/admin_layout.ejs %>
+<%# viewData from the controller is available here directly (e.g., viewData.title, viewData.errors) %>
 
-<main class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-7">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Register New Student</li>
-                </ol>
-            </nav>
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h2 class="h5 mb-0">Register New Student</h2>
-                </div>
-                <div class="card-body">
-                    <p>Fill out the form below to register a new student. They will be assigned a unique registration number and a default password.</p>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= viewData.title || 'Register New Student' %></li>
+    </ol>
+</nav>
 
-                    <%- include('../../partials/flash-messages') %>
-
-                    <form action="/admin/register-student" method="POST">
-                <div class="mb-3">
-                    <label for="firstName" class="form-label">First Name</label>
-                    <input type="text" class="form-control" id="firstName" name="firstName" required value="<%= locals.firstName || '' %>">
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input type="email" class="form-control" id="email" name="email" required value="<%= locals.email || '' %>">
-                    <div class="form-text">The student will use this email for communication and password recovery.</div>
-                </div>
-
-                <p class="text-muted small">
-                    A unique Registration Number will be automatically generated.
-                    The student will be assigned the default password: <strong><%= process.env.DEFAULT_STUDENT_PASSWORD %></strong>.
-                    They will be required to change this password upon their first login.
-                </p>
-
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <a href="/admin/dashboard" class="btn btn-secondary me-md-2">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Register Student</button>
-                </div>
-            </form>
-                </div> <%# card-body %>
-            </div> <%# card %>
-        </div>
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h1 class="h5 mb-0"><i class="fas fa-user-plus me-2"></i><%= viewData.title || 'Register New Student' %></h1>
     </div>
-</main>
+    <div class="card-body">
+        <p>Fill out the form below to register a new student. They will be assigned a unique registration number and a default password.</p>
 
-<%- include('../../partials/footer') %>
+        <%# Flash messages are now handled by the admin_layout %>
+        <%- include('../../partials/validation-errors', { errors: viewData.errors || [] }) %>
+
+
+        <form action="/admin/register-student" method="POST">
+            <div class="mb-3">
+                <label for="firstName" class="form-label">First Name</label>
+                <input type="text" class="form-control <%= (viewData.errors && viewData.errors.find(e => e.param === 'firstName')) ? 'is-invalid' : '' %>" id="firstName" name="firstName" required value="<%= viewData.firstName || '' %>">
+                 <% if (viewData.errors && viewData.errors.find(e => e.param === 'firstName')) { %>
+                    <div class="invalid-feedback">
+                        <%= viewData.errors.find(e => e.param === 'firstName').msg %>
+                    </div>
+                <% } %>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" class="form-control <%= (viewData.errors && viewData.errors.find(e => e.param === 'email')) ? 'is-invalid' : '' %>" id="email" name="email" required value="<%= viewData.email || '' %>">
+                <% if (viewData.errors && viewData.errors.find(e => e.param === 'email')) { %>
+                    <div class="invalid-feedback">
+                        <%= viewData.errors.find(e => e.param === 'email').msg %>
+                    </div>
+                <% } else { %>
+                    <div class="form-text">The student will use this email for communication and password recovery.</div>
+                <% } %>
+            </div>
+
+            <%# TODO: Add new fields here: Second Name, Surname, Enrolled Date, Course Fee %>
+            <%# These will be added in Phase 2 of the plan %>
+
+
+            <p class="text-muted small mt-4">
+                A unique Registration Number will be automatically generated.
+                The student will be assigned the default password: <strong><%= process.env.DEFAULT_STUDENT_PASSWORD %></strong>.
+                They will be required to change this password upon their first login.
+            </p>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                <a href="/admin/dashboard" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle me-2"></i>Register Student</button>
+            </div>
+        </form>
+    </div> <%# card-body %>
+</div> <%# card %>

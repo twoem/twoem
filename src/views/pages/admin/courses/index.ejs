@@ -1,79 +1,73 @@
-<%- include('../../../partials/header', { title: 'Manage Courses' }) %>
-<%- include('../../../partials/navbar') %> <%# Consider admin specific navbar/header later %>
+<%# This page is rendered within layouts/admin_layout.ejs %>
+<%# viewData from the controller is available here directly %>
 
-<main class="container mt-5">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Manage Courses</li>
-        </ol>
-    </nav>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= viewData.title || 'Manage Courses' %></li>
+    </ol>
+</nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Manage Courses</h1>
-        <a href="/admin/courses/add" class="btn btn-primary">
-            <i class="fas fa-plus-circle"></i> Add New Course
-        </a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2"><i class="fas fa-book me-2"></i><%= viewData.title || 'Manage Courses' %></h1>
+    <a href="/admin/courses/add" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-2"></i> Add New Course
+    </a>
+</div>
+
+<%# Flash messages are handled by admin_layout.ejs %>
+
+<% if (viewData.errorLoading) { %>
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error Loading Courses!</h4>
+        <p>We encountered an issue trying to load the course data. Please try again later.</p>
+        <% if (viewData.errorMessage) { %>
+            <hr>
+            <p class="mb-0"><small>Details: <%= viewData.errorMessage %></small></p>
+        <% } %>
     </div>
-
-    <%- include('../../../partials/flash-messages') %> <% /* Using a partial for flash messages */ %>
-
-    <% if (locals.success_msg) { %>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <%= success_msg %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <% } %>
-    <% if (locals.error_msg) { %>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <%= error_msg %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <% } %>
-
-    <% if (courses && courses.length > 0) { %>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Course Name</th>
-                        <th scope="col">Description</th>
-                        <th scope="col">Created At</th>
-                        <th scope="col">Last Updated</th>
-                        <th scope="col" class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% courses.forEach(function(course) { %>
+<% } else if (viewData.courses && viewData.courses.length > 0) { %>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-light">
                         <tr>
-                            <td><%= course.id %></td>
-                            <td><%= course.name %></td>
-                            <td><%= course.description ? (course.description.length > 100 ? course.description.substring(0, 97) + '...' : course.description) : 'N/A' %></td>
-                            <td><%= new Date(course.created_at).toLocaleDateString() %></td>
-                            <td><%= new Date(course.updated_at).toLocaleDateString() %></td>
-                            <td class="text-end">
-                                <a href="/admin/courses/edit/<%= course.id %>" class="btn btn-sm btn-outline-secondary me-1" title="Edit">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                <form action="/admin/courses/delete/<%= course.id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this course? This cannot be undone.');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
-                                        <i class="fas fa-trash-alt"></i> Delete
-                                    </button>
-                                </form>
-                            </td>
+                            <th scope="col">ID</th>
+                            <th scope="col">Course Name</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Created At</th>
+                            <th scope="col">Last Updated</th>
+                            <th scope="col" class="text-end">Actions</th>
                         </tr>
-                    <% }); %>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <% viewData.courses.forEach(function(course) { %>
+                            <tr>
+                                <td><%= course.id %></td>
+                                <td><%= course.name %></td>
+                                <td><%= course.description ? (course.description.length > 70 ? course.description.substring(0, 67) + '...' : course.description) : 'N/A' %></td>
+                                <td><%= new Date(course.created_at).toLocaleDateString() %></td>
+                                <td><%= new Date(course.updated_at).toLocaleDateString() %></td>
+                                <td class="text-end">
+                                    <a href="/admin/courses/edit/<%= course.id %>" class="btn btn-sm btn-outline-primary me-1" title="Edit">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <form action="/admin/courses/delete/<%= course.id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this course: \'<%= course.name %>\'? This cannot be undone and might affect student enrollments if not handled carefully elsewhere.');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash-alt"></i> Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    <% } else { %>
-        <div class="alert alert-info">No courses found. <a href="/admin/courses/add">Add the first course.</a></div>
-    <% } %>
-</main>
-
-<%# Font Awesome for icons - Add to header if not already there, or use another icon set %>
-<%# <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> %>
-
-
-<%- include('../../../partials/footer') %>
+    </div>
+<% } else { %>
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>No courses found. <a href="/admin/courses/add" class="alert-link">Add the first course.</a>
+    </div>
+<% } %>

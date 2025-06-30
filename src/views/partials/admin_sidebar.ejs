@@ -1,0 +1,54 @@
+<aside class="admin-sidebar bg-light border-end shadow-sm">
+    <div class="sidebar-header p-3 border-bottom">
+        <a href="/admin/dashboard" class="navbar-brand d-flex align-items-center">
+            <img src="/logo.png" alt="Twoem Logo" width="30" height="30" class="me-2">
+            <span class="fs-5 fw-bold gradient-text">Admin Panel</span>
+        </a>
+    </div>
+    <nav class="nav flex-column p-3">
+        <a class="nav-link active" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+
+        <h6 class="nav-heading px-3 mt-4 mb-1 text-muted text-uppercase">Content & Users</h6>
+        <a class="nav-link" href="/admin/students"><i class="fas fa-users me-2"></i>Student Management</a>
+        <ul class="nav flex-column ms-3">
+            <li><a class="nav-link py-1" href="/admin/register-student">Register Student</a></li>
+            <li><a class="nav-link py-1" href="/admin/students">View All Students</a></li>
+        </ul>
+
+        <a class="nav-link mt-1" href="/admin/customers"><i class="fas fa-network-wired me-2"></i>Internet Customers</a>
+        <ul class="nav flex-column ms-3">
+            <li><a class="nav-link py-1" href="/admin/customers/register">Register Customer</a></li>
+            <li><a class="nav-link py-1" href="/admin/customers">View All Customers</a></li>
+        </ul>
+
+        <a class="nav-link mt-1" href="/admin/courses"><i class="fas fa-book me-2"></i>Course Management</a>
+        <a class="nav-link" href="/admin/study-resources"><i class="fas fa-book-reader me-2"></i>Study Resources</a>
+        <a class="nav-link" href="/admin/documents"><i class="fas fa-file-alt me-2"></i>Downloads</a>
+
+        <h6 class="nav-heading px-3 mt-4 mb-1 text-muted text-uppercase">Communication</h6>
+        <a class="nav-link" href="/admin/notifications"><i class="fas fa-bullhorn me-2"></i>Notifications</a>
+        <a class="nav-link" href="/admin/emails/send"><i class="fas fa-envelope me-2"></i>Email Management</a>
+         <ul class="nav flex-column ms-3">
+            <li><a class="nav-link py-1" href="/admin/emails/send">Send Bulk Email</a></li>
+            <li><a class="nav-link py-1" href="/admin/emails/test">Test Templates</a></li>
+            <li><a class="nav-link py-1" href="/admin/emails/logs">Email Logs</a></li>
+        </ul>
+
+        <h6 class="nav-heading px-3 mt-4 mb-1 text-muted text-uppercase">System</h6>
+        <a class="nav-link" href="/admin/settings/wifi"><i class="fas fa-wifi me-2"></i>WiFi Settings</a>
+        <a class="nav-link" href="/admin/action-logs"><i class="fas fa-clipboard-list me-2"></i>Action Logs</a>
+        <a class="nav-link" data-bs-toggle="collapse" href="#dbManagementSubmenu" role="button" aria-expanded="false" aria-controls="dbManagementSubmenu">
+            <i class="fas fa-database me-2"></i>Database Tools
+        </a>
+        <div class="collapse" id="dbManagementSubmenu">
+            <ul class="nav flex-column ms-3">
+                <li><a class="nav-link py-1" href="/admin/settings/database/backup"><i class="fas fa-download me-1"></i> Backup DB</a></li>
+                <li><a class="nav-link py-1" href="/admin/settings/database/restore-page"><i class="fas fa-upload me-1"></i> Restore DB</a></li>
+            </ul>
+        </div>
+        <!-- Add more links as needed -->
+
+        <hr class="my-3">
+        <a class="nav-link text-danger" href="/"><i class="fas fa-arrow-circle-left me-2"></i>Back to Main Site</a>
+    </nav>
+</aside>

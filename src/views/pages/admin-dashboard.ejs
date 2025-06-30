@@ -1,113 +1,77 @@
-<%- include('../partials/header', { title: 'Admin Dashboard' }) %>
-<%- include('../partials/navbar') %>
+<%# This page will now be rendered within admin_layout.ejs %>
+<%# The <%- body %> in admin_layout.ejs will inject the content below. %>
+<%# The title for the layout will be passed from the route handler. %>
 
-<main class="container mt-5">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Admin Dashboard</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <% if (typeof admin !== 'undefined' && admin && admin.name) { %>
-                <span class="me-3">Hello, <strong><%= admin.name %></strong>!</span>
-            <% } else { %>
-                <span class="me-3">Hello, Admin!</span>
-            <% } %>
-            <form action="/admin/logout" method="POST" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button>
-            </form>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Admin Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <% if (typeof admin !== 'undefined' && admin && admin.name) { %>
+            <span class="me-3">Hello, <strong><%- admin.name %></strong>!</span>
+        <% } else { %>
+            <span class="me-3">Hello, Admin!</span>
+        <% } %>
+        <form action="/admin/logout" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button>
+        </form>
+    </div>
+</div>
+
+<p>Welcome to the admin control panel. From here you can manage all aspects of the Twoem Online Productions website and student services.</p>
+
+<% if (typeof admin !== 'undefined' && admin && admin.email) { %>
+    <p class="small text-muted">Logged in as: <%- admin.email %></p>
+<% } %>
+<p class="small text-muted">Last student/fees update by: [Admin Name] on [Date] (Placeholder - to be implemented)</p>
+
+<div class="row mt-4 g-4">
+    <div class="col-12">
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Quick Access Removed</h4>
+            <p>The quick access cards have been removed from the dashboard. Please use the sidebar navigation on the left to access different management sections.</p>
+            <hr>
+            <p class="mb-0">This area can be used in the future to display important statistics, recent activities, or alerts.</p>
         </div>
     </div>
 
-    <p>Welcome to the admin control panel. From here you can manage all aspects of the Twoem Online Productions website and student services.</p>
-
-    <% if (typeof admin !== 'undefined' && admin && admin.email) { %>
-        <p class="small text-muted">Logged in as: <%= admin.email %></p>
-    <% } %>
-    <p class="small text-muted">Last student/fees update by: [Admin Name] on [Date] (Placeholder - to be implemented)</p>
-
-    <div class="row mt-4 g-4">
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title"><i class="fas fa-users me-2"></i>Student Management</h5>
-                    <p class="card-text small text-muted flex-grow-1">Register new students, view list, edit details, manage enrollments, marks, and fees.</p>
-                    <a href="/admin/register-student" class="btn btn-sm btn-primary mt-auto mb-2 d-block">Register New Student</a>
-                    <a href="/admin/students" class="btn btn-sm btn-info d-block">View All Students</a>
-                </div>
+    <!-- Example of how you might add summary cards back in, if desired, but not for navigation -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card text-white bg-primary mb-3 shadow">
+            <div class="card-header">Registered Students</div>
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-users me-2"></i> <%= typeof studentStats !== 'undefined' && studentStats && studentStats.totalStudents ? studentStats.totalStudents : 'N/A' %> Students</h5>
+                <p class="card-text">Total number of students in the system.</p>
+                <a href="/admin/students" class="btn btn-sm btn-light">View Students</a>
             </div>
         </div>
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title"><i class="fas fa-book me-2"></i>Course Management</h5>
-                    <p class="card-text small text-muted flex-grow-1">Define and manage all courses offered by Twoem Online.</p>
-                    <a href="/admin/courses" class="btn btn-sm btn-primary mt-auto d-block">Manage Courses</a>
-                </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card text-white bg-success mb-3 shadow">
+            <div class="card-header">Active Courses</div>
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-book me-2"></i> <%= typeof courseStats !== 'undefined' && courseStats && courseStats.totalCourses ? courseStats.totalCourses : 'N/A' %> Courses</h5>
+                <p class="card-text">Total number of active courses offered.</p>
+                <a href="/admin/courses" class="btn btn-sm btn-light">Manage Courses</a>
             </div>
         </div>
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title"><i class="fas fa-bullhorn me-2"></i>Notifications</h5>
-                    <p class="card-text small text-muted flex-grow-1">Create and manage notifications for students.</p>
-                    <a href="/admin/notifications" class="btn btn-sm btn-primary mt-auto d-block">Manage Notifications</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm border-primary">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title"><i class="fas fa-envelope me-2 text-primary"></i>Email Management</h5>
-                    <p class="card-text small text-muted flex-grow-1">Send bulk emails, test templates, and manage email settings.</p>
-                    <a href="/admin/emails/send" class="btn btn-sm btn-primary mt-auto d-block mb-2">Send Bulk Email</a>
-                    <a href="/admin/emails/test" class="btn btn-sm btn-outline-primary d-block mb-2">Test Email Templates</a>
-                    <a href="/admin/emails/logs" class="btn btn-sm btn-info d-block">Email Logs</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title"><i class="fas fa-book-reader me-2"></i>Study Resources</h5>
-                    <p class="card-text small text-muted flex-grow-1">Upload and manage study materials and links for students.</p>
-                    <a href="/admin/study-resources" class="btn btn-sm btn-primary mt-auto d-block">Manage Resources</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title"><i class="fas fa-file-alt me-2"></i>Content Management</h5>
-                    <p class="card-text small text-muted flex-grow-1">Manage public downloads and other site content like the gallery.</p>
-                    <a href="/admin/documents" class="btn btn-sm btn-primary d-block mb-2">Manage Downloads</a>
-                    <a href="#" class="btn btn-sm btn-secondary disabled d-block mt-auto">Manage Gallery (Soon)</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title"><i class="fas fa-network-wired me-2"></i>Internet Customer Management</h5>
-                    <p class="card-text small text-muted flex-grow-1">Register new internet customers, view list, and manage their accounts.</p>
-                    <a href="/admin/customers/register" class="btn btn-sm btn-primary mt-auto mb-2 d-block">Register New Customer</a>
-                    <a href="/admin/customers" class="btn btn-sm btn-info d-block">View All Customers</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title"><i class="fas fa-cogs me-2"></i>System & Site Settings</h5>
-                    <p class="card-text small text-muted flex-grow-1">Manage WiFi, view admin action logs, and handle site backups.</p>
-                    <a href="/admin/settings/wifi" class="btn btn-sm btn-primary mb-2 d-block">Manage WiFi Settings</a>
-                    <a href="/admin/action-logs" class="btn btn-sm btn-info d-block mb-2">View Action Logs</a>
-                    <hr class="my-2">
-                    <h6 class="text-muted small">Database Management</h6>
-                    <a href="/admin/settings/database/backup" class="btn btn-sm btn-success d-block mb-2"><i class="fas fa-download me-1"></i> Download Database Backup</a>
-                    <a href="/admin/settings/database/restore-page" class="btn btn-sm btn-warning d-block mt-auto"><i class="fas fa-upload me-1"></i> Restore Database from Backup</a>
-                </div>
+    </div>
+     <div class="col-md-6 col-lg-4">
+        <div class="card text-white bg-info mb-3 shadow">
+            <div class="card-header">Internet Customers</div>
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-network-wired me-2"></i> <%= typeof customerStats !== 'undefined' && customerStats && customerStats.totalCustomers ? customerStats.totalCustomers : 'N/A' %> Customers</h5>
+                <p class="card-text">Total number of internet subscribers.</p>
+                <a href="/admin/customers" class="btn btn-sm btn-light">Manage Customers</a>
             </div>
         </div>
     </div>
 
-</main>
-
-<%- include('../partials/footer') %>
+    <!-- Placeholder for future content like charts or recent activity logs -->
+    <div class="col-12 mt-4">
+        <h4>Recent Activity (Placeholder)</h4>
+        <ul class="list-group shadow-sm">
+            <li class="list-group-item">Admin John Doe registered a new student.</li>
+            <li class="list-group-item">Customer Jane Smith's payment was verified.</li>
+            <li class="list-group-item">New course "Advanced Web Development" added.</li>
+        </ul>
+    </div>
+</div>

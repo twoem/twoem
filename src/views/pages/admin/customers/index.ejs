@@ -1,0 +1,106 @@
+<%# This page is rendered within layouts/admin_layout.ejs %>
+<%# viewData from the controller is available here directly %>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= viewData.title || 'Manage Internet Customers' %></li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2"><i class="fas fa-network-wired me-2"></i><%= viewData.title || 'Manage Internet Customers' %></h1>
+    <a href="/admin/customers/register" class="btn btn-primary">
+        <i class="fas fa-user-plus me-2"></i> Register New Customer
+    </a>
+</div>
+
+<%# Flash messages are handled by admin_layout.ejs %>
+
+<% if (viewData.errorLoading) { %>
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error Loading Customers!</h4>
+        <p>We encountered an issue trying to load the customer data. Please try again later.</p>
+        <% if (viewData.errorMessage) { %>
+            <hr>
+            <p class="mb-0"><small>Details: <%= viewData.errorMessage %></small></p>
+        <% } %>
+    </div>
+<% } else if (viewData.customers && viewData.customers.length > 0) { %>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Name / Org</th>
+                            <th>Account No.</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th class="text-end">Balance (KES)</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center" style="min-width: 150px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% viewData.customers.forEach((customer, index) => { %>
+                            <tr>
+                                <td><%= index + 1 %></td>
+                                <td>
+                                    <a href="/admin/customers/view/<%= customer.id %>" class="fw-bold">
+                                        <%= customer.organisation_name ? customer.organisation_name : `${customer.first_name || ''} ${customer.last_name || ''}`.trim() %>
+                                    </a>
+                                    <% if (customer.organisation_name && (customer.first_name || customer.last_name)) { %>
+                                        <br><small class="text-muted">(Contact: <%= customer.first_name %> <%= customer.last_name %>)</small>
+                                    <% } %>
+                                </td>
+                                <td><%= customer.account_number %></td>
+                                <td><%= customer.phone_number %></td>
+                                <td><%= customer.email %></td>
+                                <td class="text-end <%= customer.current_balance < 0 ? 'text-success fw-bold' : (customer.current_balance > 0 ? 'text-danger fw-bold' : '') %>">
+                                    <%= customer.current_balance.toFixed(2) %>
+                                </td>
+                                <td class="text-center">
+                                    <% if (customer.is_active) { %>
+                                        <span class="badge bg-success">Active</span>
+                                    <% } else { %>
+                                        <span class="badge bg-danger">Inactive</span>
+                                        <% if(customer.disconnection_date) { %>
+                                            <br><small class="text-muted d-block" style="font-size: 0.75em;">Off: <%= new Date(customer.disconnection_date).toLocaleDateString() %></small>
+                                        <% } %>
+                                        <% if(customer.grace_period_ends_at && new Date(customer.grace_period_ends_at) > new Date()) { %>
+                                             <small class="text-warning d-block" style="font-size: 0.75em;">Grace: <%= new Date(customer.grace_period_ends_at).toLocaleDateString() %></small>
+                                        <% } %>
+                                    <% } %>
+                                </td>
+                                <td class="text-center">
+                                    <a href="/admin/customers/view/<%= customer.id %>" class="btn btn-outline-info btn-sm me-1" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="/admin/customers/edit/<%= customer.id %>" class="btn btn-outline-primary btn-sm me-1" title="Edit Customer">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="/admin/customers/<%= customer.id %>/payments" class="btn btn-outline-success btn-sm" title="Manage Payments">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </a>
+                                    <!-- Toggle Status Form -->
+                                    <form action="/admin/customers/<%= customer.id %>/toggle-status" method="POST" class="d-inline ms-1">
+                                        <button type="submit" class="btn btn-sm <%= customer.is_active ? 'btn-outline-warning' : 'btn-outline-success' %>" title="<%= customer.is_active ? 'Deactivate' : 'Activate' %> Customer">
+                                            <i class="fas <%= customer.is_active ? 'fa-toggle-off' : 'fa-toggle-on' %>"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<% } else { %>
+    <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle me-2"></i>No internet customers found.
+        <a href="/admin/customers/register" class="alert-link">Register the first one!</a>
+    </div>
+<% } %>
