@@ -1,0 +1,58 @@
+<%- include('../../../partials/header', { title: 'Restore Database' }) %>
+<%- include('../../../partials/navbar') %>
+
+<main class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Restore Database from Backup</h3>
+                </div>
+                <div class="card-body p-4">
+                    <%- include('../../../partials/flash-messages') %>
+
+                    <div class="alert alert-warning" role="alert">
+                        <h4 class="alert-heading"><i class="fas fa-shield-alt me-2"></i>Important Safety Notice!</h4>
+                        <p>Restoring the database will <strong>completely overwrite</strong> the current live database with the contents of the backup file. This action is irreversible.</p>
+                        <hr>
+                        <p class="mb-0">It is strongly recommended to <a href="/admin/settings/database/backup" class="alert-link">download a fresh backup</a> of the current database *before* proceeding with a restore, in case you need to revert.</p>
+                    </div>
+
+                    <form action="/admin/settings/database/restore" method="POST" enctype="multipart/form-data" onsubmit="return confirmRestore();">
+                        <div class="mb-3">
+                            <label for="dbfile" class="form-label">Database Backup File (.sqlite)</label>
+                            <input class="form-control" type="file" id="dbfile" name="dbfile" accept=".sqlite,.db" required>
+                            <small class="form-text text-muted">Please select a valid SQLite database backup file (usually ending in .sqlite or .db).</small>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="confirmAction" required>
+                            <label class="form-check-label" for="confirmAction">I understand this is a destructive operation and I have backed up the current database if necessary.</label>
+                        </div>
+
+                        <hr>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/admin/dashboard" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-upload me-1"></i>Restore Database Now
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-muted small">
+                    Ensure the selected backup file is a valid database for this application. Restoring an incompatible file may cause severe issues.
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function confirmRestore() {
+        return confirm("ARE YOU ABSOLUTELY SURE?\n\nThis will overwrite the current database. This action cannot be undone.\n\nIt is strongly recommended to download a backup of the live database first.");
+    }
+</script>
+
+<%- include('../../../partials/footer') %>

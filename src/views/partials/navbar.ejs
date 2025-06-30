@@ -20,9 +20,19 @@
                         Portals
                     </a>
                     <ul class="dropdown-menu glass-card border-0" aria-labelledby="portalDropdown">
-                        <li><a class="dropdown-item" href="/student/login"><i class="fas fa-graduation-cap me-2"></i>Student Portal</a></li>
-                        <li><a class="dropdown-item" href="/admin/login"><i class="fas fa-user-shield me-2"></i>Admin Portal</a></li>
-                        <li><a class="dropdown-item" href="/customer/login"><i class="fas fa-network-wired me-2"></i>Customer Portal</a></li>
+                        <% if (customer) { %>
+                            <li><a class="dropdown-item" href="/customer/dashboard"><i class="fas fa-tachometer-alt me-2"></i>My Dashboard</a></li>
+                        <% } else if (student) { %>
+                            <li><a class="dropdown-item" href="/student/dashboard"><i class="fas fa-tachometer-alt me-2"></i>My Dashboard</a></li>
+                        <% } else if (admin) { %>
+                            <li><a class="dropdown-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard</a></li>
+                        <% } %>
+
+                        <% if (!admin && !student && !customer) { %>
+                            <li><a class="dropdown-item" href="/student/login"><i class="fas fa-graduation-cap me-2"></i>Student Portal</a></li>
+                            <li><a class="dropdown-item" href="/admin/login"><i class="fas fa-user-shield me-2"></i>Admin Portal</a></li>
+                            <li><a class="dropdown-item" href="/customer/login"><i class="fas fa-network-wired me-2"></i>Customer Portal</a></li>
+                        <% } %>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="/downloads"><i class="fas fa-download me-2"></i>Downloads</a></li>
                     </ul>
@@ -33,8 +43,45 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/contact">Contact</a>
                 </li>
+                <% if (customer || student || admin) { %>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i> <%= customer ? customer.firstName : (student ? student.firstName : (admin ? admin.name : 'User')) %>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end glass-card border-0" aria-labelledby="userDropdown">
+                            <% if (customer) { %>
+                                <li><a class="dropdown-item" href="/customer/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                                <li><a class="dropdown-item" href="/customer/profile/change-password"><i class="fas fa-key me-2"></i>Change Password</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="/customer/logout" method="POST" class="d-inline">
+                                        <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
+                                    </form>
+                                </li>
+                            <% } else if (student) { %>
+                                <li><a class="dropdown-item" href="/student/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                                <!-- Add more student links here if needed -->
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="/student/logout" method="POST" class="d-inline">
+                                        <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
+                                    </form>
+                                </li>
+                            <% } else if (admin) { %>
+                                <li><a class="dropdown-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                                <!-- Add more admin links here if needed -->
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="/admin/logout" method="POST" class="d-inline">
+                                        <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
+                                    </form>
+                                </li>
+                            <% } %>
+                        </ul>
+                    </li>
+                <% } %>
             </ul>
-            <div class="navbar-nav ms-3">
+            <div class="navbar-nav ms-3 <% if (customer || student || admin) { %>d-none<% } %>"> <%# Hide WhatsApp if logged in, or adjust as needed %>
                 <a href="https://wa.me/254707330204" class="btn btn-primary btn-sm" target="_blank">
                     <i class="fab fa-whatsapp me-1"></i>WhatsApp
                 </a>

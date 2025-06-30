@@ -167,8 +167,24 @@ router.post('/settings/wifi', authAdmin, adminController.updateWifiSettings); //
 
 // Admin - Database Management Routes
 router.get('/settings/database/backup', authAdmin, adminController.downloadDatabaseBackup);
-// router.get('/settings/database/restore-page', authAdmin, adminController.renderRestoreDatabasePage); // For restore page
-// router.post('/settings/database/restore', authAdmin, /* upload.single('dbfile'), */ adminController.restoreDatabase); // For restore action
+router.get('/settings/database/restore-page', authAdmin, adminController.renderRestoreDatabasePage);
+const multer = require('multer');
+const path = require('path');
+// Configure multer for temporary storage of uploaded DB file
+const upload = multer({
+    dest: path.join(__dirname, '../../../uploads/'), // Temp directory for uploads
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['.sqlite', '.db'];
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (allowedTypes.includes(ext)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Only .sqlite or .db files are allowed.'), false);
+        }
+    },
+    limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
+});
+router.post('/settings/database/restore', authAdmin, upload.single('dbfile'), adminController.handleRestoreDatabase);
 
 // Admin - Downloadable Documents Management Routes
 router.get('/documents', authAdmin, adminController.listDownloadableDocuments);

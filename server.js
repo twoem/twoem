@@ -42,9 +42,11 @@ app.use((req, res, next) => {
     res.locals.success_msg = req.flash('success_msg');
     res.locals.error_msg = req.flash('error_msg');
     res.locals.error = req.flash('error'); // For express-validator errors or other single errors
-    // To make user/admin info available globally in templates if logged in (optional here, as often passed directly)
-    // res.locals.admin = req.admin || null;
-    // res.locals.student = req.student || null;
+
+    // Make user objects available globally if they exist on req (populated by auth middleware)
+    res.locals.admin = req.admin || null;
+    res.locals.student = req.student || null;
+    res.locals.customer = req.customer || null;
     next();
 });
 

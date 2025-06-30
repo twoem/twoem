@@ -24,7 +24,8 @@ const renderCustomerLoginPage = (req, res) => {
 
 // Handle customer login
 const loginCustomer = async (req, res) => {
-    const { phoneNumber, password } = req.body;
+    const { password } = req.body;
+    const phoneNumber = req.body.phoneNumber ? req.body.phoneNumber.trim() : "";
 
     if (!phoneNumber || !password) {
         req.flash('error_msg', '⚠️ Phone number and password are required.');
@@ -162,11 +163,17 @@ const renderForgotPasswordForm = (req, res) => {
 
 // Handle forgot password submission
 const handleForgotPassword = async (req, res) => {
-    const { phoneNumber, anyName } = req.body;
+    const anyName = req.body.anyName;
+    const phoneNumber = req.body.phoneNumber ? req.body.phoneNumber.trim() : "";
     const errorRedirectUrl = '/customer/login?activeTab=forgot-password-panel#forgot-password-panel';
 
     if (!phoneNumber || !anyName) {
         req.flash('error_msg', '⚠️ Phone number and one of your names are required.');
+        return res.redirect(errorRedirectUrl);
+    }
+    // Add phone number format validation here too
+    if (!/^(0[17])\d{8}$/.test(phoneNumber)) {
+        req.flash('error_msg', '⚠️ Invalid phone number format. Must be 10 digits starting with 01 or 07.');
         return res.redirect(errorRedirectUrl);
     }
 
@@ -246,13 +253,18 @@ const renderResetPasswordForm = (req, res) => {
 
 // Handle reset password submission (with OTP and new password)
 const handleResetPassword = async (req, res) => {
-    const { phoneNumber, otp, newPassword, confirmNewPassword, urlToken } = req.body; // urlToken is the token from the email link if submitted via form
+    const { otp, newPassword, confirmNewPassword, urlToken } = req.body;
+    const phoneNumber = req.body.phoneNumber ? req.body.phoneNumber.trim() : "";
     const errorRedirectUrl = `/customer/reset-password-form?phone=${encodeURIComponent(phoneNumber || '')}&token=${encodeURIComponent(urlToken || '')}`;
     const minLength = parseInt(process.env.CUSTOMER_PASSWORD_MIN_LENGTH || 8, 10);
 
     // Specific validation errors will get ⚠️ prepended by flash-messages.ejs
     if (!otp || !newPassword || !confirmNewPassword || !phoneNumber) {
-        req.flash('error_msg', 'All fields (Phone, OTP, New Password, Confirm Password) are required.');
+        req.flash('error_msg', '⚠️ All fields (Phone, OTP, New Password, Confirm Password) are required.');
+        return res.redirect(errorRedirectUrl);
+    }
+    if (!/^(0[17])\d{8}$/.test(phoneNumber)) { // Added format check
+        req.flash('error_msg', '⚠️ Invalid phone number format. Must be 10 digits starting with 01 or 07.');
         return res.redirect(errorRedirectUrl);
     }
     if (newPassword.length < minLength) {

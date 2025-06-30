@@ -36,7 +36,7 @@
                         <div class="row mb-3">
                             <div class="col-md-6 form-group">
                                 <label for="phoneNumber" class="form-label">Phone Number <span class="text-danger">*</span> (e.g., 07... or 01...)</label>
-                                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" value="<%= oldInput.phoneNumber || '' %>" pattern="^(0[17])\d{8}$" title="Phone number must be 10 digits and start with 01 or 07." required>
+                                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" value="<%= oldInput.phoneNumber || '' %>" pattern="^(01|07)[0-9]{8}$" title="Phone number must be 10 digits and start with 01 or 07." required>
                                 <small class="form-text text-muted">This will be the username for the customer.</small>
                             </div>
                             <div class="col-md-6 form-group">

@@ -1,7 +1,8 @@
 <%- include('../../partials/header', { title: title, customer: customer }) %>
+<%- include('../../partials/navbar') %>
 
 <div class="container mt-4">
-    <%- include('../../partials/flash-messages') %>
+    <%# Flash messages are now included globally via header.ejs %>
 
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">

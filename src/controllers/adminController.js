@@ -2,8 +2,8 @@ const bcrypt = require('bcryptjs');
 const db = require('../config/database');
 const { randomBytes } = require('crypto');
 const { body, validationResult } = require('express-validator');
-const path = require('path'); // For DB backup
-const fs = require('fs'); // For DB backup
+const path = require('path');
+const fs = require('fs');
 
 async function logAdminAction(admin_id, action_type, description, target_entity_type, target_entity_id, ip_address) {
     try {
@@ -20,34 +20,38 @@ async function logAdminAction(admin_id, action_type, description, target_entity_
 const renderRegisterStudentForm = (req, res) => {
     res.render('pages/admin/register-student', {
         title: 'Register New Student',
-        admin: req.admin, firstName: '', email: '',
+        admin: req.admin, errors: [], firstName: '', email: '', // Pass errors for consistency
     });
 };
 
 const registerStudent = async (req, res) => {
-    const { firstName, email } = req.body;
+    const { firstName, email } = req.body; // Add other fields: secondName, surname, enrolledDate, courseFee
     const admin = req.admin;
-    let errors = []; // Manual errors
+    // Validation should ideally be done using express-validator for consistency
     if (!firstName || !email) {
-        // This kind of error is better handled by express-validator, but if kept manual:
-        req.flash('error_msg', '⚠️ Please fill in all fields.');
-        return res.status(400).render('pages/admin/register-student', { title: 'Register New Student', admin, errors: [{msg: 'Please fill in all fields.'}], firstName, email });
+        req.flash('error_msg', '⚠️ First Name and Email are required.');
+        return res.status(400).render('pages/admin/register-student', {
+            title: 'Register New Student', admin,
+            errors: [{msg: 'First Name and Email are required.'}], // For view display
+            firstName, email
+        });
     }
     try {
         const existingStudent = await db.getAsync("SELECT * FROM students WHERE email = ?", [email.toLowerCase()]);
         if (existingStudent) {
             req.flash('error_msg', '⚠️ A student with this email address already exists.');
-            return res.status(400).render('pages/admin/register-student', { title: 'Register New Student', admin, errors: [{msg: 'A student with this email address already exists.'}], firstName, email });
+            return res.status(400).render('pages/admin/register-student', {
+                title: 'Register New Student', admin,
+                errors: [{msg: 'A student with this email address already exists.'}],
+                firstName, email
+            });
         }
-        let registrationNumber;
-        let isUnique = false;
-        while (!isUnique) {
-            const timestampPart = Date.now().toString(36).slice(-4).toUpperCase();
-            const randomPart = randomBytes(2).toString('hex').toUpperCase();
-            registrationNumber = `TWOEM${timestampPart}${randomPart}`;
-            const existingReg = await db.getAsync("SELECT id FROM students WHERE registration_number = ?", [registrationNumber]);
-            if (!existingReg) isUnique = true;
-        }
+
+        // Sequential Registration Number
+        await db.runAsync("UPDATE app_sequences SET last_value = last_value + 1 WHERE sequence_name = 'student_registration'");
+        const seq = await db.getAsync("SELECT last_value FROM app_sequences WHERE sequence_name = 'student_registration'");
+        const newRegNum = `TWOEM${seq.last_value.toString().padStart(6, '0')}`; // Pad to 6 digits e.g. TWOEM000001
+
         const defaultPassword = process.env.DEFAULT_STUDENT_PASSWORD;
         if (!defaultPassword) {
             console.error("DEFAULT_STUDENT_PASSWORD is not set in .env");
@@ -55,11 +59,22 @@ const registerStudent = async (req, res) => {
             return res.redirect('/admin/register-student');
         }
         const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+        // TODO: Add new fields (second_name, surname, enrolled_date, course_fee) to this INSERT
         const sql = `INSERT INTO students (registration_number, email, first_name, password_hash, requires_password_change, is_profile_complete, is_active)
                      VALUES (?, ?, ?, ?, TRUE, FALSE, TRUE)`;
-        const result = await db.runAsync(sql, [registrationNumber, email.toLowerCase(), firstName, passwordHash]);
-        logAdminAction(req.admin.id, 'STUDENT_REGISTERED', `Admin ${admin.name} registered student: ${firstName} (${email}), RegNo: ${registrationNumber}`, 'student', result.lastID, req.ip);
-        req.flash('success_msg', `✨ Success! ✨ Student ${firstName} (${email}) registered successfully with Registration Number: ${registrationNumber}. 🎉`);
+        const result = await db.runAsync(sql, [newRegNum, email.toLowerCase(), firstName, passwordHash]);
+
+        // Log action - result from custom runAsync contains { lastID, changes }
+        if (result && typeof result.lastID !== 'undefined') {
+            logAdminAction(req.admin.id, 'STUDENT_REGISTERED', `Admin ${admin.name} registered student: ${firstName} (${email}), RegNo: ${newRegNum}`, 'student', result.lastID, req.ip);
+        } else {
+            // Fallback logging if lastID isn't available as expected (should not happen with corrected runAsync)
+            logAdminAction(req.admin.id, 'STUDENT_REGISTERED', `Admin ${admin.name} registered student: ${firstName} (${email}), RegNo: ${newRegNum} (lastID not retrieved)`, 'student', null, req.ip);
+            console.warn("[Register Student] Could not retrieve lastID for logging for student:", newRegNum);
+        }
+
+        req.flash('success_msg', `✨ Success! ✨ Student ${firstName} (${email}) registered successfully with Registration Number: ${newRegNum}. 🎉`);
         res.redirect('/admin/register-student');
     } catch (err) {
         console.error("Error registering student:", err);
@@ -71,22 +86,16 @@ const registerStudent = async (req, res) => {
 const listCourses = async (req, res) => {
     try {
         const courses = await db.allAsync("SELECT * FROM courses ORDER BY created_at DESC");
-        res.render('pages/admin/courses/index', {
-            title: 'Manage Courses', admin: req.admin, courses,
-        });
+        res.render('pages/admin/courses/index', { title: 'Manage Courses', admin: req.admin, courses });
     } catch (err) {
         console.error("Error fetching courses:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t retrieve courses. ${err.message} 😔`);
         res.redirect('/admin/dashboard');
     }
 };
-
 const renderAddCourseForm = (req, res) => {
-    res.render('pages/admin/courses/add', {
-        title: 'Add New Course', admin: req.admin, errors: [], name: '', description: ''
-    });
+    res.render('pages/admin/courses/add', { title: 'Add New Course', admin: req.admin, errors: [], name: '', description: '' });
 };
-
 const addCourse = [
     body('name').trim().notEmpty().withMessage('Course name is required.').isLength({ min: 3 }).withMessage('Course name must be at least 3 characters long.'),
     body('description').trim().optional({ checkFalsy: true }),
@@ -94,7 +103,6 @@ const addCourse = [
         const errors = validationResult(req);
         const { name, description } = req.body;
         if (!errors.isEmpty()) {
-            // express-validator errors will be picked up by flash-messages.ejs
             return res.status(400).render('pages/admin/courses/add', { title: 'Add New Course', admin: req.admin, errors: errors.array(), name, description });
         }
         try {
@@ -109,11 +117,9 @@ const addCourse = [
         }
     }
 ];
-
 const renderEditCourseForm = async (req, res) => {
-    const courseId = req.params.id;
     try {
-        const course = await db.getAsync("SELECT * FROM courses WHERE id = ?", [courseId]);
+        const course = await db.getAsync("SELECT * FROM courses WHERE id = ?", [req.params.id]);
         if (!course) {
             req.flash('error_msg', '⚠️ Course not found.');
             return res.redirect('/admin/courses');
@@ -121,11 +127,10 @@ const renderEditCourseForm = async (req, res) => {
         res.render('pages/admin/courses/edit', { title: 'Edit Course', admin: req.admin, course, errors: [] });
     } catch (err) {
         console.error("Error fetching course for edit:", err);
-        req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load course details for editing. ${err.message} 😔`);
+        req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load course details. ${err.message} 😔`);
         res.redirect('/admin/courses');
     }
 };
-
 const updateCourse = [
     body('name').trim().notEmpty().withMessage('Course name is required.').isLength({ min: 3 }).withMessage('Course name must be at least 3 characters long.'),
     body('description').trim().optional({ checkFalsy: true }),
@@ -134,7 +139,7 @@ const updateCourse = [
         const errors = validationResult(req);
         const { name, description } = req.body;
         if (!errors.isEmpty()) {
-            const course = await db.getAsync("SELECT * FROM courses WHERE id = ?", [courseId]); // For re-rendering with values
+            const course = await db.getAsync("SELECT * FROM courses WHERE id = ?", [courseId]);
             return res.status(400).render('pages/admin/courses/edit', { title: 'Edit Course', admin: req.admin, errors: errors.array(), course: { ...course, name, description } });
         }
         try {
@@ -153,10 +158,9 @@ const updateCourse = [
         }
     }
 ];
-
 const deleteCourse = async (req, res) => {
-    const courseId = req.params.id;
     try {
+        const courseId = req.params.id;
         const enrollment = await db.getAsync("SELECT COUNT(id) as count FROM enrollments WHERE course_id = ?", [courseId]);
         if (enrollment && enrollment.count > 0) {
             req.flash('error_msg', `⚠️ Cannot delete course. It has ${enrollment.count} active student enrollment(s). Please remove enrollments first.`);
@@ -176,6 +180,8 @@ const deleteCourse = async (req, res) => {
         res.redirect('/admin/courses');
     }
 };
+
+// ... (Student Management, Academic Management, Fee Management, etc. with updated flash messages) ...
 
 const listStudents = async (req, res) => {
     try {
@@ -203,20 +209,19 @@ const viewStudentDetails = async (req, res) => {
         const overallBalance = totalCharged - totalPaid;
         res.render('pages/admin/students/view', { title: 'View Student Details', admin: req.admin, student, enrollments: enrollments || [], fees: fees || [], overallBalance });
     } catch (err) {
-        console.error("Error fetching student details, enrollments, and fees:", err);
+        console.error("Error fetching student details:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load student details. ${err.message} 😔`);
         res.redirect('/admin/students');
     }
 };
-
 const renderEditStudentForm = async (req, res) => {
-    const studentId = req.params.id;
     try {
-        const student = await db.getAsync("SELECT * FROM students WHERE id = ?", [studentId]);
+        const student = await db.getAsync("SELECT * FROM students WHERE id = ?", [req.params.id]);
         if (!student) {
             req.flash('error_msg', '⚠️ Student not found.');
             return res.redirect('/admin/students');
         }
+        // TODO: Include new fields (second_name, surname, etc.) when rendering
         res.render('pages/admin/students/edit', { title: 'Edit Student', admin: req.admin, student, errors: [], firstName: student.first_name, email: student.email });
     } catch (err) {
         console.error("Error fetching student for edit:", err);
@@ -224,14 +229,14 @@ const renderEditStudentForm = async (req, res) => {
         res.redirect('/admin/students');
     }
 };
-
 const updateStudent = [
     body('firstName').trim().notEmpty().withMessage('First name is required.'),
     body('email').trim().isEmail().withMessage('Valid email is required.'),
+    // TODO: Add validators for new fields
     async (req, res) => {
         const studentId = req.params.id;
         const errors = validationResult(req);
-        const { firstName, email } = req.body;
+        const { firstName, email } = req.body; // TODO: Add new fields
         const studentForForm = await db.getAsync("SELECT * FROM students WHERE id = ?", [studentId]);
         if (!studentForForm) {
             req.flash('error_msg', '⚠️ Student not found.');
@@ -248,6 +253,7 @@ const updateStudent = [
                     return res.status(400).render('pages/admin/students/edit', { title: 'Edit Student', admin: req.admin, student: studentForForm, firstName, email, errors: [{msg: 'This email address is already in use by another student.'}] });
                 }
             }
+            // TODO: Update new fields in this query
             await db.runAsync("UPDATE students SET first_name = ?, email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [firstName, email.toLowerCase(), studentId]);
             logAdminAction(req.admin.id, 'STUDENT_UPDATED', `Admin ${req.admin.name} updated details for student ID: ${studentId}`, 'student', studentId, req.ip);
             req.flash('success_msg', '✨ Update Successful! ✨ Student details updated successfully! 🎉');
@@ -259,45 +265,40 @@ const updateStudent = [
         }
     }
 ];
-
 const toggleStudentStatus = async (req, res) => {
-    const studentId = req.params.id;
     try {
-        const student = await db.getAsync("SELECT id, first_name, is_active FROM students WHERE id = ?", [studentId]);
+        const student = await db.getAsync("SELECT id, first_name, is_active FROM students WHERE id = ?", [req.params.id]);
         if (!student) {
             req.flash('error_msg', '⚠️ Student not found.');
             return res.redirect('/admin/students');
         }
         const newStatus = !student.is_active;
-        await db.runAsync("UPDATE students SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [newStatus, studentId]);
+        await db.runAsync("UPDATE students SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [newStatus, req.params.id]);
         const action = newStatus ? 'ACTIVATED' : 'DEACTIVATED';
-        logAdminAction(req.admin.id, `STUDENT_${action}`, `Admin ${req.admin.name} ${action.toLowerCase()} student: ${student.first_name} (ID: ${studentId})`, 'student', studentId, req.ip);
+        logAdminAction(req.admin.id, `STUDENT_${action}`, `Admin ${req.admin.name} ${action.toLowerCase()} student: ${student.first_name} (ID: ${req.params.id})`, 'student', req.params.id, req.ip);
         req.flash('success_msg', `✨ Update Successful! ✨ Student account ${student.first_name} has been ${action.toLowerCase()}. 🎉`);
-        res.redirect(`/admin/students/view/${studentId}`);
+        res.redirect(`/admin/students/view/${req.params.id}`);
     } catch (err) {
         console.error("Error toggling student status:", err);
         req.flash('error_msg', `❌ Operation Failed! ❌ Failed to update student status. ${err.message} 😔`);
         res.redirect('/admin/students');
     }
 };
-
 const renderManageStudentEnrollments = async (req, res) => {
-    const studentId = req.params.studentId;
     try {
-        const student = await db.getAsync("SELECT id, first_name, registration_number FROM students WHERE id = ?", [studentId]);
+        const student = await db.getAsync("SELECT id, first_name, registration_number FROM students WHERE id = ?", [req.params.studentId]);
         if (!student) { req.flash('error_msg', '⚠️ Student not found.'); return res.redirect('/admin/students'); }
-        const currentEnrollments = await db.allAsync(`SELECT e.id, e.enrollment_date, e.final_grade, c.name as course_name FROM enrollments e JOIN courses c ON e.course_id = c.id WHERE e.student_id = ? ORDER BY c.name`, [studentId]);
-        const availableCourses = await db.allAsync(`SELECT id, name FROM courses WHERE id NOT IN (SELECT course_id FROM enrollments WHERE student_id = ?) ORDER BY name`, [studentId]);
+        const currentEnrollments = await db.allAsync(`SELECT e.id, e.enrollment_date, e.final_grade, c.name as course_name FROM enrollments e JOIN courses c ON e.course_id = c.id WHERE e.student_id = ? ORDER BY c.name`, [req.params.studentId]);
+        const availableCourses = await db.allAsync(`SELECT id, name FROM courses WHERE id NOT IN (SELECT course_id FROM enrollments WHERE student_id = ?) ORDER BY name`, [req.params.studentId]);
         res.render('pages/admin/students/enrollments', { title: `Manage Enrollments for ${student.first_name}`, admin: req.admin, student, currentEnrollments, availableCourses });
     } catch (err) {
         console.error("Error fetching data for student enrollments page:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load enrollment management page. ${err.message} 😔`);
-        res.redirect(`/admin/students/view/${studentId}`);
+        res.redirect(`/admin/students/view/${req.params.studentId}`);
     }
 };
-
 const enrollStudentInCourse = async (req, res) => {
-    const studentId = req.params.studentId;
+    const { studentId } = req.params;
     const { courseId } = req.body;
     if (!courseId) { req.flash('error_msg', '⚠️ Please select a course to enroll.'); return res.redirect(`/admin/students/${studentId}/enrollments`);}
     try {
@@ -321,10 +322,9 @@ const enrollStudentInCourse = async (req, res) => {
         res.redirect(`/admin/students/${studentId}/enrollments`);
     }
 };
-
 const removeStudentFromCourse = async (req, res) => {
-    const enrollmentId = req.params.enrollmentId;
-    const studentId = req.body.studentId;
+    const { enrollmentId } = req.params;
+    const { studentId } = req.body;
     if (!studentId) { req.flash('error_msg', '⚠️ Student identifier missing.'); return res.redirect('/admin/students'); }
     try {
         const enrollment = await db.getAsync("SELECT e.id, s.first_name as student_name, c.name as course_name FROM enrollments e JOIN students s ON e.student_id = s.id JOIN courses c ON e.course_id = c.id WHERE e.id = ?", [enrollmentId]);
@@ -340,10 +340,9 @@ const removeStudentFromCourse = async (req, res) => {
         res.redirect(`/admin/students/${studentId}/enrollments`);
     }
 };
-
 const renderEnterMarksForm = async (req, res) => {
-    const enrollmentId = req.params.enrollmentId;
     try {
+        const { enrollmentId } = req.params;
         const enrollment = await db.getAsync("SELECT * FROM enrollments WHERE id = ?", [enrollmentId]);
         if (!enrollment) { req.flash('error_msg', '⚠️ Enrollment record not found.'); return res.redirect('/admin/students'); }
         const student = await db.getAsync("SELECT id, first_name, registration_number FROM students WHERE id = ?", [enrollment.student_id]);
@@ -353,25 +352,28 @@ const renderEnterMarksForm = async (req, res) => {
     } catch (err) {
         console.error("Error fetching data for marks entry form:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load marks entry page. ${err.message} 😔`);
-        const tempEnrollment = await db.getAsync("SELECT student_id FROM enrollments WHERE id = ?", [enrollmentId]).catch(() => null);
+        const tempEnrollment = await db.getAsync("SELECT student_id FROM enrollments WHERE id = ?", [req.params.enrollmentId]).catch(() => null);
         if (tempEnrollment && tempEnrollment.student_id) return res.redirect(`/admin/students/${tempEnrollment.student_id}/enrollments`);
         res.redirect('/admin/students');
     }
 };
-
 const saveMarks = [
     body('coursework_marks').optional({ checkFalsy: true }).isInt({ min: 0, max: 100 }).withMessage('Coursework marks must be between 0 and 100.'),
     body('main_exam_marks').optional({ checkFalsy: true }).isInt({ min: 0, max: 100 }).withMessage('Main exam marks must be between 0 and 100.'),
     async (req, res) => {
-        const enrollmentId = req.params.enrollmentId;
+        const { enrollmentId } = req.params;
         const errors = validationResult(req);
         let enrollmentForForm, studentForForm, courseForForm;
-        try {
+        try { // Encapsulate pre-fetch in try-catch
             enrollmentForForm = await db.getAsync("SELECT * FROM enrollments WHERE id = ?", [enrollmentId]);
             if (enrollmentForForm) {
                 studentForForm = await db.getAsync("SELECT id, first_name FROM students WHERE id = ?", [enrollmentForForm.student_id]);
                 courseForForm = await db.getAsync("SELECT id, name FROM courses WHERE id = ?", [enrollmentForForm.course_id]);
-            } else { req.flash('error_msg', '⚠️ Enrollment not found.'); return res.redirect('/admin/students'); }
+            }
+            if (!enrollmentForForm || !studentForForm || !courseForForm) { // Check all are found
+                req.flash('error_msg', '⚠️ Enrollment, Student, or Course details not found.');
+                return res.redirect('/admin/students');
+            }
         } catch (fetchErr) {
             console.error("Error fetching details for saveMarks error rendering:", fetchErr);
             req.flash('error_msg', `⚠️ Failed to Load Data! An error occurred fetching enrollment details. ${fetchErr.message} 😔`);
@@ -400,11 +402,9 @@ const saveMarks = [
         }
     }
 ];
-
 const renderLogFeeForm = async (req, res) => {
-    const studentId = req.params.studentId;
     try {
-        const student = await db.getAsync("SELECT id, first_name, registration_number FROM students WHERE id = ?", [studentId]);
+        const student = await db.getAsync("SELECT id, first_name, registration_number FROM students WHERE id = ?", [req.params.studentId]);
         if (!student) { req.flash('error_msg', '⚠️ Student not found.'); return res.redirect('/admin/students'); }
         res.render('pages/admin/fees/log', { title: `Log Fee for ${student.first_name}`, admin: req.admin, student, description: '', total_amount: '0.00', amount_paid: '0.00', payment_date: new Date().toISOString().split('T')[0], payment_method: '', notes: '' });
     } catch (err) {
@@ -413,7 +413,6 @@ const renderLogFeeForm = async (req, res) => {
         res.redirect('/admin/students');
     }
 };
-
 const saveFeeEntry = [
     body('description').trim().notEmpty().withMessage('Description is required.'),
     body('total_amount').isFloat({ min: 0 }).withMessage('Charge amount must be a valid number (0 or more).'),
@@ -422,7 +421,7 @@ const saveFeeEntry = [
     body('payment_method').trim().optional({ checkFalsy: true }),
     body('notes').trim().optional({ checkFalsy: true }),
     async (req, res) => {
-        const studentId = req.params.studentId;
+        const { studentId } = req.params;
         const errors = validationResult(req);
         const { description, total_amount, amount_paid, payment_date, payment_method, notes } = req.body;
         const student = await db.getAsync("SELECT id, first_name FROM students WHERE id = ?", [studentId]);
@@ -433,7 +432,7 @@ const saveFeeEntry = [
         const chargeAmount = parseFloat(total_amount); const paidAmount = parseFloat(amount_paid);
         if (chargeAmount === 0 && paidAmount === 0) {
              req.flash('error_msg', '⚠️ Either Charge Amount or Payment Amount must be greater than 0.');
-             return res.status(400).render('pages/admin/fees/log', { title: `Log Fee for ${student.first_name}`, admin: req.admin, student, description, total_amount, amount_paid, payment_date, payment_method, notes });
+             return res.status(400).render('pages/admin/fees/log', { title: `Log Fee for ${student.first_name}`, admin: req.admin, student, description, total_amount, amount_paid, payment_date, payment_method, notes, errors: [{msg: 'Either Charge Amount or Payment Amount must be greater than 0.'}] });
         }
         try {
             await db.runAsync(`INSERT INTO fees (student_id, description, total_amount, amount_paid, payment_date, payment_method, notes, logged_by_admin_id, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`, [studentId, description, chargeAmount, paidAmount, payment_date, payment_method || null, notes || null, req.admin.id]);
@@ -447,20 +446,16 @@ const saveFeeEntry = [
         }
     }
 ];
-
 const listNotifications = async (req, res) => {
     try {
         const notifications = await db.allAsync("SELECT * FROM notifications ORDER BY created_at DESC");
-        res.render('pages/admin/notifications/index', {
-            title: 'Manage Notifications', admin: req.admin, notifications
-        });
+        res.render('pages/admin/notifications/index', { title: 'Manage Notifications', admin: req.admin, notifications });
     } catch (err) {
         console.error("Error fetching notifications:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t retrieve notifications. 😔`);
         res.redirect('/admin/dashboard');
     }
 };
-
 const renderCreateNotificationForm = async (req, res) => {
     let students = [], courses = [];
     try {
@@ -477,7 +472,6 @@ const renderCreateNotificationForm = async (req, res) => {
         target_audience_identifier_student: '', target_audience_identifier_course: ''
     });
 };
-
 const createNotification = [
     body('title').trim().notEmpty().withMessage('Title is required.'),
     body('message').trim().notEmpty().withMessage('Message is required.'),
@@ -492,7 +486,11 @@ const createNotification = [
         else if (target_audience_type === 'course_id') finalTargetIdentifier = target_audience_identifier_course;
 
         if (!errors.isEmpty()) {
-            let students = [], courses = []; try { students = await db.allAsync("SELECT id, first_name, registration_number FROM students WHERE is_active = TRUE ORDER BY first_name"); courses = await db.allAsync("SELECT id, name FROM courses ORDER BY name"); } catch (err) { console.error("Error fetching for error render:", err); }
+            let students = [], courses = [];
+            try {
+                students = await db.allAsync("SELECT id, first_name, registration_number FROM students WHERE is_active = TRUE ORDER BY first_name");
+                courses = await db.allAsync("SELECT id, name FROM courses ORDER BY name");
+            } catch (err) { console.error("Error fetching for error render:", err); }
             return res.status(400).render('pages/admin/notifications/form', { title: 'Create Notification', admin: req.admin, errors: errors.array(), title_val: title, message_val: message, target_audience_type, target_audience_identifier: finalTargetIdentifier, students, courses, target_audience_identifier_student, target_audience_identifier_course });
         }
         try {
@@ -510,15 +508,13 @@ const createNotification = [
         }
     }
 ];
-
 const deleteNotification = async (req, res) => {
-    const notificationId = req.params.id;
     try {
-        const result = await db.runAsync("DELETE FROM notifications WHERE id = ?", [notificationId]);
+        const result = await db.runAsync("DELETE FROM notifications WHERE id = ?", [req.params.id]);
         if (result.changes === 0) {
             req.flash('error_msg', '⚠️ Notification not found.');
         } else {
-            logAdminAction(req.admin.id, 'NOTIFICATION_DELETED', `Admin ${req.admin.name} deleted notification ID: ${notificationId}`, 'notification', notificationId, req.ip);
+            logAdminAction(req.admin.id, 'NOTIFICATION_DELETED', `Admin ${req.admin.name} deleted notification ID: ${req.params.id}`, 'notification', req.params.id, req.ip);
             req.flash('success_msg', '✨ Success! ✨ Notification deleted successfully! 🎉');
         }
         res.redirect('/admin/notifications');
@@ -528,39 +524,26 @@ const deleteNotification = async (req, res) => {
         res.redirect('/admin/notifications');
     }
 };
-
 const listResources = async (req, res) => {
     try {
-        const resources = await db.allAsync(`
-            SELECT sr.*, c.name as course_name
-            FROM study_resources sr
-            LEFT JOIN courses c ON sr.course_id = c.id
-            ORDER BY sr.created_at DESC
-        `);
-        res.render('pages/admin/resources/index', {
-            title: 'Manage Study Resources', admin: req.admin, resources
-        });
+        const resources = await db.allAsync(`SELECT sr.*, c.name as course_name FROM study_resources sr LEFT JOIN courses c ON sr.course_id = c.id ORDER BY sr.created_at DESC`);
+        res.render('pages/admin/resources/index', { title: 'Manage Study Resources', admin: req.admin, resources });
     } catch (err) {
         console.error("Error fetching study resources:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load study resources. ${err.message} 😔`);
         res.redirect('/admin/dashboard');
     }
 };
-
 const renderCreateResourceForm = async (req, res) => {
     try {
         const courses = await db.allAsync("SELECT id, name FROM courses ORDER BY name");
-        res.render('pages/admin/resources/add', {
-            title: 'Add Study Resource', admin: req.admin, courses,
-            errors: [], title_val: '', description_val: '', resource_url_val: '', course_id_val: null
-        });
+        res.render('pages/admin/resources/add', { title: 'Add Study Resource', admin: req.admin, courses, errors: [], title_val: '', description_val: '', resource_url_val: '', course_id_val: null });
     } catch (err) {
         console.error("Error fetching courses for resource form:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load data for the resource form. ${err.message} 😔`);
         res.redirect('/admin/study-resources');
     }
 };
-
 const createResource = [
     body('title').trim().notEmpty().withMessage('Resource title is required.'),
     body('resource_url').trim().notEmpty().withMessage('Resource URL is required.').isURL().withMessage('Must be a valid URL.'),
@@ -571,16 +554,13 @@ const createResource = [
         const { title, description, resource_url, course_id } = req.body;
         if (!errors.isEmpty()) {
             const courses = await db.allAsync("SELECT id, name FROM courses ORDER BY name").catch(() => []);
-            return res.status(400).render('pages/admin/resources/add', {
-                title: 'Add Study Resource', admin: req.admin, courses, errors: errors.array(),
-                title_val: title, description_val: description, resource_url_val: resource_url, course_id_val: course_id
-            });
+            return res.status(400).render('pages/admin/resources/add', { title: 'Add Study Resource', admin: req.admin, courses, errors: errors.array(), title_val: title, description_val: description, resource_url_val: resource_url, course_id_val: course_id });
         }
         try {
             const finalCourseId = course_id ? parseInt(course_id, 10) : null;
             if (finalCourseId) {
                 const courseExists = await db.getAsync("SELECT id FROM courses WHERE id = ?", [finalCourseId]);
-                if (!courseExists) throw new Error('Selected course not found.');
+                if (!courseExists) throw new Error('⚠️ Selected course not found.');
             }
             const result = await db.runAsync( `INSERT INTO study_resources (title, description, resource_url, course_id, uploaded_by_admin_id, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`, [title, description, resource_url, finalCourseId, req.admin.id] );
             logAdminAction(req.admin.id, 'RESOURCE_CREATED', `Admin ${req.admin.name} created study resource: ${title}`, 'study_resource', result.lastID, req.ip);
@@ -588,37 +568,28 @@ const createResource = [
             res.redirect('/admin/study-resources');
         } catch (err) {
             console.error("Error adding study resource:", err);
-            const specificError = err.message.includes("Selected course not found") ? `⚠️ ${err.message}` : `❌ Operation Failed! ❌ Failed to add study resource. ${err.message} 😔`;
+            const specificError = err.message.startsWith("⚠️") ? err.message : `❌ Operation Failed! ❌ Failed to add study resource. ${err.message} 😔`;
             req.flash('error_msg', specificError);
-            const courses = await db.allAsync("SELECT id, name FROM courses ORDER BY name").catch(() => []);
-            res.status(400).render('pages/admin/resources/add', { // Changed to 400 for consistency if rendering with error
-                title: 'Add Study Resource', admin: req.admin, courses,
-                errors: [{msg: specificError}],
-                title_val: title, description_val: description, resource_url_val: resource_url, course_id_val: course_id
-            });
+            const courses = await db.allAsync("SELECT id, name FROM courses ORDER BY name").catch(() => []); // Refetch for form
+            res.status(400).render('pages/admin/resources/add', { title: 'Add Study Resource', admin: req.admin, courses, errors: [{msg: specificError}], title_val: title, description_val: description, resource_url_val: resource_url, course_id_val: course_id });
         }
     }
 ];
-
 const renderEditResourceForm = async (req, res) => {
-    const resourceId = req.params.id;
     try {
-        const resource = await db.getAsync("SELECT * FROM study_resources WHERE id = ?", [resourceId]);
+        const resource = await db.getAsync("SELECT * FROM study_resources WHERE id = ?", [req.params.id]);
         if (!resource) {
             req.flash('error_msg', '⚠️ Study resource not found.');
             return res.redirect('/admin/study-resources');
         }
         const courses = await db.allAsync("SELECT id, name FROM courses ORDER BY name");
-        res.render('pages/admin/resources/edit', {
-            title: 'Edit Study Resource', admin: req.admin, resource, courses, errors: []
-        });
+        res.render('pages/admin/resources/edit', { title: 'Edit Study Resource', admin: req.admin, resource, courses, errors: [] });
     } catch (err) {
         console.error("Error fetching resource for edit:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load resource details for editing. ${err.message} 😔`);
         res.redirect('/admin/study-resources');
     }
 };
-
 const updateResource = [
     body('title').trim().notEmpty().withMessage('Resource title is required.'),
     body('resource_url').trim().notEmpty().withMessage('Resource URL is required.').isURL().withMessage('Must be a valid URL.'),
@@ -629,19 +600,15 @@ const updateResource = [
         const errors = validationResult(req);
         const { title, description, resource_url, course_id } = req.body;
         if (!errors.isEmpty()) {
-            const resource = await db.getAsync("SELECT * FROM study_resources WHERE id = ?", [resourceId]).catch(() => null);
+            const resource = await db.getAsync("SELECT * FROM study_resources WHERE id = ?", [resourceId]).catch(() => ({id: resourceId}));
             const courses = await db.allAsync("SELECT id, name FROM courses ORDER BY name").catch(() => []);
-            return res.status(400).render('pages/admin/resources/edit', {
-                title: 'Edit Study Resource', admin: req.admin,
-                resource: resource ? {...resource, title, description, resource_url, course_id } : {id: resourceId, title, description, resource_url, course_id},
-                courses, errors: errors.array(),
-            });
+            return res.status(400).render('pages/admin/resources/edit', { title: 'Edit Study Resource', admin: req.admin, resource: { ...resource, title, description, resource_url, course_id }, courses, errors: errors.array() });
         }
         try {
             const finalCourseId = course_id ? parseInt(course_id, 10) : null;
              if (finalCourseId) {
                 const courseExists = await db.getAsync("SELECT id FROM courses WHERE id = ?", [finalCourseId]);
-                if (!courseExists) throw new Error('Selected course not found.');
+                if (!courseExists) throw new Error('⚠️ Selected course not found.');
             }
             const result = await db.runAsync( `UPDATE study_resources SET title = ?, description = ?, resource_url = ?, course_id = ?, uploaded_by_admin_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [title, description, resource_url, finalCourseId, req.admin.id, resourceId] );
             if (result.changes === 0) {
@@ -653,21 +620,19 @@ const updateResource = [
             res.redirect('/admin/study-resources');
         } catch (err) {
             console.error("Error updating study resource:", err);
-            const specificError = err.message.includes("Selected course not found") ? `⚠️ ${err.message}` : `❌ Operation Failed! ❌ Failed to update study resource. ${err.message} 😔`;
+            const specificError = err.message.startsWith("⚠️") ? err.message : `❌ Operation Failed! ❌ Failed to update study resource. ${err.message} 😔`;
             req.flash('error_msg', specificError);
             res.redirect(`/admin/study-resources/edit/${resourceId}`);
         }
     }
 ];
-
 const deleteResource = async (req, res) => {
-    const resourceId = req.params.id;
     try {
-        const result = await db.runAsync("DELETE FROM study_resources WHERE id = ?", [resourceId]);
+        const result = await db.runAsync("DELETE FROM study_resources WHERE id = ?", [req.params.id]);
         if (result.changes === 0) {
             req.flash('error_msg', '⚠️ Study resource not found.');
         } else {
-            logAdminAction(req.admin.id, 'RESOURCE_DELETED', `Admin ${req.admin.name} deleted study resource ID: ${resourceId}`, 'study_resource', resourceId, req.ip);
+            logAdminAction(req.admin.id, 'RESOURCE_DELETED', `Admin ${req.admin.name} deleted study resource ID: ${req.params.id}`, 'study_resource', req.params.id, req.ip);
             req.flash('success_msg', '✨ Success! ✨ Study resource deleted successfully! 🎉');
         }
         res.redirect('/admin/study-resources');
@@ -677,7 +642,6 @@ const deleteResource = async (req, res) => {
         res.redirect('/admin/study-resources');
     }
 };
-
 const renderWifiSettingsForm = async (req, res) => {
     try {
         const settingKeys = ['wifi_ssid', 'wifi_password_plaintext', 'wifi_disclaimer'];
@@ -691,7 +655,6 @@ const renderWifiSettingsForm = async (req, res) => {
         res.redirect('/admin/dashboard');
     }
 };
-
 const updateWifiSettings = [
     body('wifi_ssid').trim().notEmpty().withMessage('WiFi SSID is required.'),
     body('wifi_password').trim().optional({checkFalsy: true}).isLength({min:8}).withMessage('New WiFi password must be at least 8 characters if provided.'),
@@ -702,9 +665,9 @@ const updateWifiSettings = [
         if (!errors.isEmpty()) {
             const settingKeys = ['wifi_ssid', 'wifi_password_plaintext', 'wifi_disclaimer'];
             const settingsData = await db.allAsync("SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN (?,?,?)", settingKeys).catch(() => []);
-            const currentSettings = {};
+            const currentSettings = {}; // Not strictly needed if just re-rendering with new inputs
             settingsData.forEach(row => { currentSettings[row.setting_key] = row.setting_value; });
-            return res.status(400).render('pages/admin/settings/wifi', { title: 'WiFi Settings Management', admin: req.admin, settings: { wifi_ssid, wifi_disclaimer }, errors: errors.array() });
+            return res.status(400).render('pages/admin/settings/wifi', { title: 'WiFi Settings Management', admin: req.admin, settings: { wifi_ssid, wifi_disclaimer, wifi_password_plaintext: (wifi_password || currentSettings.wifi_password_plaintext) }, errors: errors.array() });
         }
         try {
             const upsertSetting = (key, value, desc, adminId) => db.runAsync( `INSERT INTO site_settings (setting_key, setting_value, description, updated_by_admin_id, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value, updated_by_admin_id = excluded.updated_by_admin_id, updated_at = CURRENT_TIMESTAMP`, [key, value, desc, adminId] );
@@ -717,7 +680,7 @@ const updateWifiSettings = [
                 updatedSettingsForLog.push('Password');
             }
             updates.push(upsertSetting('wifi_disclaimer', wifi_disclaimer || '', 'WiFi Usage Disclaimer', req.admin.id));
-            if (wifi_disclaimer || wifi_disclaimer === '') updatedSettingsForLog.push('Disclaimer');
+            if (wifi_disclaimer || wifi_disclaimer === '') updatedSettingsForLog.push('Disclaimer'); // Check if it was actually changed
             await Promise.all(updates);
             logAdminAction(req.admin.id, 'WIFI_SETTINGS_UPDATED', `Admin ${req.admin.name} updated WiFi settings: ${updatedSettingsForLog.join(', ')}`, 'site_settings', null, req.ip);
             req.flash('success_msg', '✨ Update Successful! ✨ WiFi settings updated successfully! 🎉');
@@ -729,27 +692,19 @@ const updateWifiSettings = [
         }
     }
 ];
-
 const listDownloadableDocuments = async (req, res) => {
     try {
         const documents = await db.allAsync("SELECT * FROM downloadable_documents ORDER BY created_at DESC");
-        res.render('pages/admin/documents/index', {
-            title: 'Manage Downloadable Documents', admin: req.admin, documents
-        });
+        res.render('pages/admin/documents/index', { title: 'Manage Downloadable Documents', admin: req.admin, documents });
     } catch (err) {
         console.error("Error fetching downloadable documents:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load document list. ${err.message} 😔`);
         res.redirect('/admin/dashboard');
     }
 };
-
 const renderCreateDocumentForm = (req, res) => {
-    res.render('pages/admin/documents/add', {
-        title: 'Add Downloadable Document', admin: req.admin, errors: [],
-        title_val: '', description_val: '', file_url_val: '', type_val: 'public', expiry_date_val: ''
-    });
+    res.render('pages/admin/documents/add', { title: 'Add Downloadable Document', admin: req.admin, errors: [], title_val: '', description_val: '', file_url_val: '', type_val: 'public', expiry_date_val: '' });
 };
-
 const createDocument = [
     body('title').trim().notEmpty().withMessage('Document title is required.'),
     body('file_url').trim().notEmpty().withMessage('File URL is required.').isURL().withMessage('Must be a valid URL.'),
@@ -776,11 +731,9 @@ const createDocument = [
         }
     }
 ];
-
 const renderEditDocumentForm = async (req, res) => {
-    const docId = req.params.id;
     try {
-        const document = await db.getAsync("SELECT * FROM downloadable_documents WHERE id = ?", [docId]);
+        const document = await db.getAsync("SELECT * FROM downloadable_documents WHERE id = ?", [req.params.id]);
         if (!document) { req.flash('error_msg', '⚠️ Document entry not found.'); return res.redirect('/admin/documents');}
         if (document.expiry_date) document.expiry_date_formatted = new Date(document.expiry_date).toISOString().split('T')[0];
         res.render('pages/admin/documents/edit', { title: 'Edit Downloadable Document', admin: req.admin, document, errors: [] });
@@ -790,7 +743,6 @@ const renderEditDocumentForm = async (req, res) => {
         res.redirect('/admin/documents');
     }
 };
-
 const updateDocument = [
     body('title').trim().notEmpty().withMessage('Document title is required.'),
     body('file_url').trim().notEmpty().withMessage('File URL is required.').isURL().withMessage('Must be a valid URL.'),
@@ -824,15 +776,13 @@ const updateDocument = [
         }
     }
 ];
-
 const deleteDocument = async (req, res) => {
-    const docId = req.params.id;
     try {
-        const result = await db.runAsync("DELETE FROM downloadable_documents WHERE id = ?", [docId]);
+        const result = await db.runAsync("DELETE FROM downloadable_documents WHERE id = ?", [req.params.id]);
         if (result.changes === 0) {
             req.flash('error_msg', '⚠️ Document entry not found.');
         } else {
-            logAdminAction(req.admin.id, 'DOCUMENT_DELETED', `Admin ${req.admin.name} deleted document entry ID: ${docId}`, 'downloadable_document', docId, req.ip);
+            logAdminAction(req.admin.id, 'DOCUMENT_DELETED', `Admin ${req.admin.name} deleted document entry ID: ${req.params.id}`, 'downloadable_document', req.params.id, req.ip);
             req.flash('success_msg', '✨ Success! ✨ Document entry deleted successfully! 🎉');
         }
         res.redirect('/admin/documents');
@@ -842,9 +792,8 @@ const deleteDocument = async (req, res) => {
         res.redirect('/admin/documents');
     }
 };
-
 const adminResetStudentPassword = async (req, res) => {
-    const studentId = req.params.studentId;
+    const studentId = req.params.studentId; // Correctly get studentId from params
     const adminPerformingAction = req.admin;
     try {
         const student = await db.getAsync("SELECT id, first_name, email FROM students WHERE id = ?", [studentId]);
@@ -866,44 +815,38 @@ const adminResetStudentPassword = async (req, res) => {
         res.redirect(`/admin/students/view/${studentId}`);
     }
 };
-
 const viewActionLogs = async (req, res) => {
     try {
         const logs = await db.allAsync("SELECT * FROM action_logs ORDER BY created_at DESC LIMIT 100");
-        res.render('pages/admin/action-logs', {
-            title: 'Admin Action Logs',
-            admin: req.admin,
-            logs
-        });
+        res.render('pages/admin/action-logs', { title: 'Admin Action Logs', admin: req.admin, logs });
     } catch (err) {
         console.error("Error fetching action logs:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load action logs. ${err.message} 😔`);
         res.redirect('/admin/dashboard');
     }
 };
-
 const renderSendEmailForm = async (req, res) => {
     try {
         const students = await db.allAsync("SELECT id, first_name, email FROM students WHERE is_active = 1 ORDER BY first_name");
         const courses = await db.allAsync("SELECT id, name FROM courses ORDER BY name");
-        res.render('pages/admin/emails/send', {
-            title: 'Send Bulk Email', admin: req.admin, students, courses, errors: [], subject: '', message: ''
-        });
+        res.render('pages/admin/emails/send', { title: 'Send Bulk Email', admin: req.admin, students, courses, errors: [], subject: '', message: '' });
     } catch (err) {
         console.error("Error loading send email form:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load the email form. ${err.message} 😔`);
         res.redirect('/admin/dashboard');
     }
 };
-
 const sendBulkEmail = async (req, res) => {
     const { subject, message, recipients, recipient_type } = req.body;
-    let errors = [];
-    if (!subject || !message) { errors.push({ msg: '⚠️ Subject and message are required.' }); }
-    if (!recipients || recipients.length === 0) { errors.push({ msg: '⚠️ Please select at least one recipient.' }); }
+    let valErrors = [];
+    if (!subject || !message) { valErrors.push({ msg: '⚠️ Subject and message are required.' }); }
+    if (!recipient_type) { valErrors.push({msg: '⚠️ Recipient type is required.'})}
+    if (recipient_type !== 'all' && (!recipients || recipients.length === 0)) { valErrors.push({ msg: '⚠️ Please select at least one recipient or choose "All Students".' }); }
 
-    if (errors.length > 0) {
-        errors.forEach(err => req.flash('error_msg', err.msg));
+    if (valErrors.length > 0) {
+        valErrors.forEach(err => req.flash('error_msg', err.msg));
+        // To repopulate form, ideally we'd pass back subject, message, etc.
+        // For simplicity with redirects, we'll just redirect. User loses input.
         return res.redirect('/admin/emails/send');
     }
 
@@ -912,13 +855,13 @@ const sendBulkEmail = async (req, res) => {
         let emailList = [];
         if (recipient_type === 'all') {
             emailList = await db.allAsync("SELECT first_name, email FROM students WHERE is_active = 1");
-        } else if (recipient_type === 'selected') {
+        } else if (recipient_type === 'selected_students' && recipients) {
             const recipientIds = Array.isArray(recipients) ? recipients : [recipients];
             if (recipientIds.length > 0) {
                 const placeholders = recipientIds.map(() => '?').join(',');
                 emailList = await db.allAsync(`SELECT first_name, email FROM students WHERE id IN (${placeholders}) AND is_active = 1`, recipientIds);
             }
-        }
+        } // Add other recipient types like 'course_id' if needed
 
         if (emailList.length === 0) {
             req.flash('info_msg', 'ℹ️ No recipients matched the criteria for sending emails.');
@@ -930,7 +873,7 @@ const sendBulkEmail = async (req, res) => {
         for (const student of emailList) {
             try {
                 await sendEmailWithTemplate({
-                    to: student.email, subject: subject, templateName: 'general-notification-email',
+                    to: student.email, subject: subject, templateName: 'general-notification-email', // Ensure this template is generic enough
                     data: { studentName: student.first_name, notificationTitle: subject, notificationMessage: message },
                     replyTo: process.env.REPLY_TO_EMAIL
                 });
@@ -957,13 +900,9 @@ const sendBulkEmail = async (req, res) => {
         res.redirect('/admin/emails/send');
     }
 };
-
 const renderEmailTestPage = (req, res) => {
-    res.render('pages/admin/emails/test', {
-        title: 'Test Email Templates', admin: req.admin, errors: [], testEmail: req.admin.email
-    });
+    res.render('pages/admin/emails/test', { title: 'Test Email Templates', admin: req.admin, errors: [], testEmail: req.admin.email });
 };
-
 const testEmailTemplate = async (req, res) => {
     const { template_type, test_email } = req.body;
     if (!template_type || !test_email) {
@@ -1011,14 +950,13 @@ const testEmailTemplate = async (req, res) => {
         res.redirect('/admin/emails/test');
     }
 };
-
 const viewEmailLogs = async (req, res) => {
     try {
         const emailLogs = await db.allAsync(`
             SELECT * FROM action_logs
-            WHERE action_type IN ('BULK_EMAIL_SENT', 'EMAIL_TEST_SENT', 'PASSWORD_RESET_EMAIL_SENT', 'NOTIFICATION_EMAIL_SENT')
+            WHERE action_type IN ('BULK_EMAIL_SENT', 'EMAIL_TEST_SENT', 'PASSWORD_RESET_EMAIL_SENT', 'NOTIFICATION_EMAIL_SENT', 'PAYMENT_NOTIFICATION_ADMIN')
             ORDER BY created_at DESC
-            LIMIT 100 `);
+            LIMIT 100 `); // Added PAYMENT_NOTIFICATION_ADMIN
         res.render('pages/admin/emails/logs', { title: 'Email Logs', admin: req.admin, emailLogs });
     } catch (err) {
         console.error("Error fetching email logs:", err);
@@ -1026,31 +964,76 @@ const viewEmailLogs = async (req, res) => {
         res.redirect('/admin/dashboard');
     }
 };
-
-// Database Backup Function
 const downloadDatabaseBackup = (req, res) => {
-    const dbFilePath = path.resolve(__dirname, '../../../db/twoem_online.sqlite'); // Adjusted path relative to adminController.js
+    const dbFilePath = path.resolve(__dirname, '../../../db/twoem_online.sqlite');
     const backupFilename = `twoem_online_backup_${new Date().toISOString().split('T')[0]}_${new Date().toLocaleTimeString().replace(/:/g, '-')}.sqlite`;
-
     if (fs.existsSync(dbFilePath)) {
         logAdminAction(req.admin.id, 'DB_BACKUP_DOWNLOADED', `Admin ${req.admin.name} downloaded database backup.`, 'database', null, req.ip);
         res.download(dbFilePath, backupFilename, (err) => {
             if (err) {
                 console.error("Error downloading database backup:", err);
-                // Check if headers were already sent
                 if (!res.headersSent) {
                     req.flash('error_msg', '❌ Operation Failed! ❌ Could not download database backup. 😔');
-                    res.redirect('/admin/dashboard'); // Or a settings page
+                    res.redirect('/admin/dashboard');
                 }
             }
         });
     } else {
         console.error("Database file not found at:", dbFilePath);
         req.flash('error_msg', '❌ Operation Failed! ❌ Database file not found. Backup failed. 😔');
-        res.redirect('/admin/dashboard'); // Or a settings page
+        res.redirect('/admin/dashboard');
     }
 };
-
+const renderRestoreDatabasePage = (req, res) => {
+    res.render('pages/admin/settings/database-restore', { title: 'Restore Database', admin: req.admin });
+};
+const handleRestoreDatabase = async (req, res) => {
+    if (!req.file) {
+        req.flash('error_msg', '⚠️ No database file uploaded. Please select a file.');
+        return res.redirect('/admin/settings/database/restore-page');
+    }
+    const uploadedFilePath = req.file.path;
+    const dbDirectory = path.resolve(__dirname, '../../../db');
+    const dbLivePath = path.join(dbDirectory, 'twoem_online.sqlite');
+    const dbBackupPath = path.join(dbDirectory, `twoem_online.sqlite.pre-restore-${Date.now()}`);
+    try {
+        if (!fs.existsSync(dbDirectory)) { fs.mkdirSync(dbDirectory, { recursive: true }); }
+        if (fs.existsSync(dbLivePath)) {
+            console.log(`[DB Restore] Backing up current database to ${dbBackupPath}`);
+            fs.copyFileSync(dbLivePath, dbBackupPath);
+        }
+        await new Promise((resolveClose, rejectClose) => {
+            db.close((err) => {
+                if (err) console.error('[DB Restore] Error closing current database connection before restore:', err.message);
+                else console.log('[DB Restore] Current database connection closed.');
+                resolveClose();
+            });
+        });
+        console.log(`[DB Restore] Replacing live database with uploaded file: ${uploadedFilePath}`);
+        fs.renameSync(uploadedFilePath, dbLivePath); // Use renameSync for atomic-like operation
+        logAdminAction(req.admin.id, 'DB_RESTORED', `Admin ${req.admin.name} restored database from: ${req.file.originalname}`, 'database', null, req.ip);
+        req.flash('success_msg', '✨ Update Successful! ✨ Database restored successfully. Application restart is required for changes to take full effect. 🎉');
+        res.redirect('/admin/dashboard');
+        // Instruct user to restart application manually.
+        // Consider process.exit() here if running under a process manager like PM2 that auto-restarts.
+        // For now, relying on manual restart.
+    } catch (err) {
+        console.error("Error restoring database:", err);
+        if (fs.existsSync(dbBackupPath) && !fs.existsSync(dbLivePath)) { // If live DB was removed/failed copy & backup exists
+            try {
+                fs.copyFileSync(dbBackupPath, dbLivePath); // Try to restore the pre-backup
+                console.log(`[DB Restore] Rolled back to pre-restore backup: ${dbBackupPath}`);
+            } catch (rollbackErr) {
+                console.error(`[DB Restore] CRITICAL: Failed to roll back to pre-restore backup:`, rollbackErr);
+            }
+        }
+        if (fs.existsSync(uploadedFilePath)) { // Clean up uploaded file if it's still there
+            fs.unlinkSync(uploadedFilePath);
+        }
+        req.flash('error_msg', `❌ Operation Failed! ❌ Database restore failed. ${err.message} 😔`);
+        res.redirect('/admin/settings/database/restore-page');
+    }
+};
 
 module.exports = {
     renderRegisterStudentForm, registerStudent,
@@ -1065,5 +1048,5 @@ module.exports = {
     listDownloadableDocuments, renderCreateDocumentForm, createDocument, renderEditDocumentForm, updateDocument, deleteDocument,
     viewActionLogs, adminResetStudentPassword,
     renderSendEmailForm, sendBulkEmail, renderEmailTestPage, testEmailTemplate, viewEmailLogs,
-    downloadDatabaseBackup // Added new backup function
+    downloadDatabaseBackup, renderRestoreDatabasePage, handleRestoreDatabase
 };

@@ -323,6 +323,24 @@ function initializeDb() {
             else console.log("Customer_password_reset_tokens table checked/created.");
         });
 
+        // Application Sequences Table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS app_sequences (
+                sequence_name TEXT PRIMARY KEY,
+                last_value INTEGER NOT NULL DEFAULT 0
+            )
+        `, (err) => {
+            if (err) {
+                console.error("Error creating app_sequences table:", err.message);
+            } else {
+                console.log("App_sequences table checked/created.");
+                // Initialize sequence if not present
+                db.run("INSERT OR IGNORE INTO app_sequences (sequence_name, last_value) VALUES ('student_registration', 0)", (initErr) => {
+                    if (initErr) console.error("Error initializing student_registration sequence:", initErr.message);
+                    else console.log("Student_registration sequence checked/initialized.");
+                });
+            }
+        });
     });
 }
 
@@ -330,7 +348,23 @@ function initializeDb() {
 const util = require('util');
 db.getAsync = util.promisify(db.get);
 db.allAsync = util.promisify(db.all);
-db.runAsync = util.promisify(db.run);
+// Custom promisify for db.run to capture lastID and changes
+db.runAsync = function(sql, params) {
+    return new Promise((resolve, reject) => {
+        // Ensure params are provided, even if empty, to avoid issues with sqlite3 driver
+        const finalParams = params || [];
+        // Using function() to preserve `this` context from sqlite3
+        db.run(sql, finalParams, function(err) {
+            if (err) {
+                console.error(`Error running SQL: ${sql} with params: ${finalParams}`, err);
+                reject(err);
+            } else {
+                // this.lastID and this.changes are properties of the statement object (this)
+                resolve({ lastID: this.lastID, changes: this.changes });
+            }
+        });
+    });
+};
 
 
 // Close the database connection when the application exits

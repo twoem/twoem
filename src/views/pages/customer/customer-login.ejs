@@ -1,4 +1,5 @@
 <%- include('../../partials/header', { title: title, customer: null }) %> <%# Pass customer as null for login page %>
+<%- include('../../partials/navbar') %>
 
 <div class="container mt-5 mb-5">
     <div class="row justify-content-center">
@@ -8,7 +9,7 @@
                     <h2 class="mb-0">Customer Portal</h2>
                 </div>
                 <div class="card-body p-4">
-                    <%- include('../../partials/flash-messages') %>
+                    <%# Flash messages are now included globally via header.ejs %>
 
                     <ul class="nav nav-tabs nav-fill mb-3" id="loginTabs" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -31,7 +32,7 @@
                                     <label for="phoneNumberLogin" class="form-label">Phone Number</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                                        <input type="tel" class="form-control" id="phoneNumberLogin" name="phoneNumber" placeholder="07... or 01..." pattern="^(0[17])\\d{8}$" title="10 digits, starting with 01 or 07" required>
+                                        <input type="tel" class="form-control" id="phoneNumberLogin" name="phoneNumber" placeholder="07... or 01..." pattern="^(01|07)[0-9]{8}$" title="10 digits, starting with 01 or 07" required>
                                     </div>
                                 </div>
                                 <div class="mb-3">
@@ -57,7 +58,7 @@
                                     <label for="phoneNumberForgot" class="form-label">Registered Phone Number</label>
                                      <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                                        <input type="tel" class="form-control" id="phoneNumberForgot" name="phoneNumber" placeholder="07... or 01..." pattern="^(0[17])\\d{8}$" title="10 digits, starting with 01 or 07" required>
+                                        <input type="tel" class="form-control" id="phoneNumberForgot" name="phoneNumber" placeholder="07... or 01..." pattern="^(01|07)[0-9]{8}$" title="10 digits, starting with 01 or 07" required>
                                     </div>
                                 </div>
                                 <div class="mb-3">
