@@ -1,0 +1,137 @@
+<%# This page is rendered within layouts/admin_layout.ejs %>
+<%# viewData from the controller is available here directly %>
+<%
+    const enrollment = viewData.enrollment;
+    const student = viewData.student;
+    const course = viewData.course;
+    const units = viewData.units || [];
+    const unitMarks = viewData.unitMarks || {}; // Should be { unit_id: marks_obtained }
+    const examMarks = viewData.examMarks || { theory: null, practical: null };
+    const studentFullName = `${student.first_name || ''} ${student.second_name || ''} ${student.surname || ''}`.replace(/\s+/g, ' ').trim();
+%>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/courses">Manage Courses</a></li>
+        <% if (course && course.id) { %>
+            <li class="breadcrumb-item">
+                <a href="/admin/courses/<%= course.id %>/enrolled-students"><%= course.name %> - Enrolled</a>
+            </li>
+        <% } %>
+        <li class="breadcrumb-item active" aria-current="page">
+            Manage Marks: <%= studentFullName %>
+        </li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">
+        <i class="fas fa-marker me-2"></i>Manage Marks: <%= studentFullName %>
+    </h1>
+    <% if (enrollment) { %>
+        <span class="badge bg-info fs-6">Enrollment ID: <%= enrollment.id %></span>
+    <% } %>
+</div>
+<h5 class="mb-3">Course: <span class="fw-normal"><%= course ? course.name : 'N/A' %></span></h5>
+
+
+<% if (viewData.errorLoading) { %>
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error Loading Data!</h4>
+        <p><%= viewData.errorMessage || "Could not load data for marks management." %></p>
+    </div>
+<% } else if (enrollment && student && course) { %>
+    <form action="/admin/enrollments/<%= enrollment.id %>/manage-marks" method="POST">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h4 class="h5 mb-0">Unit Marks (Contributes 30% to Final Grade)</h4>
+            </div>
+            <div class="card-body">
+                <% if (units.length > 0) { %>
+                    <div class="row g-3">
+                        <% units.forEach(unit => { %>
+                            <div class="col-md-6 col-lg-3">
+                                <label for="unit_<%= unit.id %>" class="form-label">
+                                    <%= unit.unit_name %> <small class="text-muted">(Max: <%= unit.max_marks %>)</small>
+                                </label>
+                                <input type="number" class="form-control form-control-sm"
+                                       id="unit_<%= unit.id %>" name="unit_marks[<%= unit.id %>]"
+                                       value="<%= unitMarks[unit.id] !== undefined ? unitMarks[unit.id] : '' %>"
+                                       min="0" max="<%= unit.max_marks %>" placeholder="0-<%= unit.max_marks %>">
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted">No units found for this course. Please add units to the course first.</p>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h4 class="h5 mb-0">Exam Marks (Contributes 70% to Final Grade)</h4>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="theory_exam_marks" class="form-label">Theory Exam Marks <small class="text-muted">(Max: 100)</small></label>
+                        <input type="number" class="form-control" id="theory_exam_marks" name="theory_exam_marks"
+                               value="<%= examMarks.theory !== null ? examMarks.theory : '' %>"
+                               min="0" max="100" placeholder="0-100">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="practical_exam_marks" class="form-label">Practical Exam Marks <small class="text-muted">(Max: 100)</small></label>
+                        <input type="number" class="form-control" id="practical_exam_marks" name="practical_exam_marks"
+                               value="<%= examMarks.practical !== null ? examMarks.practical : '' %>"
+                               min="0" max="100" placeholder="0-100">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save All Marks</button>
+
+            <div class="ms-auto">
+                 <span class="me-3">Current Final Grade: <strong><%= enrollment.final_grade || 'Pending' %></strong></span>
+                 <span class="me-3">Completion Status: <strong><%= enrollment.completion_status || 'Pending' %></strong></span>
+                <% if (enrollment.completion_status !== 'Completed') { %>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#finishStudyModal">
+                    <i class="fas fa-check-circle me-2"></i>Finish Course Study
+                </button>
+                <% } else { %>
+                     <button type="button" class="btn btn-outline-secondary" disabled>Course Completed</button>
+                <% } %>
+            </div>
+        </div>
+    </form>
+
+    <!-- Finish Study Modal -->
+    <div class="modal fade" id="finishStudyModal" tabindex="-1" aria-labelledby="finishStudyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="finishStudyModalLabel">Confirm Finish Course Study</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to finalize the study for this student in this course?</p>
+                    <p>This will calculate their final grade based on entered marks and set their completion status (e.g., "Completed" or "Incomplete" if marks are missing).</p>
+                    <p class="text-danger"><strong>This action may not be reversible once grades are finalized.</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form action="/admin/enrollments/<%= enrollment.id %>/finish-study" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-success">Yes, Finish Study</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<% } else { %>
+    <div class="alert alert-warning">
+        Could not load necessary data for marks management. Please ensure the enrollment, student, and course exist.
+    </div>
+<% } %>

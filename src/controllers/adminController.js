@@ -1254,5 +1254,336 @@ module.exports = {
     listDownloadableDocuments, renderCreateDocumentForm, createDocument, renderEditDocumentForm, updateDocument, deleteDocument,
     viewActionLogs, adminResetStudentPassword,
     renderSendEmailForm, sendBulkEmail, renderEmailTestPage, testEmailTemplate, viewEmailLogs,
-    downloadDatabaseBackup, renderRestoreDatabasePage, handleRestoreDatabase
+    downloadDatabaseBackup, renderRestoreDatabasePage, handleRestoreDatabase,
+
+    // Grading System Controllers
+    renderCourseEnrolledStudentsPage: async (req, res) => {
+        const { courseId } = req.params; // This could be an ID or a slug/name in future
+        let courseName = "Computer Classes"; // Defaulting to "Computer Classes" for now
+        let actualCourseId = courseId;
+
+        try {
+            // If courseId is 'computer-classes' or similar, fetch by name, otherwise assume it's an ID.
+            // For this specific implementation, let's always target "Computer Classes".
+            const course = await db.getAsync("SELECT id, name FROM courses WHERE name = ?", [courseName]);
+
+            if (!course) {
+                req.flash('error_msg', `Course "${courseName}" not found.`);
+                return res.redirect('/admin/courses'); // Or a more appropriate error page
+            }
+            actualCourseId = course.id;
+
+            const enrolledStudents = await db.allAsync(`
+                SELECT
+                    s.id as student_id, s.registration_number, s.first_name, s.second_name, s.surname, s.email,
+                    e.id as enrollment_id, e.enrollment_date
+                FROM students s
+                JOIN enrollments e ON s.id = e.student_id
+                WHERE e.course_id = ?
+                ORDER BY s.surname, s.first_name
+            `, [actualCourseId]);
+
+            const viewData = {
+                title: `Students Enrolled in ${course.name}`,
+                course: course,
+                students: enrolledStudents,
+                admin: req.admin
+            };
+            res.render('layouts/admin_layout', {
+                title: `Students in ${course.name}`,
+                bodyView: 'pages/admin/courses/enrolled-students',
+                admin: req.admin,
+                viewData
+            });
+        } catch (err) {
+            console.error(`Error fetching enrolled students for course ${courseName} (ID: ${actualCourseId}):`, err);
+            req.flash('error_msg', `⚠️ Failed to load enrolled students. ${err.message}`);
+            const errorViewData = {
+                title: `Error Loading Students for ${courseName}`,
+                course: { name: courseName, id: actualCourseId }, // Pass what we know
+                students: [],
+                admin: req.admin,
+                errorLoading: true,
+                errorMessage: err.message
+            };
+            res.status(500).render('layouts/admin_layout', {
+                title: 'Error Loading Enrolled Students',
+                bodyView: 'pages/admin/courses/enrolled-students',
+                admin: req.admin,
+                viewData: errorViewData
+            });
+        }
+    },
+    renderManageMarksPage: async (req, res) => {
+        const { enrollmentId } = req.params;
+        try {
+            const enrollment = await db.getAsync("SELECT * FROM enrollments WHERE id = ?", [enrollmentId]);
+            if (!enrollment) {
+                req.flash('error_msg', 'Enrollment record not found.');
+                return res.redirect('/admin/dashboard'); // Or a more relevant page
+            }
+
+            const student = await db.getAsync("SELECT * FROM students WHERE id = ?", [enrollment.student_id]);
+            const course = await db.getAsync("SELECT * FROM courses WHERE id = ?", [enrollment.course_id]);
+
+            if (!student || !course) {
+                req.flash('error_msg', 'Student or Course details not found for this enrollment.');
+                return res.redirect('/admin/dashboard');
+            }
+
+            const units = await db.allAsync("SELECT * FROM course_units WHERE course_id = ? ORDER BY unit_order, unit_name", [course.id]);
+            const existingUnitMarksList = await db.allAsync("SELECT unit_id, marks_obtained FROM student_unit_marks WHERE enrollment_id = ?", [enrollmentId]);
+
+            const unitMarks = {};
+            existingUnitMarksList.forEach(mark => {
+                unitMarks[mark.unit_id] = mark.marks_obtained;
+            });
+
+            const studentFullName = `${student.first_name || ''} ${student.second_name || ''} ${student.surname || ''}`.replace(/\s+/g, ' ').trim();
+            const pageTitle = `Manage Marks: ${studentFullName} - ${course.name}`;
+
+            const viewData = {
+                title: pageTitle,
+                enrollment,
+                student,
+                course,
+                units,
+                unitMarks, // This is an object: { unit_id: marks }
+                examMarks: {
+                    theory: enrollment.theory_exam_marks,
+                    practical: enrollment.practical_exam_marks
+                },
+                admin: req.admin
+            };
+
+            res.render('layouts/admin_layout', {
+                title: pageTitle,
+                bodyView: 'pages/admin/academics/manage-marks',
+                admin: req.admin,
+                viewData
+            });
+
+        } catch (err) {
+            console.error(`Error fetching data for manage marks page (Enrollment ID: ${enrollmentId}):`, err);
+            req.flash('error_msg', `⚠️ Failed to load marks management page. ${err.message}`);
+            const errorViewData = {
+                title: 'Error Loading Marks Data',
+                enrollment: {id: enrollmentId}, // Pass what we know
+                student: {}, course: {}, units:[], unitMarks: {}, examMarks: {},
+                admin: req.admin,
+                errorLoading: true,
+                errorMessage: err.message
+            };
+            res.status(500).render('layouts/admin_layout', {
+                title: 'Error Loading Marks',
+                bodyView: 'pages/admin/academics/manage-marks',
+                admin: req.admin,
+                viewData: errorViewData
+            });
+        }
+    },
+    saveStudentMarks: [
+        // Validation using express-validator for exam marks
+        body('theory_exam_marks').optional({ checkFalsy: true }).isInt({ min: 0, max: 100 }).withMessage('Theory exam marks must be an integer between 0 and 100.'),
+        body('practical_exam_marks').optional({ checkFalsy: true }).isInt({ min: 0, max: 100 }).withMessage('Practical exam marks must be an integer between 0 and 100.'),
+        // Unit marks will be validated manually due to their dynamic nature in req.body
+
+        async (req, res) => {
+            const { enrollmentId } = req.params;
+            const errors = validationResult(req);
+            const { unit_marks, theory_exam_marks, practical_exam_marks } = req.body;
+
+            // Manual validation for unit_marks
+            const unitMarkErrors = [];
+            if (unit_marks) {
+                for (const unitId in unit_marks) {
+                    const mark = unit_marks[unitId];
+                    if (mark !== '' && (isNaN(parseInt(mark)) || parseInt(mark) < 0 || parseInt(mark) > 100)) {
+                        // Fetch unit name for better error message (optional, could be complex here)
+                        unitMarkErrors.push({ param: `unit_marks[${unitId}]`, msg: `Unit ID ${unitId} mark must be an integer between 0 and 100.` });
+                    }
+                }
+            }
+
+            const allErrors = errors.array().concat(unitMarkErrors);
+
+            if (allErrors.length > 0) {
+                // Flashing errors and redirecting is complex here because we need to repopulate the form
+                // with many dynamic fields. For simplicity in this step, we might re-render.
+                // However, the plan is to use PRG. Let's try to flash what we can.
+                // A full PRG for this dynamic form would require flashing the entire unit_marks object.
+                // For now, let's just flash a general error and redirect. A more robust solution
+                // would involve more complex state management for form repopulation on error.
+                allErrors.forEach(err => req.flash('error_msg', err.msg)); // This will show multiple flash messages
+                return res.redirect(`/admin/enrollments/${enrollmentId}/manage-marks`);
+            }
+
+            try {
+                const enrollment = await db.getAsync("SELECT * FROM enrollments WHERE id = ?", [enrollmentId]);
+                if (!enrollment) {
+                    req.flash('error_msg', 'Enrollment not found.');
+                    return res.redirect('/admin/dashboard'); // Or a more relevant page
+                }
+                const courseUnits = await db.allAsync("SELECT id, max_marks FROM course_units WHERE course_id = ?", [enrollment.course_id]);
+
+                // 1. Save/Update Unit Marks
+                if (unit_marks) {
+                    for (const unitId in unit_marks) {
+                        const markValue = unit_marks[unitId];
+                        const unitMaxMarks = courseUnits.find(u => u.id.toString() === unitId)?.max_marks || 100;
+
+                        if (markValue !== '') {
+                            const mark = parseInt(markValue, 10);
+                             if (mark < 0 || mark > unitMaxMarks) { // Re-check, though validator should catch some
+                                req.flash('error_msg', `Invalid mark for Unit ID ${unitId}. Must be between 0 and ${unitMaxMarks}.`);
+                                return res.redirect(`/admin/enrollments/${enrollmentId}/manage-marks`);
+                            }
+                            // UPSERT logic for student_unit_marks
+                            await db.runAsync(
+                                `INSERT INTO student_unit_marks (enrollment_id, unit_id, marks_obtained, updated_at)
+                                 VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                                 ON CONFLICT(enrollment_id, unit_id) DO UPDATE SET
+                                 marks_obtained = excluded.marks_obtained, updated_at = CURRENT_TIMESTAMP`,
+                                [enrollmentId, unitId, mark]
+                            );
+                        } else { // If mark is empty string, treat as NULL (or delete existing)
+                             await db.runAsync(
+                                `UPDATE student_unit_marks SET marks_obtained = NULL, updated_at = CURRENT_TIMESTAMP
+                                 WHERE enrollment_id = ? AND unit_id = ?`,
+                                [enrollmentId, unitId]
+                            );
+                        }
+                    }
+                }
+
+                // 2. Save/Update Exam Marks in enrollments table
+                const theoryMarks = theory_exam_marks !== '' ? parseInt(theory_exam_marks, 10) : null;
+                const practicalMarks = practical_exam_marks !== '' ? parseInt(practical_exam_marks, 10) : null;
+
+                await db.runAsync(
+                    `UPDATE enrollments SET
+                        theory_exam_marks = ?,
+                        practical_exam_marks = ?,
+                        updated_at = CURRENT_TIMESTAMP
+                     WHERE id = ?`,
+                    [theoryMarks, practicalMarks, enrollmentId]
+                );
+
+                // 3. Recalculate Final Grade (Complex part - to be refined)
+                // Fetch all unit marks for this enrollment
+                const allUnitMarksRecords = await db.allAsync("SELECT sum.total_marks, count.num_units FROM (SELECT SUM(marks_obtained) as total_marks FROM student_unit_marks WHERE enrollment_id = ?) sum, (SELECT COUNT(*) as num_units FROM course_units WHERE course_id = ?) count", [enrollmentId, enrollment.course_id]);
+
+                let finalGrade = 'Pending';
+                let allMarksEntered = true;
+
+                const totalUnits = allUnitMarksRecords[0]?.num_units || 0;
+                const obtainedUnitMarksSum = allUnitMarksRecords[0]?.total_marks || 0;
+
+                // Check if all unit marks are entered (assuming all units in course_units need marks)
+                const enteredUnitMarksCount = (await db.getAsync("SELECT COUNT(*) as count FROM student_unit_marks WHERE enrollment_id = ? AND marks_obtained IS NOT NULL", [enrollmentId])).count;
+                if (enteredUnitMarksCount < totalUnits) {
+                    allMarksEntered = false;
+                }
+
+
+                if (theoryMarks === null || practicalMarks === null) {
+                    allMarksEntered = false;
+                }
+
+                if (allMarksEntered && totalUnits > 0) {
+                    const averageUnitScore = (obtainedUnitMarksSum / (totalUnits * 100)) * 100; // Assuming max_marks per unit is 100 for average calculation
+                    const unitContribution = averageUnitScore * 0.30;
+                    const examContribution = (( (theoryMarks || 0) + (practicalMarks || 0) ) / 200) * 100 * 0.70; // Average of two exams, then 70%
+
+                    const totalPercentage = unitContribution + examContribution;
+
+                    // Example Grading Scale (can be made more complex)
+                    if (totalPercentage >= 70) finalGrade = 'Distinction';
+                    else if (totalPercentage >= 60) finalGrade = 'Credit';
+                    else if (totalPercentage >= 50) finalGrade = 'Pass';
+                    else finalGrade = 'Fail';
+                }
+
+                await db.runAsync("UPDATE enrollments SET final_grade = ? WHERE id = ?", [finalGrade, enrollmentId]);
+
+
+                logAdminAction(req.admin.id, 'MARKS_SAVED', `Admin ${req.admin.name} saved marks for enrollment ID: ${enrollmentId}.`, 'enrollment', enrollmentId, req.ip);
+                req.flash('success_msg', '✨ Marks saved successfully! Final grade updated.');
+                res.redirect(`/admin/enrollments/${enrollmentId}/manage-marks`);
+
+            } catch (err) {
+                console.error("Error saving student marks:", err);
+                req.flash('error_msg', `❌ Operation Failed! ❌ Failed to save marks. ${err.message}`);
+                res.redirect(`/admin/enrollments/${enrollmentId}/manage-marks`);
+            }
+        }
+    ],
+    finishStudentCourseStudy: async (req, res) => {
+        const { enrollmentId } = req.params;
+        try {
+            const enrollment = await db.getAsync("SELECT * FROM enrollments WHERE id = ?", [enrollmentId]);
+            if (!enrollment) {
+                req.flash('error_msg', 'Enrollment not found.');
+                return res.redirect('/admin/dashboard'); // Or a more relevant page
+            }
+
+            const courseUnits = await db.allAsync("SELECT id FROM course_units WHERE course_id = ?", [enrollment.course_id]);
+            const totalUnitsInCourse = courseUnits.length;
+
+            const enteredUnitMarksCount = (await db.getAsync(
+                "SELECT COUNT(*) as count FROM student_unit_marks WHERE enrollment_id = ? AND marks_obtained IS NOT NULL",
+                [enrollmentId]
+            )).count;
+
+            let allMarksPresent = true;
+            if (enteredUnitMarksCount < totalUnitsInCourse) {
+                allMarksPresent = false;
+            }
+            if (enrollment.theory_exam_marks === null || enrollment.practical_exam_marks === null) {
+                allMarksPresent = false;
+            }
+
+            let newCompletionStatus = enrollment.completion_status;
+            let finalGradeToUpdate = enrollment.final_grade; // Keep existing if not recalculating
+
+            if (allMarksPresent) {
+                newCompletionStatus = 'Completed';
+                // Recalculate final grade one last time to be sure, using the logic from saveStudentMarks
+                // This avoids duplicating the exact calculation logic here, assuming saveStudentMarks already updated it.
+                // If saveStudentMarks wasn't called right before, we might need to recalculate here.
+                // For now, assume final_grade is mostly correct from saveStudentMarks.
+                // If final_grade is still 'Pending' despite all marks, it means it needs calculation.
+                if (finalGradeToUpdate === 'Pending') {
+                     const obtainedUnitMarksSum = (await db.getAsync("SELECT SUM(marks_obtained) as total_marks FROM student_unit_marks WHERE enrollment_id = ?", [enrollmentId]))?.total_marks || 0;
+                     if (totalUnitsInCourse > 0) {
+                        const averageUnitScore = (obtainedUnitMarksSum / (totalUnitsInCourse * 100)) * 100;
+                        const unitContribution = averageUnitScore * 0.30;
+                        const examContribution = (( (enrollment.theory_exam_marks || 0) + (enrollment.practical_exam_marks || 0) ) / 200) * 100 * 0.70;
+                        const totalPercentage = unitContribution + examContribution;
+                        if (totalPercentage >= 70) finalGradeToUpdate = 'Distinction';
+                        else if (totalPercentage >= 60) finalGradeToUpdate = 'Credit';
+                        else if (totalPercentage >= 50) finalGradeToUpdate = 'Pass';
+                        else finalGradeToUpdate = 'Fail';
+                    }
+                }
+            } else {
+                newCompletionStatus = 'Incomplete';
+                finalGradeToUpdate = 'Pending'; // If incomplete, grade should be pending
+            }
+
+            await db.runAsync(
+                "UPDATE enrollments SET completion_status = ?, final_grade = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                [newCompletionStatus, finalGradeToUpdate, enrollmentId]
+            );
+
+            logAdminAction(req.admin.id, 'COURSE_STUDY_FINALIZED', `Admin ${req.admin.name} finalized study for enrollment ID: ${enrollmentId}. Status: ${newCompletionStatus}, Grade: ${finalGradeToUpdate}`, 'enrollment', enrollmentId, req.ip);
+            req.flash('success_msg', `✨ Course study finalized for enrollment. Status: ${newCompletionStatus}, Final Grade: ${finalGradeToUpdate}.`);
+            res.redirect(`/admin/enrollments/${enrollmentId}/manage-marks`);
+
+        } catch (err) {
+            console.error("Error finalizing student course study:", err);
+            req.flash('error_msg', `❌ Operation Failed! ❌ Failed to finalize course study. ${err.message}`);
+            res.redirect(`/admin/enrollments/${enrollmentId}/manage-marks`);
+        }
+    }
 };

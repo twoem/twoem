@@ -288,13 +288,84 @@ const viewMyFees = async (req, res) => { /* ... जस का तस ... */
         res.redirect('/student/dashboard');
     }
 };
-const viewMyAcademics = async (req, res) => { /* ... जस का तस ... */
+const viewMyAcademics = async (req, res) => {
     const studentId = req.student.id;
     try {
-        const student = await db.getAsync("SELECT id, first_name FROM students WHERE id = ?", [studentId]);
-        if (!student) { req.flash('error_msg', '⚠️ Student record not found.'); return res.redirect('/student/login'); }
-        const enrollments = await db.allAsync(`SELECT e.id as enrollment_id, c.name AS course_name, e.enrollment_date, e.coursework_marks, e.main_exam_marks, ((COALESCE(e.coursework_marks, 0) * 0.3) + (COALESCE(e.main_exam_marks, 0) * 0.7)) AS total_score, e.final_grade, e.certificate_issued_at FROM enrollments e JOIN courses c ON e.course_id = c.id WHERE e.student_id = ? ORDER BY c.name`, [studentId]);
-        res.render('pages/student/academics', { title: 'My Academic Records', student: req.student, enrollments: enrollments || [], PASSING_GRADE: parseInt(process.env.PASSING_GRADE) || 60 });
+        const student = await db.getAsync("SELECT id, first_name, second_name, surname FROM students WHERE id = ?", [studentId]);
+        if (!student) {
+            req.flash('error_msg', '⚠️ Student record not found.');
+            return res.redirect('/student/login');
+        }
+
+        // Assuming "Computer Classes" is the target course for detailed marks
+        const computerCourse = await db.getAsync("SELECT id, name FROM courses WHERE name = 'Computer Classes'");
+        if (!computerCourse) {
+            req.flash('error_msg', '⚠️ "Computer Classes" course not found in the system.');
+            // Render the page with an empty state or a message
+            return res.render('pages/student/academics', {
+                title: 'My Academic Records',
+                student: req.student,
+                courseName: 'N/A',
+                unitsWithMarks: [],
+                examMarks: { theory: null, practical: null },
+                finalGrade: 'N/A',
+                completionStatus: 'N/A',
+                errorMsg: 'Computer Classes details are unavailable.'
+            });
+        }
+
+        const enrollment = await db.getAsync(
+            "SELECT * FROM enrollments WHERE student_id = ? AND course_id = ?",
+            [studentId, computerCourse.id]
+        );
+
+        let unitsWithMarks = [];
+        let examMarks = { theory: null, practical: null };
+        let finalGradeDisplay = 'Pending';
+        let completionStatusDisplay = 'Pending';
+
+        if (enrollment) {
+            const courseUnits = await db.allAsync(
+                "SELECT id, unit_name, max_marks FROM course_units WHERE course_id = ? ORDER BY unit_order, unit_name",
+                [computerCourse.id]
+            );
+
+            const studentUnitMarksRecords = await db.allAsync(
+                "SELECT unit_id, marks_obtained FROM student_unit_marks WHERE enrollment_id = ?",
+                [enrollment.id]
+            );
+
+            const studentMarksMap = new Map();
+            studentUnitMarksRecords.forEach(mark => {
+                studentMarksMap.set(mark.unit_id, mark.marks_obtained);
+            });
+
+            unitsWithMarks = courseUnits.map(unit => ({
+                ...unit,
+                marks_obtained: studentMarksMap.get(unit.id) // Will be undefined if no mark
+            }));
+
+            examMarks = {
+                theory: enrollment.theory_exam_marks,
+                practical: enrollment.practical_exam_marks
+            };
+            finalGradeDisplay = enrollment.final_grade || 'Pending';
+            completionStatusDisplay = enrollment.completion_status || 'Pending';
+        } else {
+             req.flash('info_msg', 'You are not currently enrolled in Computer Classes.');
+        }
+
+        res.render('pages/student/academics', {
+            title: 'My Academic Records',
+            student: req.student, // For navbar/layout
+            studentDetails: student, // For displaying name on page
+            courseName: computerCourse.name,
+            unitsWithMarks,
+            examMarks,
+            finalGrade: finalGradeDisplay,
+            completionStatus: completionStatusDisplay
+        });
+
     } catch (err) {
         console.error("Error fetching student academic records:", err);
         req.flash('error_msg', '⚠️ Failed to Load Data! We couldn’t retrieve academic records. 😔');
@@ -407,26 +478,62 @@ const handleUpdateNok = async (req, res) => { /* ... जस का तस ... */
         res.redirect('/student/profile/edit-nok');
     }
 };
-const retrieveStudentCredentials = async (req, res) => { /* ... जस का तस ... */
-    const { email, firstName } = req.body;
-    const activeTab = 'new-student-panel';
-    const errorRedirectUrl = `/student/login?activeTab=${activeTab}#${activeTab}`;
-    const successRedirectUrl = `/student/login?activeTab=${activeTab}#${activeTab}`;
-    if (!email || !firstName) { req.flash('error_msg', '⚠️ Email and First Name are required.'); return res.redirect(errorRedirectUrl); }
-    try {
-        const student = await db.getAsync( "SELECT id, registration_number, requires_password_change, credentials_retrieved_once FROM students WHERE lower(email) = lower(?) AND lower(first_name) = lower(?)", [email.trim(), firstName.trim()] );
-        if (!student) { req.flash('error_msg', '⚠️ No matching student record found.'); return res.redirect(errorRedirectUrl); }
-        if (!student.requires_password_change) { req.flash('error_msg', '⚠️ Account setup already completed.'); return res.redirect(errorRedirectUrl); }
-        if (student.credentials_retrieved_once) { req.flash('error_msg', '⚠️ Initial credentials already retrieved.'); return res.redirect(errorRedirectUrl); }
+const retrieveStudentCredentials = async (req, res) => {
+    const { email, anyName } = req.body; // 'anyName' from the new form
+    // Redirect to the main login page; flash messages will appear there.
+    // The student-login.ejs script can be enhanced to pick up a query param if we want to force a tab.
+    const redirectUrl = '/student/login?activeTab=new-student-panel#new-student-panel';
 
+    if (!email || !anyName) {
+        req.flash('error_msg', '⚠️ Email and a Name are required.');
+        return res.redirect(redirectUrl);
+    }
+
+    try {
+        const student = await db.getAsync(
+            `SELECT id, registration_number, first_name, second_name, surname, email,
+                    requires_password_change, credentials_retrieved_once
+             FROM students
+             WHERE lower(email) = lower(?)
+               AND (lower(first_name) = lower(?) OR lower(second_name) = lower(?) OR lower(surname) = lower(?))`,
+            [email.trim(), anyName.trim(), anyName.trim(), anyName.trim()]
+        );
+
+        if (!student) {
+            req.flash('error_msg', '⚠️ No matching student record found with the provided Email and Name.');
+            return res.redirect(redirectUrl);
+        }
+
+        // This check might be too restrictive if they already changed pw but want to see regNo again.
+        // The original requirement was about *initial* credential retrieval.
+        // If they changed password, requires_password_change would be FALSE.
+        // Let's assume if requires_password_change is FALSE, they've already been through initial setup.
+        if (!student.requires_password_change && student.credentials_retrieved_once) {
+             req.flash('info_msg', 'ℹ️ Account setup appears complete and initial credentials previously retrieved. If you forgot your password, please use the "Forgot Password" link on the login page.');
+            return res.redirect('/student/login'); // Send to main login
+        }
+
+        if (student.credentials_retrieved_once) {
+            req.flash('info_msg', 'ℹ️ Initial credentials for this account have already been retrieved. If you have forgotten your password, please use the "Forgot Password" link on the login page.');
+            return res.redirect('/student/login'); // Send to main login page with info
+        }
+
+        // If we reach here, it's a valid first-time retrieval
         await db.runAsync("UPDATE students SET credentials_retrieved_once = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [student.id]);
-        const successMessage = `✨ Success! ✨ Your credentials have been retrieved: <br>Registration Number: <strong>${student.registration_number}</strong><br>Default Password: <strong>${process.env.DEFAULT_STUDENT_PASSWORD}</strong><br>Please login and change your password immediately. 🎉`;
-        req.flash('success_msg', successMessage);
-        return res.redirect(successRedirectUrl);
+
+        const studentFullName = `${student.first_name} ${student.second_name || ''} ${student.surname || ''}`.replace(/\s+/g, ' ').trim();
+        const successMessage = `<h4><i class="fas fa-check-circle text-success me-2"></i>Credentials Retrieved for ${studentFullName}!</h4>
+                                <p class="mb-1"><strong>Registration Number:</strong> <mark>${student.registration_number}</mark></p>
+                                <p class="mb-0"><strong>Default Password:</strong> <mark>${process.env.DEFAULT_STUDENT_PASSWORD}</mark></p>
+                                <hr>
+                                <p class="small text-danger mb-0">Please login immediately and change this default password.</p>`;
+        req.flash('success_msg', successMessage); // Pass as HTML
+        return res.redirect(redirectUrl);
+
     } catch (err) {
         console.error("Error retrieving student credentials:", err);
-        req.flash('error_msg', '❌ Operation Failed! ❌ An error occurred. Please try again. 😔');
-        return res.redirect(errorRedirectUrl);
+        req.flash('error_msg', '❌ Operation Failed! ❌ An error occurred while retrieving credentials. Please try again. 😔');
+        return res.redirect(redirectUrl);
     }
 };
 

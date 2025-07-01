@@ -233,6 +233,13 @@ router.post('/documents/delete/:id', authAdmin, adminController.deleteDocument);
 // Admin - View Action Logs Route
 router.get('/action-logs', authAdmin, adminController.viewActionLogs);
 
+// Admin - Grading System Routes for "Computer Classes"
+router.get('/courses/:courseId/enrolled-students', authAdmin, adminController.renderCourseEnrolledStudentsPage);
+router.get('/enrollments/:enrollmentId/manage-marks', authAdmin, adminController.renderManageMarksPage);
+router.post('/enrollments/:enrollmentId/manage-marks', authAdmin, adminController.saveStudentMarks); // Will include validation
+router.post('/enrollments/:enrollmentId/finish-study', authAdmin, adminController.finishStudentCourseStudy);
+
+
 // --- Internet Customer Management Routes (Admin Side) ---
 const customerAdminController = require('../controllers/customerAdminController');
 const customerAdminValidators = require('../middleware/validators/customerAdminValidators');
