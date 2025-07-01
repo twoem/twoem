@@ -248,7 +248,8 @@ exports.handleSubmitPaymentCode = async (req, res) => {
                 accountNumber: customer.accountNumber,
                 phoneNumber: customer.phoneNumber,
                 accountDueAmount: customer.currentBalance, // Current balance before this payment
-                mpesaCode: transactionCode.trim()
+                mpesaCode: transactionCode.trim(),
+                siteUrl: process.env.FRONTEND_URL || 'https://twoemcyberkagwe.onrender.com' // Added siteUrl
             },
             replyTo: customer.email // Optional: set customer's email as reply-to
         });

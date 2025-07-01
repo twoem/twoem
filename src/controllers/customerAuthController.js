@@ -260,7 +260,8 @@ exports.handleForgotPasswordRequest = async (req, res) => {
             data: {
                 customerName: customer.firstName,
                 otp: otp, // The unhashed OTP
-                resetLink: resetURL
+                resetLink: resetURL,
+                siteUrl: process.env.FRONTEND_URL || 'https://twoemcyberkagwe.onrender.com' // Added siteUrl
             }
         };
 

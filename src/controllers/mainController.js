@@ -39,6 +39,7 @@ const handleContactForm = async (req, res) => {
     };
 
     try {
+        emailData.siteUrl = process.env.FRONTEND_URL || 'https://twoemcyberkagwe.onrender.com'; // Added siteUrl
         await sendEmailWithTemplate({
             to: process.env.CONTACT_RECEIVER_EMAIL,
             subject: emailSubject, // This is the subject line of the email notification itself

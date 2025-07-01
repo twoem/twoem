@@ -146,7 +146,12 @@ const handleForgotPassword = async (req, res) => {
         const { sendEmailWithTemplate } = require('../config/mailer');
         const emailSubject = "Password Reset Instructions - Twoem Online Productions";
         const resetLink = `${req.protocol}://${req.get('host')}/student/reset-password-with-token/${urlToken}`;
-        const emailData = { studentName: student.first_name, otp: otp, resetLink: resetLink };
+        const emailData = {
+            studentName: student.first_name,
+            otp: otp,
+            resetLink: resetLink,
+            siteUrl: process.env.FRONTEND_URL || 'https://twoemcyberkagwe.onrender.com' // Added siteUrl
+        };
         await sendEmailWithTemplate({ to: student.email, subject: emailSubject, templateName: 'otp-email', data: emailData });
 
         req.flash('success_msg', 'Password reset instructions (OTP and link) sent to your email. Please check your inbox.');

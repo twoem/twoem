@@ -197,7 +197,17 @@ const handleSendComposedEmail = async (req, res) => {
     if (!toEmail || !subject || !emailBody) { req.flash('error_msg', 'Recipient email, subject, and body are required.'); return res.redirect('/admin/compose-email'); }
     if (!validator.isEmail(toEmail)) { req.flash('error_msg', 'Invalid recipient email address format.'); return res.redirect('/admin/compose-email'); }
     try {
-        await sendEmailWithTemplate({ to: toEmail, subject: subject, templateName: 'adminComposedEmail', data: { subjectLine: subject, htmlBody: emailBody }, replyTo: process.env.REPLY_TO_EMAIL || adminUser.email });
+        await sendEmailWithTemplate({
+            to: toEmail,
+            subject: subject,
+            templateName: 'adminComposedEmail',
+            data: {
+                subjectLine: subject,
+                htmlBody: emailBody,
+                siteUrl: process.env.FRONTEND_URL || 'https://twoemcyberkagwe.onrender.com' // Added siteUrl
+            },
+            replyTo: process.env.REPLY_TO_EMAIL || adminUser.email
+        });
         await logAdminAction(adminUser.id, 'ADMIN_COMPOSED_EMAIL_SENT', `Admin ${adminUser.name} sent an email to ${toEmail} with subject: "${subject}"`, 'email', null, req.ip);
         req.flash('formData', {}); req.flash('success_msg', `Email successfully sent to ${toEmail}.`);
         res.redirect('/admin/compose-email');
@@ -295,7 +305,39 @@ const listCustomers = async (req, res) => {
 
 const listCourses = async (req, res) => { try { const courses = await db.allAsync("SELECT * FROM courses ORDER BY created_at DESC"); res.render('pages/admin/courses/index', { title: 'Manage Courses', admin: req.admin, courses, messages: { error: req.flash('error_msg'), success: req.flash('success_msg') } }); } catch (err) { console.error("Error fetching courses:", err); req.flash('error_msg', "Error fetching courses. " + err.message); res.redirect('/admin/dashboard'); }};
 const renderAddCourseForm = (req, res) => { res.render('pages/admin/courses/add', { title: 'Add New Course', admin: req.admin, errors: req.flash('errors') || [], name: req.flash('formData')[0]?.name || '', description: req.flash('formData')[0]?.description || '' }); };
-const addCourse = [ body('name').trim().notEmpty().withMessage('Course name is required.').isLength({ min: 3 }).withMessage('Course name must be at least 3 characters long.'), body('description').trim().optional({ checkFalsy: true }), async (req, res) => { const errors = validationResult(req); const { name, description } = req.body; req.flash('formData', {name, description}); if (!errors.isEmpty()) { req.flash('errors', errors.array()); return res.redirect('/admin/courses/add'); } try { const result = await db.runAsync("INSERT INTO courses (name, description, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)", [name, description]); logAdminAction(req.admin.id, 'COURSE_CREATED', `Admin ${req.admin.name} created course: ${name} (ID: ${result.lastID})`, 'course', result.lastID, req.ip); req.flash('success_msg', `Course "${name}" added successfully.`); req.flash('formData', {}); res.redirect('/admin/courses'); } catch (err) { console.error("Error adding course:", err); req.flash('error_msg', 'Failed to add course. ' + err.message); res.redirect('/admin/courses/add'); } } ];
+
+const addCourse = [
+    body('name').trim().notEmpty().withMessage('Course name is required.').isLength({ min: 3 }).withMessage('Course name must be at least 3 characters long.'),
+    body('description').trim().optional({ checkFalsy: true }),
+    async (req, res) => {
+        const errors = validationResult(req);
+        const { name, description } = req.body;
+        req.flash('formData', {name, description});
+        if (!errors.isEmpty()) {
+            req.flash('errors', errors.array());
+            return res.redirect('/admin/courses/add');
+        }
+        try {
+            const dbResult = await db.runAsync("INSERT INTO courses (name, description, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)", [name, description]);
+
+            if (!dbResult || typeof dbResult.lastID === 'undefined') {
+                console.error("Error adding course: db.runAsync did not return expected result object or lastID.", dbResult);
+                req.flash('error_msg', 'Failed to add course due to an unexpected database response. Please check server logs.');
+                return res.redirect('/admin/courses/add');
+            }
+
+            await logAdminAction(req.admin.id, 'COURSE_CREATED', `Admin ${req.admin.name} created course: ${name} (ID: ${dbResult.lastID})`, 'course', dbResult.lastID, req.ip);
+            req.flash('success_msg', `Course "${name}" added successfully.`);
+            req.flash('formData', {});
+            res.redirect('/admin/courses');
+        } catch (err) {
+            console.error("Detailed error adding course:", err);
+            req.flash('error_msg', 'Failed to add course. ' + (err.message || 'An unknown error occurred.'));
+            res.redirect('/admin/courses/add');
+        }
+    }
+];
+
 const renderEditCourseForm = async (req, res) => { const courseId = req.params.id; try { const course = await db.getAsync("SELECT * FROM courses WHERE id = ?", [courseId]); if (!course) { req.flash('error_msg', 'Course not found.'); return res.redirect('/admin/courses'); } const formData = req.flash('formData')[0]; const errors = req.flash('errors') || []; res.render('pages/admin/courses/edit', { title: 'Edit Course', admin: req.admin, course, errors, name: formData?.name, description: formData?.description }); } catch (err) { console.error("Error fetching course for edit:", err); req.flash('error_msg', 'Failed to load course details for editing.'); res.redirect('/admin/courses'); } };
 const updateCourse = [ body('name').trim().notEmpty().withMessage('Course name is required.').isLength({ min: 3 }).withMessage('Course name must be at least 3 characters long.'), body('description').trim().optional({ checkFalsy: true }), async (req, res) => { const courseId = req.params.id; const errors = validationResult(req); const { name, description } = req.body; req.flash('formData', {name, description}); if (!errors.isEmpty()) { req.flash('errors', errors.array()); return res.redirect(`/admin/courses/edit/${courseId}`); } try { const result = await db.runAsync("UPDATE courses SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [name, description, courseId]); if (result.changes === 0) req.flash('error_msg', 'Course not found or no changes made.'); else { logAdminAction(req.admin.id, 'COURSE_UPDATED', `Admin ${req.admin.name} updated course: ${name} (ID: ${courseId})`, 'course', courseId, req.ip); req.flash('success_msg', `Course "${name}" updated successfully.`); } req.flash('formData', {}); res.redirect('/admin/courses'); } catch (err) { console.error("Error updating course:", err); req.flash('error_msg', 'Failed to update course. ' + err.message); res.redirect(`/admin/courses/edit/${courseId}`); } } ];
 const deleteCourse = async (req, res) => { const courseId = req.params.id; try { const enrollment = await db.getAsync("SELECT COUNT(id) as count FROM enrollments WHERE course_id = ?", [courseId]); if (enrollment && enrollment.count > 0) { req.flash('error_msg', `Cannot delete course. It has ${enrollment.count} active student enrollment(s).`); return res.redirect('/admin/courses'); } const result = await db.runAsync("DELETE FROM courses WHERE id = ?", [courseId]); if (result.changes === 0) req.flash('error_msg', 'Course not found.'); else { logAdminAction(req.admin.id, 'COURSE_DELETED', `Admin ${req.admin.name} deleted course ID: ${courseId}`, 'course', courseId, req.ip); req.flash('success_msg', 'Course deleted successfully.'); } res.redirect('/admin/courses'); } catch (err) { console.error("Error deleting course:", err); req.flash('error_msg', 'Failed to delete course. ' + err.message); res.redirect('/admin/courses'); } };
@@ -537,7 +579,21 @@ const sendBulkEmail = async (req, res) => {
         else if (recipient_type === 'selected') { const recipientIds = Array.isArray(recipients) ? recipients : [recipients]; const placeholders = recipientIds.map(() => '?').join(','); emailList = await db.allAsync(`SELECT first_name, email FROM students WHERE id IN (${placeholders}) AND is_active = 1`, recipientIds); }
         let successCount = 0; let failCount = 0;
         for (const student of emailList) {
-            try { await sendEmailWithTemplate({ to: student.email, subject: subject, templateName: 'general-notification-email', data: { studentName: student.first_name, notificationTitle: subject, notificationMessage: message }, replyTo: process.env.REPLY_TO_EMAIL }); successCount++; }
+            try {
+                await sendEmailWithTemplate({
+                    to: student.email,
+                    subject: subject,
+                    templateName: 'general-notification-email',
+                    data: {
+                        studentName: student.first_name,
+                        notificationTitle: subject,
+                        notificationMessage: message,
+                        siteUrl: process.env.FRONTEND_URL || 'https://twoemcyberkagwe.onrender.com' // Added siteUrl
+                    },
+                    replyTo: process.env.REPLY_TO_EMAIL
+                });
+                successCount++;
+            }
             catch (emailErr) { console.error(`Failed to send email to ${student.email}:`, emailErr); failCount++; }
         }
         await logAdminAction(req.admin.id, 'BULK_EMAIL_SENT', `Admin ${req.admin.name} sent bulk email "${subject}" to ${successCount} recipients`, 'email', null, req.ip);
@@ -560,7 +616,16 @@ const testEmailTemplate = async (req, res) => {
             case 'notification': templateData = { studentName: 'Test Student', notificationTitle: 'Test Notification', notificationMessage: 'This is a test notification email.', actionLink: `${process.env.FRONTEND_URL}/student/dashboard`, actionText: 'View Dashboard' }; subject = 'Test Notification - Twoem Online'; break;
             case 'contact': templateData = { senderName: 'Test Contact', senderEmail: 'test@example.com', emailSubject: 'Test Contact Form', emailMessage: 'This is a test contact form submission.', submissionDate: new Date().toLocaleString() }; subject = 'Test Contact Form Submission'; break;
         }
-        await sendEmailWithTemplate({ to: test_email, subject: subject, templateName: template_type === 'otp' ? 'otp-email' : template_type === 'notification' ? 'general-notification-email' : 'contact-form-submission', data: templateData, replyTo: process.env.REPLY_TO_EMAIL });
+        // Add siteUrl to all test templates
+        templateData.siteUrl = process.env.FRONTEND_URL || 'https://twoemcyberkagwe.onrender.com';
+
+        await sendEmailWithTemplate({
+            to: test_email,
+            subject: subject,
+            templateName: template_type === 'otp' ? 'otp-email' : template_type === 'notification' ? 'general-notification-email' : 'contact-form-submission',
+            data: templateData,
+            replyTo: process.env.REPLY_TO_EMAIL
+        });
         await logAdminAction(req.admin.id, 'EMAIL_TEST_SENT', `Admin ${req.admin.name} sent test email (${template_type}) to ${test_email}`, 'email', null, req.ip);
         req.flash('success_msg', `Test email sent successfully to ${test_email}!`);
         req.flash('formData', {});
@@ -696,3 +761,5 @@ module.exports = {
         }
     ]
 };
+
+[end of src/controllers/adminController.js]

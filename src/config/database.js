@@ -31,13 +31,18 @@ function initializeDb() {
                 registration_number TEXT UNIQUE NOT NULL,
                 email TEXT UNIQUE NOT NULL,
                 first_name TEXT NOT NULL,
+                second_name TEXT, -- Added
+                surname TEXT NOT NULL, -- Added
+                phone_number TEXT NOT NULL, -- Added
                 password_hash TEXT NOT NULL,
                 next_of_kin_details TEXT,
+                enrolled_date DATE, -- Added
+                course_fee REAL, -- Added
                 last_login_at DATETIME,
                 requires_password_change BOOLEAN DEFAULT TRUE,
                 is_profile_complete BOOLEAN DEFAULT FALSE,
                 is_active BOOLEAN DEFAULT TRUE NOT NULL,
-                credentials_retrieved_once BOOLEAN DEFAULT FALSE NOT NULL, -- New column for this feature
+                credentials_retrieved_once BOOLEAN DEFAULT FALSE NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
@@ -76,8 +81,22 @@ function initializeDb() {
                 -- Add image_url TEXT if courses have images
             )
         `, (err) => {
-            if (err) console.error("Error creating courses table:", err.message);
-            else console.log("Courses table checked/created.");
+            if (err) {
+                console.error("Error creating courses table:", err.message);
+            } else {
+                console.log("Courses table checked/created.");
+                // Seed "Computer Packages" course if it doesn't exist
+                const computerPackagesCourseName = "Computer Packages";
+                db.getAsync("SELECT id FROM courses WHERE name = ?", [computerPackagesCourseName])
+                    .then(course => {
+                        if (!course) {
+                            db.runAsync("INSERT INTO courses (name, description) VALUES (?, ?)", [computerPackagesCourseName, "A foundational course covering essential computer skills including Introduction to Computers, Keyboard & Mouse, MS Word, Excel, Publisher, PowerPoint, Access, Internet & Email."])
+                                .then(() => console.log(`Default course "${computerPackagesCourseName}" seeded.`))
+                                .catch(seedErr => console.error(`Error seeding default course "${computerPackagesCourseName}":`, seedErr.message));
+                        }
+                    })
+                    .catch(checkErr => console.error("Error checking for default course:", checkErr.message));
+            }
         });
 
         // Enrollments Table
