@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const customerAuthController = require('../../controllers/customer/customerAuthController');
-const { authCustomer } = require('../../middleware/authMiddleware'); // Import the new middleware
+const customerAuthController = require('../controllers/customerAuthController');
+const { authCustomer } = require('../middleware/authMiddleware'); // Import the new middleware
 
 // @route   GET /portal/customer/login
 // @desc    Render customer login page

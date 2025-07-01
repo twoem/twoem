@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const customerController = require('../../controllers/customer/customerController');
-const { authCustomer } = require('../../middleware/authMiddleware');
+const customerController = require('../controllers/customerController');
+const { authCustomer } = require('../middleware/authMiddleware');
 
 // @route   GET /portal/customer/dashboard
 // @desc    Display customer dashboard

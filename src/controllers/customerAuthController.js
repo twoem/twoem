@@ -1,4 +1,4 @@
-const Customer = require('../../models/customerModel');
+const Customer = require('../models/customerModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
@@ -193,7 +193,7 @@ exports.handleChangePassword = async (req, res) => {
 };
 
 const crypto = require('crypto');
-const { sendEmailWithTemplate } = require('../../config/mailer');
+const { sendEmailWithTemplate } = require('../config/mailer');
 
 
 // Render Forgot Password Page

@@ -1,4 +1,4 @@
-const Customer = require('../../models/customerModel');
+const Customer = require('../models/customerModel');
 // Add other necessary imports like mongoose, validator if needed for future functions
 
 // Render Customer Dashboard
@@ -176,7 +176,7 @@ exports.renderSubscriptionPage = async (req, res) => {
     }
 };
 
-const { sendEmailWithTemplate } = require('../../config/mailer'); // Import email utility
+const { sendEmailWithTemplate } = require('../config/mailer'); // Import email utility
 
 // Render Make Payment Page
 exports.renderMakePaymentPage = async (req, res) => {
