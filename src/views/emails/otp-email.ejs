@@ -13,98 +13,64 @@
         /* General styles */
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.5;
-            color: #333333;
-            margin: 0;
-            padding: 0;
-            background-color: #f8f9fa;
+            line-height: 1.6; color: #343a40; /* Darker base text */
+            margin: 0; padding: 0; background-color: #DBD4FF; /* --lavender-very-light */
         }
-
+        .email-wrapper { width: 100%; background-color: #DBD4FF; padding: 20px 0; }
         .container {
-            width: 100%;
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            overflow: hidden;
+            width: 100%; max-width: 600px; margin: 20px auto;
+            background-color: #ffffff; /* White card background */
+            border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden; border: 1px solid #C1BFFF; /* --lavender-light-blue border */
         }
-
         .header {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: #ffffff;
-            padding: 40px 20px;
-            text-align: center;
-            position: relative;
+            background-color: #C1BFFF; /* --lavender-light-blue */
+            padding: 30px 20px; text-align: center;
         }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="30" cy="30" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="70" cy="50" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="70" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
-            opacity: 0.3;
-        }
-
         .logo {
-            max-height: 70px;
-            width: auto;
-            display: block;
-            margin: 0 auto 15px;
+            max-height: 60px; /* Adjusted size */
+            width: auto; display: block; margin: 0 auto 15px;
         }
-
-        .content {
-            padding: 25px;
-            font-size: 16px;
-            line-height: 1.6;
+        .header h1 {
+            margin: 10px 0 0 0; font-size: 22px; font-weight: 600; color: #343a40;
         }
-
+        .content { padding: 30px; font-size: 16px; line-height: 1.7; }
+        .content p { margin-bottom: 18px; }
+        .otp-card {
+            margin: 25px 0; padding: 20px; background-color: #FDFBD4; /* --lavender-lightest-yellow */
+            border-radius: 8px; text-align: center;
+            border: 1px dashed #BDB96A; /* --lavender-muted-green */
+        }
+        .otp-card p { margin-bottom: 10px; color: var(--lavender-darker-purple, #a358d3); font-weight: 500;}
         .otp-code {
-            font-size: 36px;
-            font-weight: 800;
-            color: #f093fb;
-            text-align: center;
-            margin: 30px 0;
-            padding: 25px;
-            background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
-            border-radius: 16px;
-            letter-spacing: 8px;
-            border: 3px dashed #f093fb;
-            font-family: 'Courier New', monospace;
-            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.2);
+            font-size: 32px; font-weight: 700; color: #CF6DFC; /* --lavender-vibrant-purple */
+            letter-spacing: 4px; display: inline-block; padding: 8px 15px;
+            background-color: #fff; border-radius: 6px;
+            border: 1px solid #DBD4FF; /* --lavender-very-light */
         }
-
-        .footer {
-            text-align: center;
-            padding: 20px;
-            font-size: 13px;
-            color: #6c757d;
-            background-color: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-        }
-
+        .button-container { text-align: center; margin: 25px 0; }
         .button {
-            display: inline-block;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            margin: 20px 0;
-            text-align: center;
+            display: inline-block; padding: 12px 28px;
+            background-color: #CF6DFC; /* --lavender-vibrant-purple */
+            color: #ffffff !important; text-decoration: none; border-radius: 8px;
+            font-weight: 600; font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-
-        h1 {
-            color: #3a0ca3;
-            font-size: 24px;
-            margin-top: 0;
-            margin-bottom: 20px;
+        .button:hover { background-color: #a358d3; /* --lavender-darker-purple */ }
+        .link-alt { color: #a358d3; text-decoration: none; }
+        .link-alt:hover { text-decoration: underline; }
+        .security-notice {
+            margin: 25px 0; padding: 15px; background-color: #DBD4FF; /* --lavender-very-light */
+            border-radius: 8px; border-left: 4px solid #BDB96A; /* --lavender-muted-green */
         }
-
+        .security-notice p { margin: 0; font-size: 14px; }
+        .footer {
+            text-align: center; padding: 25px; font-size: 13px;
+            color: #6c757d; background-color: #FDFBD4; /* --lavender-lightest-yellow */
+            border-top: 1px solid #C1BFFF; /* --lavender-light-blue */
+        }
+        .footer p { margin: 5px 0; }
+        .footer a { color: #a358d3; text-decoration: none; }
         /* Responsive styles */
         @media screen and (max-width: 600px) {
             .container {
@@ -181,11 +147,13 @@
 
                     <!-- Footer -->
                     <tr>
-                        <td class="footer" style="padding: 20px; text-align: center; font-size: 13px; color: #6c757d; background-color: #f8f9fa; border-top: 1px solid #e9ecef;">
-                            <p style="margin: 0 0 10px 0;">&copy; <%= new Date().getFullYear() %> Twoem Online Productions. All rights reserved.</p>
-                            <% if (locals.siteUrl) { %>
-                                <p style="margin: 0;"><a href="<%= siteUrl %>" style="color: #4361ee; text-decoration: none; font-weight: 500;">Visit our website</a></p>
-                            <% } %>
+                        <td class="footer">
+                            <p>&copy; <%= new Date().getFullYear() %> <%= process.env.EMAIL_FROM_NAME || 'Twoem Online Productions' %>. All rights reserved.</p>
+                            <% if (locals.siteUrl) { %><p><a href="<%= siteUrl %>" class="link-alt">Visit our website</a></p><% } %>
+                            <p>
+                                Need help? Contact us at <a href="mailto:<%= process.env.CONTACT_RECEIVER_EMAIL %>" class="link-alt"><%= process.env.CONTACT_RECEIVER_EMAIL %></a>
+                                <% if (process.env.COMPANY_PHONE) { %> | Phone: <%= process.env.COMPANY_PHONE %><% } %>
+                            </p>
                         </td>
                     </tr>
                 </table>

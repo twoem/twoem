@@ -1,7 +1,5 @@
-<%- include('../../../partials/header', { title: 'Update Next of Kin Details' }) %>
-<%- include('../../../partials/navbar') %>
+<%- include('../../../partials/studentHeader', { title: title, student: student }) %>
 
-<main class="container mt-5">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/student/dashboard">Dashboard</a></li>
@@ -11,18 +9,18 @@
 
     <div class="row justify-content-center">
         <div class="col-md-7 col-lg-6">
-            <div class="card shadow-sm">
-                <div class="card-header">
+            <div class="card shadow-lg" style="border-radius: 0.75rem;">
+                <div class="card-header text-white" style="background-color: var(--lavender-darker-purple); border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem;">
                     <h4 class="mb-0"><i class="fas fa-users me-2"></i>Update Next of Kin Information</h4>
                 </div>
-                <div class="card-body">
-                    <p>Keep your Next of Kin details up-to-date.</p>
+                <div class="card-body" style="background-color: var(--lavender-lightest-yellow);">
+                    <p class="text-muted">Keep your Next of Kin details up-to-date for emergency purposes.</p>
 
                     <%- include('../../../partials/flash-messages') %>
 
                     <form action="/student/profile/edit-nok" method="POST">
                         <div class="mb-3">
-                            <label for="nokName" class="form-label">Next of Kin Full Name</label>
+                            <label for="nokName" class="form-label">Next of Kin Full Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="nokName" name="nokName" required
                                    value="<%= locals.nokName !== undefined ? locals.nokName : (currentNokDetails ? currentNokDetails.name : '') %>">
                         </div>
@@ -44,18 +42,17 @@
                         </div>
 
                         <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <button type="submit" class="btn w-100" style="background-color: var(--lavender-vibrant-purple); color:white;"><i class="fas fa-save me-2"></i>Save Changes</button>
                         </div>
                     </form>
+                     <div class="text-center mt-3">
+                        <a href="/student/dashboard" class="btn btn-sm btn-outline-secondary" style="border-color: var(--lavender-muted-green); color: var(--lavender-muted-green);">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                        </a>
+                    </div>
                 </div>
-            </div>
-             <div class="text-center mt-3">
-                 <a href="/student/dashboard" class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
-                </a>
             </div>
         </div>
     </div>
-</main>
 
-<%- include('../../../partials/footer') %>
+<%- include('../../../partials/studentFooter') %>

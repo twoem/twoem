@@ -68,7 +68,7 @@ const sendEmailWithTemplate = async ({ to, subject, templateName, data, replyTo 
     const emailData = {
         ...data,
         siteUrl: process.env.FRONTEND_URL || 'http://localhost:10000',
-        logoUrl: `${process.env.FRONTEND_URL || 'http://localhost:10000'}/logo.png` // Assuming logo is served
+        logoUrl: 'https://i.ibb.co/MkHK0KMj/logo-modified-1.png' // New logo URL
     };
 
     try {

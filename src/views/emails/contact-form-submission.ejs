@@ -3,34 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Contact Form Submission 📧</title>
+    <title><%= locals.subjectLine || 'New Contact Form Submission' %></title>
     <style>
+        :root {
+            --lavender-lightest-yellow: #FDFBD4;
+            --lavender-muted-green: #BDB96A;
+            --lavender-light-blue: #C1BFFF;
+            --lavender-very-light: #DBD4FF;
+            --lavender-vibrant-purple: #CF6DFC;
+            --lavender-darker-purple: #a358d3;
+        }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: #2d3748;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+            line-height: 1.6; color: #2d3748; margin: 0; padding: 0;
+            background-color: var(--lavender-very-light); /* Main background */
         }
-
         .email-wrapper {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+            background-color: var(--lavender-very-light); /* Main background */
             padding: 30px 20px;
-            min-height: 100vh;
         }
-
         .container {
-            max-width: 650px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
+            max-width: 650px; margin: 0 auto; background-color: #ffffff;
+            border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden; border: 1px solid var(--lavender-light-blue); /* Palette border */
         }
-
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--lavender-light-blue) 0%, var(--lavender-darker-purple) 100%); /* Adjusted gradient */
             color: #ffffff;
             padding: 40px 30px;
             text-align: center;
@@ -55,10 +53,9 @@
         }
 
         .header img.logo {
-            max-height: 80px;
+            max-height: 60px; /* Consistent with other emails */
             margin-bottom: 15px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-            border-radius: 12px;
+            border-radius: 8px; /* Consistent */
         }
 
         .header h1 {
@@ -273,19 +270,21 @@
         <div class="container">
             <div class="header">
                 <div class="header-content">
-                    <img src="https://i.postimg.cc/j5pxCjZy/logo-modified-1.png" alt="Twoem Online Productions Logo" class="logo">
+                    <% if (typeof logoUrl !== 'undefined' && logoUrl) { %>
+                        <img src="<%= logoUrl %>" alt="<%= process.env.EMAIL_FROM_NAME || 'Site Logo' %>" class="logo">
+                    <% } %>
                     <h1>🎉 New Contact Form Submission!</h1>
-                    <p>Someone wants to connect with Twoem Online Productions</p>
+                    <% if (process.env.EMAIL_FROM_NAME) { %>
+                        <p>For <%= process.env.EMAIL_FROM_NAME %></p>
+                    <% } %>
                 </div>
             </div>
 
             <div class="content">
-                <div class="welcome-card">
-                    <h2>📬 You've Got Mail!</h2>
-                    <p>A potential client has reached out through your website contact form. Here are the details:</p>
-                </div>
+                <% /* Removed welcome-card for a more direct approach for admin notifications */ %>
+                <p style="font-size: 1.1em;">A new message has been submitted via the website contact form:</p>
 
-                <div class="details-card">
+                <div class="details-card" style="background-color: var(--lavender-lightest-yellow); border-color: var(--lavender-muted-green);">
                     <div class="details-grid">
                         <div class="detail-item">
                             <div class="detail-icon">👤</div>
@@ -335,20 +334,14 @@
             </div>
 
             <div class="footer">
-                <img src="https://i.postimg.cc/j5pxCjZy/logo-modified-1.png" alt="Twoem Logo" class="footer-logo">
-                <p><strong>Twoem Online Productions</strong></p>
-                <p>🏢 Plaza Building 1st Floor, Opposite Total Petrol Station, Kagwe Town</p>
-                <p>📱 +254 707 330 204 | ✉️ twoemcyber@gmail.com</p>
-
-                <div class="social-links">
-                    <a href="https://wa.me/254707330204" class="social-link">📱</a>
-                    <a href="tel:+254707330204" class="social-link">📞</a>
-                    <a href="mailto:twoemcyber@gmail.com" class="social-link">📧</a>
-                </div>
-
-                <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">
-                    © <%= new Date().getFullYear() %> Twoem Online Productions. All rights reserved.<br>
-                    This email was automatically generated from your website contact form.
+                <p>&copy; <%= new Date().getFullYear() %> <%= process.env.EMAIL_FROM_NAME || "Twoem Online Productions" %>. All rights reserved.</p>
+                <% if (locals.siteUrl) { %><p><a href="<%= siteUrl %>" class="link-alt">Visit our website</a></p><% } %>
+                <p>
+                    This is an automated notification from the website contact form.
+                </p>
+                 <p>
+                    Contact for support: <a href="mailto:<%= process.env.CONTACT_RECEIVER_EMAIL %>" class="link-alt"><%= process.env.CONTACT_RECEIVER_EMAIL %></a>
+                    <% if (process.env.COMPANY_PHONE) { %> | Phone: <%= process.env.COMPANY_PHONE %><% } %>
                 </p>
             </div>
         </div>
