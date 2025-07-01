@@ -28,12 +28,45 @@ router.get('/login', (req, res) => {
 // POST Admin login
 router.post('/login', authAdminController.loginAdmin);
 
+const db = require('../config/database'); // Ensure db is required
+
 // GET Admin dashboard (protected)
-router.get('/dashboard', authAdmin, (req, res) => {
-    res.render('pages/admin-dashboard', {
-        title: 'Admin Dashboard',
-        admin: req.admin // req.admin is populated by authAdmin middleware
-    });
+router.get('/dashboard', authAdmin, async (req, res) => {
+    try {
+        let lastFeeUpdateAdminName = null;
+        let lastFeeUpdateDate = null;
+
+        // Get the last fee entry
+        const lastFeeEntry = await db.getAsync(
+            `SELECT f.created_at, f.logged_by_admin_id, a.name as admin_name
+             FROM fees f
+             LEFT JOIN admins a ON f.logged_by_admin_id = a.id
+             ORDER BY f.created_at DESC
+             LIMIT 1`
+        );
+
+        if (lastFeeEntry) {
+            lastFeeUpdateAdminName = lastFeeEntry.admin_name || `Admin ID: ${lastFeeEntry.logged_by_admin_id}`; // Fallback if name not found
+            lastFeeUpdateDate = lastFeeEntry.created_at;
+        }
+
+        res.render('pages/admin-dashboard', {
+            title: 'Admin Dashboard',
+            admin: req.admin, // req.admin is populated by authAdmin middleware
+            lastFeeUpdateAdminName,
+            lastFeeUpdateDate
+        });
+    } catch (err) {
+        console.error("Error fetching data for admin dashboard:", err);
+        // Render dashboard with error or default values for stats
+        res.render('pages/admin-dashboard', {
+            title: 'Admin Dashboard',
+            admin: req.admin,
+            lastFeeUpdateAdminName: 'Error',
+            lastFeeUpdateDate: 'Error loading data',
+            error_msg: 'Could not load some dashboard statistics.' // Optional: pass error to view
+        });
+    }
 });
 
 // POST Admin logout

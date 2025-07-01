@@ -14,7 +14,22 @@
     <% if (typeof admin !== 'undefined' && admin && admin.email) { %>
         <p class="small" style="color: var(--lavender-muted-green);">Logged in as: <%= admin.email %></p>
     <% } %>
-    <%# <p class="small text-muted">Last student/fees update by: [Admin Name] on [Date] (Placeholder - to be implemented)</p> %>
+
+    <% if (typeof lastFeeUpdateDate !== 'undefined' && lastFeeUpdateDate) { %>
+        <p class="small text-muted">
+            Last fee entry:
+            <% if (lastFeeUpdateAdminName && lastFeeUpdateAdminName !== 'Error') { %>
+                by <strong><%= lastFeeUpdateAdminName %></strong>
+            <% } else if (lastFeeUpdateAdminName === 'Error') { %>
+                <em>Error loading admin name</em>
+            <% } else { %>
+                <em>N/A</em>
+            <% } %>
+            on <strong><%= new Date(lastFeeUpdateDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></strong>.
+        </p>
+    <% } else { %>
+        <p class="small text-muted">No fee entries found yet.</p>
+    <% } %>
 
     <%- include('../partials/flash-messages') %>
 
