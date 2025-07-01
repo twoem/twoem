@@ -589,5 +589,3 @@ module.exports = {
     viewActionLogs,
     renderSendEmailForm, sendBulkEmail, renderEmailTestPage, testEmailTemplate, viewEmailLogs
 };
-
-[end of src/controllers/adminController.js]
