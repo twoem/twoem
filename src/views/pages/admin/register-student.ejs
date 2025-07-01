@@ -41,9 +41,47 @@
                 <% } %>
             </div>
 
-            <%# TODO: Add new fields here: Second Name, Surname, Enrolled Date, Course Fee %>
-            <%# These will be added in Phase 2 of the plan %>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="secondName" class="form-label">Second Name (Optional)</label>
+                    <input type="text" class="form-control <%= (viewData.errors && viewData.errors.find(e => e.param === 'secondName')) ? 'is-invalid' : '' %>" id="secondName" name="secondName" value="<%= viewData.secondName || '' %>">
+                    <% if (viewData.errors && viewData.errors.find(e => e.param === 'secondName')) { %>
+                        <div class="invalid-feedback">
+                            <%= viewData.errors.find(e => e.param === 'secondName').msg %>
+                        </div>
+                    <% } %>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="surname" class="form-label">Surname (Optional)</label>
+                    <input type="text" class="form-control <%= (viewData.errors && viewData.errors.find(e => e.param === 'surname')) ? 'is-invalid' : '' %>" id="surname" name="surname" value="<%= viewData.surname || '' %>">
+                    <% if (viewData.errors && viewData.errors.find(e => e.param === 'surname')) { %>
+                        <div class="invalid-feedback">
+                            <%= viewData.errors.find(e => e.param === 'surname').msg %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
 
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="enrolledDate" class="form-label">Enrolled Date</label>
+                    <input type="date" class="form-control <%= (viewData.errors && viewData.errors.find(e => e.param === 'enrolledDate')) ? 'is-invalid' : '' %>" id="enrolledDate" name="enrolledDate" value="<%= viewData.enrolledDate || new Date().toISOString().split('T')[0] %>" required>
+                    <% if (viewData.errors && viewData.errors.find(e => e.param === 'enrolledDate')) { %>
+                        <div class="invalid-feedback">
+                            <%= viewData.errors.find(e => e.param === 'enrolledDate').msg %>
+                        </div>
+                    <% } %>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="courseFee" class="form-label">Course Fee (KES)</label>
+                    <input type="number" step="0.01" class="form-control <%= (viewData.errors && viewData.errors.find(e => e.param === 'courseFee')) ? 'is-invalid' : '' %>" id="courseFee" name="courseFee" placeholder="e.g., 15000.00" value="<%= viewData.courseFee || '' %>">
+                    <% if (viewData.errors && viewData.errors.find(e => e.param === 'courseFee')) { %>
+                        <div class="invalid-feedback">
+                            <%= viewData.errors.find(e => e.param === 'courseFee').msg %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
 
             <p class="text-muted small mt-4">
                 A unique Registration Number will be automatically generated.

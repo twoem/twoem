@@ -1,87 +1,112 @@
-<%- include('../../../partials/header', { title: 'Edit Student' }) %>
-<%- include('../../../partials/navbar') %>
+<%# This page is rendered within layouts/admin_layout.ejs %>
+<%# viewData from the controller is available here directly %>
+<% const student = viewData.student; %>
+<% const oldInput = viewData.oldInput || {}; %>
+<% const errors = viewData.errors || []; %>
 
-<main class="container mt-5">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/admin/students">Manage Students</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Edit Student: <%= student ? student.first_name : '...' %> (<%= student ? student.registration_number : '...' %>)</li>
-        </ol>
-    </nav>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/students">Manage Students</a></li>
+        <% if (student) { %>
+            <li class="breadcrumb-item"><a href="/admin/students/view/<%= student.id %>">View: <%= student.first_name %> <%= student.surname || '' %></a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit Student</li>
+        <% } else { %>
+            <li class="breadcrumb-item active" aria-current="page">Edit Student</li>
+        <% } %>
+    </ol>
+</nav>
 
-    <h2>Edit Student: <%= student ? student.first_name : 'Details' %></h2>
-
-    <% if (locals.error_msg) { %>
-        <div class="alert alert-danger"><%= error_msg %></div>
-    <% } %>
-    <% if (locals.errors && locals.errors.length > 0) { %>
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                <% errors.forEach(function(error) { %>
-                    <li><%= error.msg || error %></li>
-                <% }); %>
-            </ul>
+<% if (viewData.errorLoading && !student) { %>
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error Loading Student Data!</h4>
+        <p>We encountered an issue trying to load the data for editing.</p>
+        <% if (viewData.errors && viewData.errors.length > 0 && viewData.errors[0].msg) { %>
+            <hr>
+            <p class="mb-0"><small>Details: <%= viewData.errors[0].msg %></small></p>
+        <% } %>
+         <a href="/admin/students" class="btn btn-primary mt-3">Back to Student List</a>
+    </div>
+<% } else if (student) { %>
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h1 class="h5 mb-0"><i class="fas fa-user-edit me-2"></i>Edit Student: <%= oldInput.firstName || student.first_name %> <%= oldInput.surname || student.surname || '' %></h1>
         </div>
-    <% } %>
+        <div class="card-body">
+            <%- include('../../partials/validation-errors', { errors: errors }) %>
 
-    <% if (student) { %>
-        <form action="/admin/students/edit/<%= student.id %>" method="POST">
-            <div class="row">
-                <div class="col-md-6">
-                    <fieldset disabled>
-                        <div class="mb-3">
-                            <label for="registrationNumber" class="form-label">Registration Number</label>
-                            <input type="text" class="form-control" id="registrationNumber" name="registrationNumber" value="<%= student.registration_number %>">
-                        </div>
-                    </fieldset>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="firstName" class="form-label">First Name</label>
-                        <input type="text" class="form-control" id="firstName" name="firstName" value="<%= locals.firstName !== undefined ? locals.firstName : student.first_name %>" required>
-                         <% if (locals.errors && errors.find(e => e.param === 'firstName')) { %><div class="text-danger small mt-1"><%= errors.find(e => e.param === 'firstName').msg %></div><% } %>
+            <form action="/admin/students/edit/<%= student.id %>" method="POST">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="registrationNumber" class="form-label">Registration Number</label>
+                        <input type="text" class="form-control" id="registrationNumber" name="registrationNumber" value="<%= student.registration_number %>" disabled readonly>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="email" name="email" value="<%= locals.email !== undefined ? locals.email : student.email %>" required>
-                        <% if (locals.errors && errors.find(e => e.param === 'email')) { %><div class="text-danger small mt-1"><%= errors.find(e => e.param === 'email').msg %></div><% } %>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control <%= errors.find(e => e.param === 'firstName') ? 'is-invalid' : '' %>" id="firstName" name="firstName" value="<%= oldInput.firstName %>" required>
+                        <% if (errors.find(e => e.param === 'firstName')) { %><div class="invalid-feedback"><%= errors.find(e => e.param === 'firstName').msg %></div><% } %>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="secondName" class="form-label">Second Name</label>
+                        <input type="text" class="form-control <%= errors.find(e => e.param === 'secondName') ? 'is-invalid' : '' %>" id="secondName" name="secondName" value="<%= oldInput.secondName %>">
+                        <% if (errors.find(e => e.param === 'secondName')) { %><div class="invalid-feedback"><%= errors.find(e => e.param === 'secondName').msg %></div><% } %>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="surname" class="form-label">Surname</label>
+                        <input type="text" class="form-control <%= errors.find(e => e.param === 'surname') ? 'is-invalid' : '' %>" id="surname" name="surname" value="<%= oldInput.surname %>">
+                        <% if (errors.find(e => e.param === 'surname')) { %><div class="invalid-feedback"><%= errors.find(e => e.param === 'surname').msg %></div><% } %>
                     </div>
                 </div>
-            </div>
 
-            <div class="mb-3">
-                <p class="form-text">
-                    Student Status: <strong><%= student.is_active ? 'Active' : 'Inactive' %></strong>.
-                    Password management for students is handled via student-initiated password resets or by specific admin "Reset Student Password" actions (to be implemented).
-                </p>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <button type="submit" class="btn btn-primary">Update Student Details</button>
-                    <a href="/admin/students/view/<%= student.id %>" class="btn btn-secondary ms-2">Cancel</a>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control <%= errors.find(e => e.param === 'email') ? 'is-invalid' : '' %>" id="email" name="email" value="<%= oldInput.email %>" required>
+                        <% if (errors.find(e => e.param === 'email')) { %><div class="invalid-feedback"><%= errors.find(e => e.param === 'email').msg %></div><% } %>
+                    </div>
                 </div>
-            </div>
-        </form>
 
-        <hr class="my-4">
-        <h5>Account Status</h5>
-        <form action="/admin/students/toggle-status/<%= student.id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to <%= student.is_active ? 'deactivate' : 'activate' %> this student account?');">
-            <p>Current status: <strong><%= student.is_active ? 'Active' : 'Inactive' %></strong></p>
-            <button type="submit" class="btn <%= student.is_active ? 'btn-warning' : 'btn-success' %>">
-                <i class="fas <%= student.is_active ? 'fa-user-slash' : 'fa-user-check' %>"></i>
-                <%= student.is_active ? 'Deactivate Student Account' : 'Activate Student Account' %>
-            </button>
-        </form>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="enrolledDate" class="form-label">Enrolled Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control <%= errors.find(e => e.param === 'enrolledDate') ? 'is-invalid' : '' %>" id="enrolledDate" name="enrolledDate" value="<%= oldInput.enrolledDate %>" required>
+                        <% if (errors.find(e => e.param === 'enrolledDate')) { %><div class="invalid-feedback"><%= errors.find(e => e.param === 'enrolledDate').msg %></div><% } %>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="courseFee" class="form-label">Course Fee (KES)</label>
+                        <input type="number" step="0.01" class="form-control <%= errors.find(e => e.param === 'courseFee') ? 'is-invalid' : '' %>" id="courseFee" name="courseFee" placeholder="e.g., 15000.00" value="<%= oldInput.courseFee %>">
+                        <% if (errors.find(e => e.param === 'courseFee')) { %><div class="invalid-feedback"><%= errors.find(e => e.param === 'courseFee').msg %></div><% } %>
+                    </div>
+                </div>
 
-    <% } else { %>
-        <div class="alert alert-warning">Student details not found. <a href="/admin/students">Return to student list.</a></div>
-    <% } %>
-</main>
+                <div class="mt-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Update Student Details</button>
+                        <a href="/admin/students/view/<%= student.id %>" class="btn btn-outline-secondary ms-2">Cancel</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
-<%- include('../../../partials/footer') %>
+    <hr class="my-4">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Account Status</h5>
+        </div>
+        <div class="card-body">
+             <p>Current status: <strong><%= student.is_active ? 'Active' : 'Inactive' %></strong></p>
+            <form action="/admin/students/toggle-status/<%= student.id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to <%= student.is_active ? 'deactivate' : 'activate' %> this student account?');">
+                <button type="submit" class="btn <%= student.is_active ? 'btn-warning' : 'btn-success' %>">
+                    <i class="fas <%= student.is_active ? 'fa-user-slash' : 'fa-user-check' %> me-2"></i>
+                    <%= student.is_active ? 'Deactivate Student Account' : 'Activate Student Account' %>
+                </button>
+            </form>
+        </div>
+    </div>
+
+<% } else if (!viewData.errorLoading) { %>
+    <div class="alert alert-warning">Student details not found. <a href="/admin/students" class="alert-link">Return to student list.</a></div>
+<% } %>

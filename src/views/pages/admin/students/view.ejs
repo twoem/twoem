@@ -1,71 +1,117 @@
-<%- include('../../../partials/header', { title: 'View Student Details' }) %>
-<%- include('../../../partials/navbar') %>
+<%# This page is rendered within layouts/admin_layout.ejs %>
+<%# viewData from the controller is available here directly %>
+<% const student = viewData.student; %>
+<% const enrollments = viewData.enrollments; %>
+<% const fees = viewData.fees; %>
+<% const overallBalance = viewData.overallBalance; %>
 
-<main class="container mt-5">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/admin/students">Manage Students</a></li>
-            <li class="breadcrumb-item active" aria-current="page">View Student: <%= student ? student.first_name : 'Details' %></li>
-        </ol>
-    </nav>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/students">Manage Students</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= viewData.title || (student ? `Student: ${student.first_name}` : 'Student Details') %></li>
+    </ol>
+</nav>
 
-    <% if (student) { %>
-        <h2>Student Details: <%= student.first_name %> (<%= student.registration_number %>)</h2>
-        <hr>
+<% if (viewData.errorLoading) { %>
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error Loading Student Details!</h4>
+        <p>We encountered an issue trying to load the data for this student.</p>
+        <% if (viewData.errorMessage) { %>
+            <hr>
+            <p class="mb-0"><small>Details: <%= viewData.errorMessage %></small></p>
+        <% } %>
+         <a href="/admin/students" class="btn btn-primary mt-3">Back to Student List</a>
+    </div>
+<% } else if (student) { %>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h2">
+            <i class="fas fa-user-graduate me-2"></i>Student Details:
+            <%= student.first_name %> <%= student.second_name || '' %> <%= student.surname || '' %>
+            (<%= student.registration_number %>)
+        </h1>
+        <div>
+            <a href="/admin/students/edit/<%= student.id %>" class="btn btn-outline-primary">
+                <i class="fas fa-edit"></i> Edit Student
+            </a>
+        </div>
+    </div>
+    <hr>
 
-        <div class="row">
-            <div class="col-md-6">
-                <h4>Personal Information</h4>
-                <dl class="row">
-                    <dt class="col-sm-4">Full Name:</dt>
-                    <dd class="col-sm-8"><%= student.first_name %></dd>
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header"><h4 class="h5 mb-0">Personal Information</h4></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Full Name:</dt>
+                        <dd class="col-sm-8"><%= student.first_name %> <%= student.second_name || '' %> <%= student.surname || '' %></dd>
 
-                    <dt class="col-sm-4">Email:</dt>
-                    <dd class="col-sm-8"><a href="mailto:<%= student.email %>"><%= student.email %></a></dd>
+                        <dt class="col-sm-4">Email:</dt>
+                        <dd class="col-sm-8"><a href="mailto:<%= student.email %>"><%= student.email %></a></dd>
 
-                    <dt class="col-sm-4">Registration #:</dt>
-                    <dd class="col-sm-8"><%= student.registration_number %></dd>
+                        <dt class="col-sm-4">Registration #:</dt>
+                        <dd class="col-sm-8"><%= student.registration_number %></dd>
 
-                    <dt class="col-sm-4">Registered On:</dt>
-                    <dd class="col-sm-8"><%= new Date(student.created_at).toLocaleString() %></dd>
+                        <dt class="col-sm-4">Enrolled On:</dt>
+                        <dd class="col-sm-8"><%= student.enrolled_date ? new Date(student.enrolled_date).toLocaleDateString() : 'N/A' %></dd>
 
-                    <dt class="col-sm-4">Last Login:</dt>
-                    <dd class="col-sm-8"><%= student.last_login_at ? new Date(student.last_login_at).toLocaleString() : 'Never' %></dd>
+                        <dt class="col-sm-4">Course Fee:</dt>
+                        <dd class="col-sm-8">KES <%= student.course_fee ? student.course_fee.toFixed(2) : 'N/A' %></dd>
 
-                    <dt class="col-sm-4">Password Changed:</dt>
-                    <dd class="col-sm-8"><%= student.requires_password_change ? 'No (Default Password Active)' : 'Yes' %></dd>
+                        <dt class="col-sm-4">Registered On:</dt>
+                        <dd class="col-sm-8"><%= new Date(student.created_at).toLocaleString() %></dd>
 
-                    <dt class="col-sm-4">Profile Complete:</dt>
-                    <dd class="col-sm-8"><%= student.is_profile_complete ? 'Yes' : 'No (Next of Kin pending)' %></dd>
-                </dl>
+                        <dt class="col-sm-4">Last Login:</dt>
+                        <dd class="col-sm-8"><%= student.last_login_at ? new Date(student.last_login_at).toLocaleString() : 'Never' %></dd>
 
-                <% if (student.next_of_kin_details) {
-                    let nok;
-                    try { nok = JSON.parse(student.next_of_kin_details); } catch(e) { nok = null; }
-                %>
-                    <% if (nok) { %>
-                        <h5 class="mt-4">Next of Kin Details</h5>
-                        <dl class="row">
-                            <dt class="col-sm-4">Name:</dt>
-                            <dd class="col-sm-8"><%= nok.name %></dd>
-                            <dt class="col-sm-4">Relationship:</dt>
-                            <dd class="col-sm-8"><%= nok.relationship %></dd>
-                            <dt class="col-sm-4">Phone:</dt>
-                            <dd class="col-sm-8"><%= nok.phone %></dd>
-                            <% if (nok.email) { %>
-                                <dt class="col-sm-4">Email:</dt>
-                                <dd class="col-sm-8"><%= nok.email %></dd>
+                        <dt class="col-sm-4">Password Status:</dt>
+                        <dd class="col-sm-8"><%= student.requires_password_change ? 'Default (Requires Change)' : 'Changed' %></dd>
+
+                        <dt class="col-sm-4">Profile Complete:</dt>
+                        <dd class="col-sm-8"><%= student.is_profile_complete ? 'Yes' : 'No (Next of Kin pending)' %></dd>
+
+                        <dt class="col-sm-4">Account Status:</dt>
+                        <dd class="col-sm-8">
+                            <% if (student.is_active) { %>
+                                <span class="badge bg-success">Active</span>
+                            <% } else { %>
+                                <span class="badge bg-danger">Inactive</span>
                             <% } %>
-                        </dl>
-                    <% } %>
-                <% } else { %>
-                    <p class="text-muted">Next of Kin details not yet provided.</p>
-                <% } %>
-            </div>
+                        </dd>
+                    </dl>
 
-            <div class="col-md-6">
-                <h4>Academic Records</h4>
+                    <% if (student.next_of_kin_details) {
+                        let nok;
+                        try { nok = JSON.parse(student.next_of_kin_details); } catch(e) { nok = null; }
+                    %>
+                        <% if (nok) { %>
+                            <h5 class="mt-4">Next of Kin Details</h5>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Name:</dt>
+                                <dd class="col-sm-8"><%= nok.name %></dd>
+                                <dt class="col-sm-4">Relationship:</dt>
+                                <dd class="col-sm-8"><%= nok.relationship %></dd>
+                                <dt class="col-sm-4">Phone:</dt>
+                                <dd class="col-sm-8"><%= nok.phone %></dd>
+                                <% if (nok.email) { %>
+                                    <dt class="col-sm-4">Email:</dt>
+                                    <dd class="col-sm-8"><%= nok.email %></dd>
+                                <% } %>
+                            </dl>
+                        <% } %>
+                    <% } else { %>
+                        <p class="text-muted mt-3">Next of Kin details not yet provided.</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-4 h-100">
+                <div class="card-header"><h4 class="h5 mb-0">Academic & Financial Overview</h4></div>
+                <div class="card-body">
+                    <h5>Academic Records</h5>
                 <% if (enrollments && enrollments.length > 0) { %>
                     <div class="table-responsive">
                         <table class="table table-sm table-hover">

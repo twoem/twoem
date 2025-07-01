@@ -31,6 +31,10 @@ function initializeDb() {
                 registration_number TEXT UNIQUE NOT NULL,
                 email TEXT UNIQUE NOT NULL,
                 first_name TEXT NOT NULL,
+                second_name TEXT,
+                surname TEXT,
+                enrolled_date DATE DEFAULT CURRENT_DATE,
+                course_fee REAL,
                 password_hash TEXT NOT NULL,
                 next_of_kin_details TEXT,
                 last_login_at DATETIME,
@@ -71,25 +75,58 @@ function initializeDb() {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 description TEXT,
+                default_fee REAL, -- New field for default course fee
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 -- Add image_url TEXT if courses have images
             )
         `, (err) => {
             if (err) console.error("Error creating courses table:", err.message);
-            else console.log("Courses table checked/created.");
+            else {
+                console.log("Courses table checked/created.");
+                // Add default_fee column if it doesn't exist (simple migration)
+                db.run("ALTER TABLE courses ADD COLUMN default_fee REAL", (alterErr) => {
+                    if (alterErr && !alterErr.message.includes("duplicate column name")) {
+                        console.error("Error adding default_fee column to courses:", alterErr.message);
+                    } else if (!alterErr) {
+                        console.log("Column default_fee added to courses table.");
+                    } else {
+                        console.log("Column default_fee already exists in courses table.");
+                    }
+                });
+            }
         });
 
-        // Enrollments Table
+        // Course Units Table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS course_units (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                course_id INTEGER NOT NULL,
+                unit_name TEXT NOT NULL,
+                unit_order INTEGER, -- Optional: for ordering units within a course
+                max_marks INTEGER DEFAULT 100, -- Default max marks for a unit
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+            )
+        `, (err) => {
+            if (err) console.error("Error creating course_units table:", err.message);
+            else console.log("Course_units table checked/created.");
+        });
+
+        // Enrollments Table - Add fields for theory and practical exam marks
         db.run(`
             CREATE TABLE IF NOT EXISTS enrollments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 student_id INTEGER NOT NULL,
                 course_id INTEGER NOT NULL,
                 enrollment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                coursework_marks INTEGER,
-                main_exam_marks INTEGER,
-                final_grade TEXT, -- e.g., 'A', 'B', 'Pass', 'Fail'
+                coursework_marks INTEGER, -- This might become deprecated or calculated from student_unit_marks
+                main_exam_marks INTEGER, -- This might become deprecated or calculated from theory/practical
+                theory_exam_marks INTEGER, -- New field for theory exam
+                practical_exam_marks INTEGER, -- New field for practical exam
+                final_grade TEXT, -- e.g., 'A', 'B', 'Pass', 'Fail', 'Pending', 'Incomplete'
+                completion_status TEXT DEFAULT 'Pending', -- New: e.g., 'Pending', 'Incomplete', 'Completed'
                 certificate_issued_at DATETIME,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -99,8 +136,79 @@ function initializeDb() {
             )
         `, (err) => {
             if (err) console.error("Error creating enrollments table:", err.message);
-            else console.log("Enrollments table checked/created.");
+            else {
+                console.log("Enrollments table checked/created.");
+                // Simple migration for new exam marks and completion_status columns
+                const enrollmentCols = [
+                    { name: 'theory_exam_marks', type: 'INTEGER' },
+                    { name: 'practical_exam_marks', type: 'INTEGER' },
+                    { name: 'completion_status', type: 'TEXT DEFAULT "Pending"' }
+                ];
+                enrollmentCols.forEach(col => {
+                    db.run(`ALTER TABLE enrollments ADD COLUMN ${col.name} ${col.type}`, (alterErr) => {
+                        if (alterErr && !alterErr.message.includes("duplicate column name")) {
+                            console.error(`Error adding ${col.name} column to enrollments:`, alterErr.message);
+                        } else if (!alterErr) {
+                            console.log(`Column ${col.name} added to enrollments table.`);
+                        } else {
+                            console.log(`Column ${col.name} already exists in enrollments table.`);
+                        }
+                    });
+                });
+            }
         });
+
+        // Student Unit Marks Table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS student_unit_marks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                enrollment_id INTEGER NOT NULL, -- Links to an enrollment record
+                unit_id INTEGER NOT NULL, -- Links to a specific unit in course_units
+                marks_obtained INTEGER,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (enrollment_id) REFERENCES enrollments(id) ON DELETE CASCADE,
+                FOREIGN KEY (unit_id) REFERENCES course_units(id) ON DELETE CASCADE,
+                UNIQUE(enrollment_id, unit_id) -- Marks for a unit per enrollment should be unique
+            )
+        `, (err) => {
+            if (err) console.error("Error creating student_unit_marks table:", err.message);
+            else console.log("Student_unit_marks table checked/created.");
+        });
+
+        // Seed "Computer Classes" course and its units
+        db.get("SELECT id FROM courses WHERE name = 'Computer Classes'", [], (err, row) => {
+            if (err) return console.error("Error checking for Computer Classes course:", err.message);
+            if (!row) {
+                db.run("INSERT INTO courses (name, description, default_fee, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+                    ['Computer Classes', 'Fundamental computer literacy and application skills.', 5000.00], function(err) {
+                    if (err) return console.error("Error inserting Computer Classes course:", err.message);
+                    const courseId = this.lastID;
+                    console.log("'Computer Classes' course seeded with ID:", courseId);
+                    const units = [
+                        { name: 'Introduction to Computers', order: 1, max: 100 },
+                        { name: 'Microsoft Word', order: 2, max: 100 },
+                        { name: 'Microsoft Excel', order: 3, max: 100 },
+                        { name: 'Microsoft PowerPoint', order: 4, max: 100 },
+                        { name: 'Microsoft Publisher', order: 5, max: 100 },
+                        { name: 'Internet & Email', order: 6, max: 100 },
+                        { name: 'Typing Skills', order: 7, max: 100 },
+                        { name: 'Operating System (Windows)', order: 8, max: 100 }
+                    ];
+                    const stmt = db.prepare("INSERT INTO course_units (course_id, unit_name, unit_order, max_marks, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)");
+                    units.forEach(unit => {
+                        stmt.run(courseId, unit.name, unit.order, unit.max, (err) => {
+                            if(err) console.error(`Error inserting unit ${unit.name}:`, err.message);
+                            else console.log(`Unit '${unit.name}' for Computer Classes seeded.`);
+                        });
+                    });
+                    stmt.finalize();
+                });
+            } else {
+                console.log("'Computer Classes' course already exists.");
+            }
+        });
+
 
         // Add columns if they don't exist (simple migration)
         const columnsToAdd = [

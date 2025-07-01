@@ -21,10 +21,13 @@ const renderRegisterStudentForm = (req, res) => {
     const viewData = {
         title: 'Register New Student', // This title is for the content page
         admin: req.admin,
-        errors: req.flash('validation_errors') || [], // Use flashed errors if available
-        firstName: req.flash('firstName') || '', // Persist input on error
-        email: req.flash('email') || '', // Persist input on error
-        // Add other fields here for persistence if needed for the new form
+        errors: JSON.parse(req.flash('validation_errors')[0] || '[]'), // Parse flashed errors
+        firstName: req.flash('firstName')[0] || '',
+        secondName: req.flash('secondName')[0] || '',
+        surname: req.flash('surname')[0] || '',
+        email: req.flash('email')[0] || '',
+        enrolledDate: req.flash('enrolledDate')[0] || new Date().toISOString().split('T')[0], // Default to today
+        courseFee: req.flash('courseFee')[0] || ''
     };
     res.render('layouts/admin_layout', {
         title: 'Register New Student', // This is for the <title> tag in the layout
@@ -34,60 +37,92 @@ const renderRegisterStudentForm = (req, res) => {
     });
 };
 
-const registerStudent = async (req, res) => {
-    const { firstName, email } = req.body; // Add other fields: secondName, surname, enrolledDate, courseFee
-    const admin = req.admin;
-    // Validation should ideally be done using express-validator for consistency
-    if (!firstName || !email) {
-        req.flash('validation_errors', JSON.stringify([{param: 'firstName', msg: 'First Name and Email are required.'}]));
-        req.flash('firstName', firstName);
-        req.flash('email', email);
-        return res.redirect('/admin/register-student'); // Redirect to GET which handles layout
-    }
-    try {
-        const existingStudent = await db.getAsync("SELECT * FROM students WHERE email = ?", [email.toLowerCase()]);
-        if (existingStudent) {
-            req.flash('validation_errors', JSON.stringify([{param: 'email', msg: 'A student with this email address already exists.'}]));
+const registerStudent = [
+    // Validation middleware
+    body('firstName').trim().notEmpty().withMessage('First Name is required.'),
+    body('email').trim().isEmail().withMessage('A valid Email is required.'),
+    body('secondName').trim().optional({ checkFalsy: true }),
+    body('surname').trim().optional({ checkFalsy: true }),
+    body('enrolledDate').isISO8601().toDate().withMessage('A valid Enrolled Date is required.'),
+    body('courseFee').optional({ checkFalsy: true }).isFloat({ gt: 0 }).withMessage('Course Fee must be a positive number if provided.'),
+
+    async (req, res) => {
+        const errors = validationResult(req);
+        const { firstName, secondName, surname, email, enrolledDate, courseFee } = req.body;
+        const admin = req.admin;
+
+        if (!errors.isEmpty()) {
+            req.flash('validation_errors', JSON.stringify(errors.array()));
             req.flash('firstName', firstName);
+            req.flash('secondName', secondName);
+            req.flash('surname', surname);
             req.flash('email', email);
-            return res.redirect('/admin/register-student'); // Redirect to GET
-        }
-
-        // Sequential Registration Number
-        await db.runAsync("UPDATE app_sequences SET last_value = last_value + 1 WHERE sequence_name = 'student_registration'");
-        const seq = await db.getAsync("SELECT last_value FROM app_sequences WHERE sequence_name = 'student_registration'");
-        const newRegNum = `TWOEM-${seq.last_value.toString().padStart(4, '0')}`; // Format: TWOEM-XXXX
-
-        const defaultPassword = process.env.DEFAULT_STUDENT_PASSWORD;
-        if (!defaultPassword) {
-            console.error("DEFAULT_STUDENT_PASSWORD is not set in .env");
-            req.flash('error_msg', '❌ Operation Failed! ❌ Server configuration error: Default password not set. 😔');
+            req.flash('enrolledDate', enrolledDate);
+            req.flash('courseFee', courseFee);
             return res.redirect('/admin/register-student');
         }
-        const passwordHash = await bcrypt.hash(defaultPassword, 10);
 
-        // TODO: Add new fields (second_name, surname, enrolled_date, course_fee) to this INSERT
-        const sql = `INSERT INTO students (registration_number, email, first_name, password_hash, requires_password_change, is_profile_complete, is_active)
-                     VALUES (?, ?, ?, ?, TRUE, FALSE, TRUE)`;
-        const result = await db.runAsync(sql, [newRegNum, email.toLowerCase(), firstName, passwordHash]);
+        try {
+            const existingStudent = await db.getAsync("SELECT * FROM students WHERE email = ?", [email.toLowerCase()]);
+            if (existingStudent) {
+                req.flash('validation_errors', JSON.stringify([{ param: 'email', msg: 'A student with this email address already exists.' }]));
+                req.flash('firstName', firstName);
+                req.flash('secondName', secondName);
+                req.flash('surname', surname);
+                req.flash('email', email);
+                req.flash('enrolledDate', enrolledDate);
+                req.flash('courseFee', courseFee);
+                return res.redirect('/admin/register-student');
+            }
 
-        // Log action - result from custom runAsync contains { lastID, changes }
-        if (result && typeof result.lastID !== 'undefined') {
-            logAdminAction(req.admin.id, 'STUDENT_REGISTERED', `Admin ${admin.name} registered student: ${firstName} (${email}), RegNo: ${newRegNum}`, 'student', result.lastID, req.ip);
-        } else {
-            // Fallback logging if lastID isn't available as expected (should not happen with corrected runAsync)
-            logAdminAction(req.admin.id, 'STUDENT_REGISTERED', `Admin ${admin.name} registered student: ${firstName} (${email}), RegNo: ${newRegNum} (lastID not retrieved)`, 'student', null, req.ip);
-            console.warn("[Register Student] Could not retrieve lastID for logging for student:", newRegNum);
+            // Sequential Registration Number
+            await db.runAsync("UPDATE app_sequences SET last_value = last_value + 1 WHERE sequence_name = 'student_registration'");
+            const seq = await db.getAsync("SELECT last_value FROM app_sequences WHERE sequence_name = 'student_registration'");
+            const newRegNum = `TWOEM-${seq.last_value.toString().padStart(4, '0')}`;
+
+            const defaultPassword = process.env.DEFAULT_STUDENT_PASSWORD;
+            if (!defaultPassword) {
+                console.error("DEFAULT_STUDENT_PASSWORD is not set in .env");
+                req.flash('error_msg', '❌ Operation Failed! ❌ Server configuration error: Default password not set. 😔');
+                return res.redirect('/admin/register-student');
+            }
+            const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+            const sql = `INSERT INTO students (
+                            registration_number, email, first_name, second_name, surname,
+                            enrolled_date, course_fee, password_hash,
+                            requires_password_change, is_profile_complete, is_active, updated_at
+                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE, TRUE, CURRENT_TIMESTAMP)`;
+            const params = [
+                newRegNum, email.toLowerCase(), firstName, secondName || null, surname || null,
+                enrolledDate, courseFee ? parseFloat(courseFee) : null, passwordHash
+            ];
+            const result = await db.runAsync(sql, params);
+
+            const studentFullName = `${firstName} ${secondName || ''} ${surname || ''}`.replace(/\s+/g, ' ').trim();
+            if (result && typeof result.lastID !== 'undefined') {
+                logAdminAction(req.admin.id, 'STUDENT_REGISTERED', `Admin ${admin.name} registered student: ${studentFullName} (${email}), RegNo: ${newRegNum}`, 'student', result.lastID, req.ip);
+            } else {
+                logAdminAction(req.admin.id, 'STUDENT_REGISTERED', `Admin ${admin.name} registered student: ${studentFullName} (${email}), RegNo: ${newRegNum} (lastID not retrieved)`, 'student', null, req.ip);
+                console.warn("[Register Student] Could not retrieve lastID for logging for student:", newRegNum);
+            }
+
+            req.flash('success_msg', `✨ Success! ✨ Student ${studentFullName} (${email}) registered successfully with Registration Number: ${newRegNum}. 🎉`);
+            res.redirect('/admin/register-student');
+        } catch (err) {
+            console.error("Error registering student:", err);
+            // Flash all inputs back in case of a general error too
+            req.flash('firstName', firstName);
+            req.flash('secondName', secondName);
+            req.flash('surname', surname);
+            req.flash('email', email);
+            req.flash('enrolledDate', enrolledDate);
+            req.flash('courseFee', courseFee);
+            req.flash('error_msg', `❌ Operation Failed! ❌ An error occurred while registering the student. ${err.message} 😔`);
+            res.redirect('/admin/register-student');
         }
-
-        req.flash('success_msg', `✨ Success! ✨ Student ${firstName} (${email}) registered successfully with Registration Number: ${newRegNum}. 🎉`);
-        res.redirect('/admin/register-student');
-    } catch (err) {
-        console.error("Error registering student:", err);
-        req.flash('error_msg', `❌ Operation Failed! ❌ An error occurred while registering the student. ${err.message} 😔`);
-        res.redirect('/admin/register-student');
     }
-};
+];
 
 const listCourses = async (req, res) => {
     try {
@@ -229,12 +264,36 @@ const deleteCourse = async (req, res) => {
 
 const listStudents = async (req, res) => {
     try {
-        const students = await db.allAsync("SELECT id, registration_number, first_name, email, created_at, last_login_at, is_active FROM students ORDER BY created_at DESC");
-        res.render('pages/admin/students/index', { title: 'Manage Students', admin: req.admin, students });
+        // Added second_name, surname, enrolled_date to the SELECT query
+        const students = await db.allAsync("SELECT id, registration_number, first_name, second_name, surname, email, enrolled_date, created_at, last_login_at, is_active FROM students ORDER BY created_at DESC");
+        const viewData = {
+            title: 'Manage Students',
+            admin: req.admin,
+            students: students
+        };
+        res.render('layouts/admin_layout', {
+            title: 'Manage Students', // For <title> tag
+            bodyView: 'pages/admin/students/index',
+            admin: req.admin,
+            viewData: viewData
+        });
     } catch (err) {
         console.error("Error fetching students:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t retrieve student list. ${err.message} 😔`);
-        res.redirect('/admin/dashboard');
+        // Render with error state within layout
+        const errorViewData = {
+            title: 'Manage Students - Error',
+            admin: req.admin,
+            students: [],
+            errorLoading: true,
+            errorMessage: err.message
+        };
+        res.status(500).render('layouts/admin_layout', {
+            title: 'Error Loading Students',
+            bodyView: 'pages/admin/students/index',
+            admin: req.admin,
+            viewData: errorViewData
+        });
     }
 };
 
@@ -251,11 +310,45 @@ const viewStudentDetails = async (req, res) => {
         let totalCharged = 0; let totalPaid = 0;
         fees.forEach(fee => { totalCharged += fee.total_amount || 0; totalPaid += fee.amount_paid || 0; });
         const overallBalance = totalCharged - totalPaid;
-        res.render('pages/admin/students/view', { title: 'View Student Details', admin: req.admin, student, enrollments: enrollments || [], fees: fees || [], overallBalance });
+
+        const studentFullName = `${student.first_name || ''} ${student.second_name || ''} ${student.surname || ''}`.replace(/\s+/g, ' ').trim();
+        const pageTitle = `Details for ${studentFullName}`;
+
+        const viewData = {
+            title: pageTitle,
+            admin: req.admin,
+            student,
+            enrollments: enrollments || [],
+            fees: fees || [],
+            overallBalance
+        };
+        res.render('layouts/admin_layout', {
+            title: pageTitle, // For <title> tag
+            bodyView: 'pages/admin/students/view',
+            admin: req.admin,
+            viewData: viewData
+        });
+
     } catch (err) {
         console.error("Error fetching student details:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load student details. ${err.message} 😔`);
-        res.redirect('/admin/students');
+        // Attempt to render the page with an error state within the layout
+        const errorViewData = {
+            title: 'View Student Details - Error',
+            admin: req.admin,
+            student: null, // Or a placeholder student object
+            enrollments: [],
+            fees: [],
+            overallBalance: 0,
+            errorLoading: true,
+            errorMessage: err.message
+        };
+        res.status(500).render('layouts/admin_layout', {
+            title: 'Error Loading Student Details',
+            bodyView: 'pages/admin/students/view',
+            admin: req.admin,
+            viewData: errorViewData
+        });
     }
 };
 const renderEditStudentForm = async (req, res) => {
@@ -265,41 +358,110 @@ const renderEditStudentForm = async (req, res) => {
             req.flash('error_msg', '⚠️ Student not found.');
             return res.redirect('/admin/students');
         }
-        // TODO: Include new fields (second_name, surname, etc.) when rendering
-        res.render('pages/admin/students/edit', { title: 'Edit Student', admin: req.admin, student, errors: [], firstName: student.first_name, email: student.email });
+        // Ensure enrolled_date is formatted for the date input field
+        const formattedEnrolledDate = student.enrolled_date ? new Date(student.enrolled_date).toISOString().split('T')[0] : '';
+
+        const viewData = {
+            title: `Edit Student: ${student.first_name} ${student.surname || ''}`,
+            admin: req.admin,
+            student: { // Pass all student fields, including new ones
+                ...student,
+                enrolled_date_formatted: formattedEnrolledDate
+            },
+            errors: JSON.parse(req.flash('validation_errors')[0] || '[]'),
+            // Pre-fill with flashed old input if available, otherwise use student data
+            oldInput: {
+                firstName: req.flash('firstName')[0] || student.first_name,
+                secondName: req.flash('secondName')[0] || student.second_name,
+                surname: req.flash('surname')[0] || student.surname,
+                email: req.flash('email')[0] || student.email,
+                enrolledDate: req.flash('enrolledDate')[0] || formattedEnrolledDate,
+                courseFee: req.flash('courseFee')[0] || (student.course_fee !== null ? student.course_fee.toString() : '')
+            }
+        };
+        res.render('layouts/admin_layout', {
+            title: `Edit Student: ${student.first_name}`, // For <title> tag
+            bodyView: 'pages/admin/students/edit',
+            admin: req.admin,
+            viewData: viewData
+        });
     } catch (err) {
         console.error("Error fetching student for edit:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load student details for editing. ${err.message} 😔`);
-        res.redirect('/admin/students');
+        // Attempt to render with error state
+        const errorViewData = {
+            title: 'Edit Student - Error',
+            admin: req.admin,
+            student: null,
+            errors: [{msg: `Error loading student data: ${err.message}`}],
+            oldInput: {}
+        };
+         res.status(500).render('layouts/admin_layout', {
+            title: 'Error Editing Student',
+            bodyView: 'pages/admin/students/edit',
+            admin: req.admin,
+            viewData: errorViewData
+        });
     }
 };
 const updateStudent = [
-    body('firstName').trim().notEmpty().withMessage('First name is required.'),
-    body('email').trim().isEmail().withMessage('Valid email is required.'),
-    // TODO: Add validators for new fields
+    body('firstName').trim().notEmpty().withMessage('First Name is required.'),
+    body('email').trim().isEmail().withMessage('A valid Email is required.'),
+    body('secondName').trim().optional({ checkFalsy: true }),
+    body('surname').trim().optional({ checkFalsy: true }),
+    body('enrolledDate').isISO8601().toDate().withMessage('A valid Enrolled Date is required.'),
+    body('courseFee').optional({ checkFalsy: true }).isFloat({ min: 0 }).withMessage('Course Fee must be a non-negative number.'),
+
     async (req, res) => {
         const studentId = req.params.id;
         const errors = validationResult(req);
-        const { firstName, email } = req.body; // TODO: Add new fields
-        const studentForForm = await db.getAsync("SELECT * FROM students WHERE id = ?", [studentId]);
-        if (!studentForForm) {
-            req.flash('error_msg', '⚠️ Student not found.');
-            return res.redirect('/admin/students');
-        }
+        const { firstName, secondName, surname, email, enrolledDate, courseFee } = req.body;
+
         if (!errors.isEmpty()) {
-            return res.status(400).render('pages/admin/students/edit', { title: 'Edit Student', admin: req.admin, errors: errors.array(), student: studentForForm, firstName, email });
+            req.flash('validation_errors', JSON.stringify(errors.array()));
+            req.flash('firstName', firstName);
+            req.flash('secondName', secondName);
+            req.flash('surname', surname);
+            req.flash('email', email);
+            req.flash('enrolledDate', enrolledDate);
+            req.flash('courseFee', courseFee);
+            return res.redirect(`/admin/students/edit/${studentId}`);
         }
+
         try {
+            const studentForForm = await db.getAsync("SELECT * FROM students WHERE id = ?", [studentId]);
+            if (!studentForForm) {
+                req.flash('error_msg', '⚠️ Student not found.');
+                return res.redirect('/admin/students');
+            }
+
             if (email.toLowerCase() !== studentForForm.email.toLowerCase()) {
                 const existingEmailStudent = await db.getAsync("SELECT id FROM students WHERE email = ? AND id != ?", [email.toLowerCase(), studentId]);
                 if (existingEmailStudent) {
-                    req.flash('error_msg', '⚠️ This email address is already in use by another student.');
-                    return res.status(400).render('pages/admin/students/edit', { title: 'Edit Student', admin: req.admin, student: studentForForm, firstName, email, errors: [{msg: 'This email address is already in use by another student.'}] });
+                    req.flash('validation_errors', JSON.stringify([{ param: 'email', msg: 'This email address is already in use by another student.' }]));
+                    req.flash('firstName', firstName);
+                    req.flash('secondName', secondName);
+                    req.flash('surname', surname);
+                    req.flash('email', email); // Keep attempted email
+                    req.flash('enrolledDate', enrolledDate);
+                    req.flash('courseFee', courseFee);
+                    return res.redirect(`/admin/students/edit/${studentId}`);
                 }
             }
-            // TODO: Update new fields in this query
-            await db.runAsync("UPDATE students SET first_name = ?, email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [firstName, email.toLowerCase(), studentId]);
-            logAdminAction(req.admin.id, 'STUDENT_UPDATED', `Admin ${req.admin.name} updated details for student ID: ${studentId}`, 'student', studentId, req.ip);
+
+            const sql = `UPDATE students SET
+                            first_name = ?, second_name = ?, surname = ?, email = ?,
+                            enrolled_date = ?, course_fee = ?, updated_at = CURRENT_TIMESTAMP
+                         WHERE id = ?`;
+            const params = [
+                firstName, secondName || null, surname || null, email.toLowerCase(),
+                enrolledDate, courseFee ? parseFloat(courseFee) : null,
+                studentId
+            ];
+            await db.runAsync(sql, params);
+
+            const studentFullName = `${firstName} ${secondName || ''} ${surname || ''}`.replace(/\s+/g, ' ').trim();
+            logAdminAction(req.admin.id, 'STUDENT_UPDATED', `Admin ${req.admin.name} updated details for student: ${studentFullName} (ID: ${studentId})`, 'student', studentId, req.ip);
             req.flash('success_msg', '✨ Update Successful! ✨ Student details updated successfully! 🎉');
             res.redirect(`/admin/students/view/${studentId}`);
         } catch (err) {

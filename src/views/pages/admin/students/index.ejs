@@ -1,92 +1,88 @@
-<%- include('../../../partials/header', { title: 'Manage Students' }) %>
-<%- include('../../../partials/navbar') %>
+<%# This page is rendered within layouts/admin_layout.ejs %>
+<%# viewData from the controller is available here directly %>
 
-<main class="container mt-5">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Manage Students</li>
-        </ol>
-    </nav>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= viewData.title || 'Manage Students' %></li>
+    </ol>
+</nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Manage Students</h1>
-        <a href="/admin/register-student" class="btn btn-primary">
-            <i class="fas fa-user-plus"></i> Register New Student
-        </a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2"><i class="fas fa-users me-2"></i><%= viewData.title || 'Manage Students' %></h1>
+    <a href="/admin/register-student" class="btn btn-primary">
+        <i class="fas fa-user-plus me-2"></i> Register New Student
+    </a>
+</div>
+
+<%# Flash messages are handled by admin_layout.ejs %>
+
+<% if (viewData.errorLoading) { %>
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error Loading Students!</h4>
+        <p>We encountered an issue trying to load the student data. Please try again later.</p>
+        <% if (viewData.errorMessage) { %>
+            <hr>
+            <p class="mb-0"><small>Details: <%= viewData.errorMessage %></small></p>
+        <% } %>
     </div>
-
-    <% if (locals.success_msg) { %>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <%= success_msg %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <% } %>
-    <% if (locals.error_msg) { %>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <%= error_msg %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <% } %>
-
-    <% if (students && students.length > 0) { %>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Reg. Number</th>
-                        <th scope="col">First Name</th>
-                        <th scope="col">Email</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Registered At</th>
-                        <th scope="col">Last Login</th>
-                        <th scope="col" class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% students.forEach(function(student) { %>
+<% } else if (viewData.students && viewData.students.length > 0) { %>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <td><%= student.id %></td>
-                            <td><%= student.registration_number %></td>
-                            <td><%= student.first_name %></td>
-                            <td><a href="mailto:<%= student.email %>"><%= student.email %></a></td>
-                            <td>
-                                <% if (student.is_active) { %>
-                                    <span class="badge bg-success">Active</span>
-                                <% } else { %>
-                                    <span class="badge bg-danger">Inactive</span>
-                                <% } %>
-                            </td>
-                            <td><%= new Date(student.created_at).toLocaleDateString() %></td>
-                            <td><%= student.last_login_at ? new Date(student.last_login_at).toLocaleString() : 'Never' %></td>
-                            <td class="text-end">
-                                <a href="/admin/students/view/<%= student.id %>" class="btn btn-sm btn-outline-info me-1" title="View Details">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
-                                <a href="/admin/students/edit/<%= student.id %>" class="btn btn-sm btn-outline-secondary me-1" title="Edit Student">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                <form action="/admin/students/toggle-status/<%= student.id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to <%= student.is_active ? 'deactivate' : 'activate' %> this student account?');">
-                                    <button type="submit" class="btn btn-sm <%= student.is_active ? 'btn-outline-warning' : 'btn-outline-success' %>" title="<%= student.is_active ? 'Deactivate' : 'Activate' %> Student">
-                                        <i class="fas <%= student.is_active ? 'fa-user-slash' : 'fa-user-check' %>"></i> <%= student.is_active ? 'Deact.' : 'Act.' %>
-                                    </button>
-                                </form>
-                                <!-- Delete might be too risky without soft delete / deactivation first -->
-                                <!-- <form action="/admin/students/delete/<%= student.id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure? This is permanent.');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Student">
-                                        <i class="fas fa-user-times"></i> Delete
-                                    </button>
-                                </form> -->
-                            </td>
+                            <th scope="col">ID</th>
+                            <th scope="col">Reg. No.</th>
+                            <th scope="col">Full Name</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Enrolled</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="text-center" style="min-width: 180px;">Actions</th>
                         </tr>
-                    <% }); %>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <% viewData.students.forEach(function(student) { %>
+                            <tr>
+                                <td><%= student.id %></td>
+                                <td><%= student.registration_number %></td>
+                                <td>
+                                    <a href="/admin/students/view/<%= student.id %>" class="fw-bold">
+                                        <%= student.first_name %> <%= student.second_name || '' %> <%= student.surname || '' %>
+                                    </a>
+                                </td>
+                                <td><a href="mailto:<%= student.email %>"><%= student.email %></a></td>
+                                <td><%= student.enrolled_date ? new Date(student.enrolled_date).toLocaleDateString() : 'N/A' %></td>
+                                <td>
+                                    <% if (student.is_active) { %>
+                                        <span class="badge bg-success">Active</span>
+                                    <% } else { %>
+                                        <span class="badge bg-danger">Inactive</span>
+                                    <% } %>
+                                </td>
+                                <td class="text-center">
+                                    <a href="/admin/students/view/<%= student.id %>" class="btn btn-sm btn-outline-info me-1" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="/admin/students/edit/<%= student.id %>" class="btn btn-sm btn-outline-primary me-1" title="Edit Student">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form action="/admin/students/toggle-status/<%= student.id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to <%= student.is_active ? 'deactivate' : 'activate' %> this student account?');">
+                                        <button type="submit" class="btn btn-sm <%= student.is_active ? 'btn-outline-warning' : 'btn-outline-success' %>" title="<%= student.is_active ? 'Deactivate' : 'Activate' %> Student">
+                                            <i class="fas <%= student.is_active ? 'fa-user-slash' : 'fa-user-check' %>"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    <% } else { %>
-        <div class="alert alert-info">No students found. <a href="/admin/register-student">Register the first student.</a></div>
-    <% } %>
-</main>
-
-<%- include('../../../partials/footer') %>
+    </div>
+<% } else { %>
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>No students found. <a href="/admin/register-student" class="alert-link">Register the first student.</a>
+    </div>
+<% } %>
