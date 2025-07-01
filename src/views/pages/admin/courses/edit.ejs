@@ -26,21 +26,18 @@
             <% } %>
 
             <% if (course) { %>
-                <form action="/admin/courses/edit/<%= course.id %>" method="POST">
-                    <%- include('./form', { course: course, errors: locals.errors || [] }) %>
-                </form>
+                <div class="card shadow-sm mt-3"> <%# Card wrapper for the form %>
+                    <div class="card-body">
+                        <form action="/admin/courses/edit/<%= course.id %>" method="POST">
+                            <%- include('./form', { course: course, errors: locals.errors || [] }) %>
+                            <%# The form partial should contain the submit buttons %>
+                        </form>
+                    </div>
+                </div>
             <% } else { %>
                 <div class="alert alert-warning">Course details not found. <a href="/admin/courses">Return to course list.</a></div>
             <% } %>
 
-            <div class="card shadow-sm mt-3"> <%# Added card wrapper %>
-                <div class="card-body">
-                     <form action="/admin/courses/edit/<%= course.id %>" method="POST">
-                        <%- include('./form', { course: course, errors: locals.errors || [] }) %>
-                         <%# The form partial should contain the submit buttons %>
-                    </form>
-                </div>
-            </div>
         </div>
     </div>
 
