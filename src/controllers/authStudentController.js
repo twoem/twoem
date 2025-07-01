@@ -80,7 +80,8 @@ const renderChangePasswordInitialForm = (req, res) => {
         title: 'Change Your Password',
         student: req.student,
         defaultStudentPassword: process.env.DEFAULT_STUDENT_PASSWORD,
-        passwordMinLength: process.env.PASSWORD_MIN_LENGTH || 8
+        passwordMinLength: process.env.PASSWORD_MIN_LENGTH || 8,
+        errors: req.flash('validation_errors') ? JSON.parse(req.flash('validation_errors')[0] || '[]') : []
     };
     res.render('layouts/student_layout', {
         title: 'Change Your Password',
@@ -90,44 +91,66 @@ const renderChangePasswordInitialForm = (req, res) => {
     });
 };
 
-const handleChangePasswordInitial = async (req, res) => {
-    const { currentPassword, newPassword, confirmNewPassword } = req.body;
-    const studentId = req.student.id;
-    const redirectUrl = '/student/change-password-initial';
-    if (currentPassword !== process.env.DEFAULT_STUDENT_PASSWORD) { req.flash('error_msg', 'Incorrect current default password.'); return res.redirect(redirectUrl); }
-    if (newPassword.length < (parseInt(process.env.PASSWORD_MIN_LENGTH, 10) || 8)) { req.flash('error_msg', `New password must be at least ${process.env.PASSWORD_MIN_LENGTH || 8} characters long.`); return res.redirect(redirectUrl); }
-    if (newPassword !== confirmNewPassword) { req.flash('error_msg', 'New passwords do not match.'); return res.redirect(redirectUrl); }
-    if (newPassword === process.env.DEFAULT_STUDENT_PASSWORD) { req.flash('error_msg', 'New password cannot be the same as the default password.'); return res.redirect(redirectUrl); }
-    try {
-        const newPasswordHash = await bcrypt.hash(newPassword, 10);
-        await db.runAsync("UPDATE students SET password_hash = ?, requires_password_change = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [newPasswordHash, studentId]);
-        const updatedStudent = await db.getAsync("SELECT is_profile_complete FROM students WHERE id = ?", [studentId]);
-
-        req.flash('success_msg', '✨ Update Successful! ✨ Your password has been changed successfully! 🎉');
-        if (!updatedStudent.is_profile_complete) {
-            req.flash('info_msg', 'Please complete your profile to continue.');
-            res.redirect('/student/complete-profile-initial');
-        } else {
-            res.redirect('/student/dashboard');
+const handleChangePasswordInitial = [
+    body('currentPassword').notEmpty().withMessage('Current password is required.'),
+    body('newPassword').isLength({ min: parseInt(process.env.PASSWORD_MIN_LENGTH || 8, 10) }).withMessage(`New password must be at least ${process.env.PASSWORD_MIN_LENGTH || 8} characters long.`),
+    body('confirmNewPassword').custom((value, { req }) => {
+        if (value !== req.body.newPassword) {
+            throw new Error('New passwords do not match.');
         }
-    } catch (err) {
-        console.error("Error changing initial password:", err);
-        req.flash('error_msg', '❌ Operation Failed! ❌ Something went wrong while changing password. Please try again. 😔');
-        res.redirect(redirectUrl);
+        return true;
+    }),
+    async (req, res) => {
+        const errors = validationResult(req);
+        const { currentPassword, newPassword } = req.body;
+        const studentId = req.student.id;
+        const redirectUrl = '/student/change-password-initial';
+
+        if (!errors.isEmpty()) {
+            req.flash('validation_errors', JSON.stringify(errors.array()));
+            return res.redirect(redirectUrl);
+        }
+        if (currentPassword !== process.env.DEFAULT_STUDENT_PASSWORD) {
+            req.flash('validation_errors', JSON.stringify([{param:'currentPassword', msg: 'Incorrect current default password.'}]));
+            return res.redirect(redirectUrl);
+        }
+        if (newPassword === process.env.DEFAULT_STUDENT_PASSWORD) {
+            req.flash('validation_errors', JSON.stringify([{param:'newPassword', msg: 'New password cannot be the same as the default password.'}]));
+            return res.redirect(redirectUrl);
+        }
+        try {
+            const newPasswordHash = await bcrypt.hash(newPassword, 10);
+            await db.runAsync("UPDATE students SET password_hash = ?, requires_password_change = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [newPasswordHash, studentId]);
+            const updatedStudent = await db.getAsync("SELECT is_profile_complete FROM students WHERE id = ?", [studentId]);
+
+            req.flash('success_msg', '✨ Update Successful! ✨ Your password has been changed successfully! 🎉');
+            if (!updatedStudent.is_profile_complete) {
+                req.flash('info_msg', 'Please complete your profile to continue.');
+                res.redirect('/student/complete-profile-initial');
+            } else {
+                res.redirect('/student/dashboard');
+            }
+        } catch (err) {
+            console.error("Error changing initial password:", err);
+            req.flash('error_msg', '❌ Operation Failed! ❌ Something went wrong while changing password. Please try again. 😔');
+            res.redirect(redirectUrl);
+        }
     }
-};
+];
 
 const renderCompleteProfileInitialForm = (req, res) => {
     const viewData = {
         title: 'Complete Your Profile',
         student: req.student,
-        nokName: req.flash('nokName')[0] || '', // For repopulating form on error
-        nokRelationship: req.flash('nokRelationship')[0] || '',
-        nokPhone: req.flash('nokPhone')[0] || '',
-        nokEmail: req.flash('nokEmail')[0] || '',
+        oldInput: {
+            nokName: req.flash('nokName')[0] || '',
+            nokRelationship: req.flash('nokRelationship')[0] || '',
+            nokPhone: req.flash('nokPhone')[0] || '',
+            nokEmail: req.flash('nokEmail')[0] || ''
+        },
         errors: req.flash('validation_errors_profile_initial') ? JSON.parse(req.flash('validation_errors_profile_initial')[0]) : []
     };
-     res.render('layouts/student_layout', { // Assuming this should also use the layout
+     res.render('layouts/student_layout', {
         title: 'Complete Your Profile',
         bodyView: 'pages/student/complete-profile-initial',
         student: req.student,
@@ -163,7 +186,7 @@ const handleCompleteProfileInitial = [
         } catch (err) {
             console.error("Error completing initial profile:", err);
             req.flash('error_msg', '❌ Operation Failed! ❌ An error occurred while saving your profile. 😔');
-            req.flash('nokName', nokName); // Re-flash for persistence
+            req.flash('nokName', nokName);
             req.flash('nokRelationship', nokRelationship);
             req.flash('nokPhone', nokPhone);
             req.flash('nokEmail', nokEmail);
@@ -173,7 +196,6 @@ const handleCompleteProfileInitial = [
 ];
 
 function generateOtp() {
-    const crypto = require('crypto');
     return crypto.randomInt(100000, 999999).toString();
 }
 
@@ -195,16 +217,18 @@ const handleForgotPassword = async (req, res) => {
 
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
         let emailSubject = "";
-        let emailData = { studentName: student.first_name };
+        let emailData = { studentName: student.first_name, preheaderText: "" }; // Initialize preheaderText
         let redirectPath = "";
+        let tokenRecordId = null;
 
         if (resetMethod === 'otp') {
             const otp = generateOtp();
             const otpHash = await bcrypt.hash(otp, 10);
-            await db.runAsync(
+            const result = await db.runAsync(
                 "INSERT INTO password_reset_tokens (student_id, otp_hash, token_hash, expires_at) VALUES (?, ?, NULL, ?)",
                 [student.id, otpHash, expiresAt.toISOString()]
             );
+            tokenRecordId = result.lastID;
             emailSubject = "Your Password Reset OTP - Twoem Online Productions";
             emailData.otp = otp;
             emailData.preheaderText = `Your OTP is ${otp}. It expires in 10 minutes.`;
@@ -212,10 +236,11 @@ const handleForgotPassword = async (req, res) => {
         } else if (resetMethod === 'link') {
             const linkToken = crypto.randomBytes(32).toString('hex');
             const linkTokenHash = await bcrypt.hash(linkToken, 10);
-            await db.runAsync(
+            const result = await db.runAsync(
                 "INSERT INTO password_reset_tokens (student_id, otp_hash, token_hash, expires_at) VALUES (?, NULL, ?, ?)",
                 [student.id, linkTokenHash, expiresAt.toISOString()]
             );
+            tokenRecordId = result.lastID;
             const fullResetLink = `${req.protocol}://${req.get('host')}/student/reset-password-form?token=${linkToken}`;
             emailSubject = "Password Reset Link - Twoem Online Productions";
             emailData.resetLink = fullResetLink;
@@ -236,6 +261,9 @@ const handleForgotPassword = async (req, res) => {
             req.flash('success_msg', `✅ Email Sent Successfully! 📩 Instructions have been sent to ${student.email}. Please check your inbox (and spam folder). 🎉`);
         } catch (emailError) {
             console.error("Forgot password - email send error:", emailError);
+            if(tokenRecordId) { // Attempt to mark token as used/failed if email send fails
+                await db.runAsync("UPDATE password_reset_tokens SET used = TRUE WHERE id = ?", [tokenRecordId]).catch(e => console.error("Failed to mark token as used after email failure",e));
+            }
             req.flash('error_msg', '❌ Failed to Send Email ⚠️ Oops! Something went wrong while sending the email. Please try again. 😔');
         }
 
@@ -250,25 +278,22 @@ const handleForgotPassword = async (req, res) => {
 
 const renderResetPasswordForm = (req, res) => {
     const { regNo, token } = req.query;
-    // This page probably should not use the full student_layout if the user is not logged in.
-    // It should use a simpler public page layout. For now, using main header/footer.
     res.render('pages/student/reset-password-form', {
         title: 'Reset Your Password',
-        registrationNumber: regNo || '', // regNo might be undefined if coming from token link
+        registrationNumber: regNo || '',
         token: token || '',
         passwordMinLength: process.env.PASSWORD_MIN_LENGTH || 8,
-        student: null // Not logged in
+        student: null
     });
 };
 
 const handleResetPassword = async (req, res) => {
     const { registrationNumber, otp, newPassword, confirmNewPassword, urlToken } = req.body;
-    const studentIdentifier = registrationNumber || (urlToken ? 'token_user' : ''); // Need a value for error redirect if regNo is empty
     const errorRedirectUrl = `/student/reset-password-form?regNo=${encodeURIComponent(registrationNumber || '')}&token=${encodeURIComponent(urlToken || '')}`;
     const minLength = parseInt(process.env.PASSWORD_MIN_LENGTH || 8, 10);
 
     if ((!otp && !urlToken) || !newPassword || !confirmNewPassword ) {
-        req.flash('error_msg', '⚠️ Required fields are missing. Please provide OTP or use a valid link, and enter your new password.');
+        req.flash('error_msg', '⚠️ Required fields are missing.');
         return res.redirect(errorRedirectUrl);
     }
     if (newPassword.length < minLength) { req.flash('error_msg', `New password must be at least ${minLength} characters.`); return res.redirect(errorRedirectUrl); }
@@ -279,9 +304,8 @@ const handleResetPassword = async (req, res) => {
         let tokenRecord;
 
         if (urlToken) {
-            // Find token record by comparing hash of urlToken
             const potentialTokens = await db.allAsync(
-                "SELECT * FROM password_reset_tokens WHERE used = FALSE AND expires_at > datetime('now') ORDER BY created_at DESC"
+                "SELECT * FROM password_reset_tokens WHERE used = FALSE AND token_hash IS NOT NULL AND expires_at > datetime('now') ORDER BY created_at DESC"
             );
             for (let pt of potentialTokens) {
                 if (await bcrypt.compare(urlToken, pt.token_hash)) {
@@ -292,7 +316,7 @@ const handleResetPassword = async (req, res) => {
             if (tokenRecord) {
                 student = await db.getAsync("SELECT * FROM students WHERE id = ?", [tokenRecord.student_id]);
             }
-        } else if (otp && registrationNumber) { // OTP Flow
+        } else if (otp && registrationNumber) {
             student = await db.getAsync("SELECT * FROM students WHERE registration_number = ?", [registrationNumber]);
             if (student) {
                 const potentialTokens = await db.allAsync(
@@ -308,8 +332,20 @@ const handleResetPassword = async (req, res) => {
             }
         }
 
-        if (!student) { req.flash('error_msg', '⚠️ Invalid student identifier or link.'); return res.redirect(errorRedirectUrl); }
+        if (!student) { req.flash('error_msg', '⚠️ Invalid student identifier or link/OTP.'); return res.redirect(errorRedirectUrl); }
         if (!tokenRecord) { req.flash('error_msg', '⚠️ Invalid or expired OTP/token. Please request a new one.'); return res.redirect(errorRedirectUrl); }
+
+        // If using OTP flow, ensure the OTP field was actually submitted (even if urlToken was also somehow in form)
+        if (!urlToken && otp && tokenRecord.otp_hash) {
+             const isOtpMatch = await bcrypt.compare(otp, tokenRecord.otp_hash);
+             if(!isOtpMatch) {
+                req.flash('error_msg', '⚠️ Invalid OTP.'); return res.redirect(errorRedirectUrl);
+             }
+        } else if (urlToken && !tokenRecord.token_hash) {
+            // This case should ideally not happen if tokenRecord was found via urlToken
+            req.flash('error_msg', '⚠️ Token mismatch. Please use the link from your email.'); return res.redirect(errorRedirectUrl);
+        }
+
 
         const defaultPassword = process.env.DEFAULT_STUDENT_PASSWORD;
         if (student.requires_password_change && defaultPassword && newPassword === defaultPassword) {
@@ -565,7 +601,7 @@ const viewMyAcademics = async (req, res) => {
 const viewWifiCredentials = async (req, res) => {
     try {
         const settingKeys = ['wifi_ssid', 'wifi_password_plaintext', 'wifi_disclaimer'];
-        const settingsData = await db.allAsync( `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN (?, ?, ?)`, settingKeys );
+        const settingsData = await db.allAsync( `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN (?, ?, ?)`, settingsKeys );
         const settings = {};
         settingsData.forEach(row => { settings[row.setting_key] = row.setting_value; });
 
@@ -659,7 +695,8 @@ const renderChangePasswordForm = (req, res) => {
     const viewData = {
         title: 'Change Password',
         student: req.student,
-        passwordMinLength: process.env.PASSWORD_MIN_LENGTH || 8
+        passwordMinLength: process.env.PASSWORD_MIN_LENGTH || 8,
+        errors: req.flash('validation_errors') ? JSON.parse(req.flash('validation_errors')[0] || '[]') : []
     };
     res.render('layouts/student_layout', {
         title: 'Change Password',
@@ -669,30 +706,54 @@ const renderChangePasswordForm = (req, res) => {
     });
 };
 
-const handleChangePassword = async (req, res) => {
-    const { currentPassword, newPassword, confirmNewPassword } = req.body;
-    const studentId = req.student.id;
-    if (!currentPassword || !newPassword || !confirmNewPassword) { req.flash('error_msg', '⚠️ All password fields are required.'); return res.redirect('/student/profile/change-password'); }
-    if (newPassword.length < (parseInt(process.env.PASSWORD_MIN_LENGTH, 10) || 8)) { req.flash('error_msg', `⚠️ New password must be at least ${process.env.PASSWORD_MIN_LENGTH || 8} characters long.`); return res.redirect('/student/profile/change-password'); }
-    if (newPassword !== confirmNewPassword) { req.flash('error_msg', '⚠️ New passwords do not match.'); return res.redirect('/student/profile/change-password'); }
-    try {
-        const student = await db.getAsync("SELECT password_hash FROM students WHERE id = ?", [studentId]);
-        if (!student) { req.flash('error_msg', '⚠️ Student not found.'); return res.redirect('/student/dashboard'); }
-        const isMatch = await bcrypt.compare(currentPassword, student.password_hash);
-        if (!isMatch) { req.flash('error_msg', '⚠️ Incorrect current password.'); return res.redirect('/student/profile/change-password'); }
-        const isDefaultPassword = await bcrypt.compare(process.env.DEFAULT_STUDENT_PASSWORD, student.password_hash);
-        if (!isDefaultPassword && newPassword === currentPassword) { req.flash('error_msg', '⚠️ New password cannot be the same as your current password.'); return res.redirect('/student/profile/change-password');}
+const handleChangePassword = [
+    body('currentPassword').notEmpty().withMessage('Current password is required.'),
+    body('newPassword').isLength({ min: parseInt(process.env.PASSWORD_MIN_LENGTH || 8, 10) }).withMessage(`New password must be at least ${process.env.PASSWORD_MIN_LENGTH || 8} characters.`),
+    body('confirmNewPassword').custom((value, { req }) => {
+        if (value !== req.body.newPassword) {
+            throw new Error('New passwords do not match.');
+        }
+        return true;
+    }),
+    async (req, res) => {
+        const errors = validationResult(req);
+        const { currentPassword, newPassword } = req.body;
+        const studentId = req.student.id;
 
-        const newPasswordHash = await bcrypt.hash(newPassword, 10);
-        await db.runAsync( "UPDATE students SET password_hash = ?, requires_password_change = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [newPasswordHash, studentId] );
-        req.flash('success_msg', '✨ Update Successful! ✨ Your password has been changed successfully! 🎉');
-        res.redirect('/student/dashboard');
-    } catch (err) {
-        console.error("Error changing student password:", err);
-        req.flash('error_msg', '❌ Operation Failed! ❌ An error occurred while changing your password. 😔');
-        res.redirect('/student/profile/change-password');
+        if (!errors.isEmpty()) {
+            req.flash('validation_errors', JSON.stringify(errors.array()));
+            return res.redirect('/student/profile/change-password');
+        }
+        try {
+            const student = await db.getAsync("SELECT password_hash FROM students WHERE id = ?", [studentId]);
+            if (!student) { req.flash('error_msg', '⚠️ Student not found.'); return res.redirect('/student/dashboard'); }
+            const isMatch = await bcrypt.compare(currentPassword, student.password_hash);
+            if (!isMatch) {
+                req.flash('validation_errors', JSON.stringify([{param: 'currentPassword', msg: 'Incorrect current password.'}]));
+                return res.redirect('/student/profile/change-password');
+            }
+            const isDefaultPassword = await bcrypt.compare(process.env.DEFAULT_STUDENT_PASSWORD, student.password_hash);
+            if (!isDefaultPassword && newPassword === currentPassword) { // Only block if not default and same as current
+                 req.flash('validation_errors', JSON.stringify([{param: 'newPassword', msg: 'New password cannot be the same as your current password.'}]));
+                 return res.redirect('/student/profile/change-password');
+            }
+            if (isDefaultPassword && newPassword === process.env.DEFAULT_STUDENT_PASSWORD) {
+                 req.flash('validation_errors', JSON.stringify([{param: 'newPassword', msg: 'New password cannot be the same as the default password.'}]));
+                 return res.redirect('/student/profile/change-password');
+            }
+
+            const newPasswordHash = await bcrypt.hash(newPassword, 10);
+            await db.runAsync( "UPDATE students SET password_hash = ?, requires_password_change = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [newPasswordHash, studentId] );
+            req.flash('success_msg', '✨ Update Successful! ✨ Your password has been changed successfully! 🎉');
+            res.redirect('/student/dashboard');
+        } catch (err) {
+            console.error("Error changing student password:", err);
+            req.flash('error_msg', '❌ Operation Failed! ❌ An error occurred while changing your password. 😔');
+            res.redirect('/student/profile/change-password');
+        }
     }
-};
+];
+
 
 const renderEditNokForm = async (req, res) => {
     const studentId = req.student.id;
@@ -759,13 +820,13 @@ const handleUpdateNok = [
 
         const nokDetails = JSON.stringify({ name: nokName, relationship: nokRelationship, phone: nokPhone, email: nokEmail || '' });
         try {
-            await db.runAsync( "UPDATE students SET next_of_kin_details = ?, is_profile_complete = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [nokDetails, studentId] ); // Ensure is_profile_complete is TRUE
+            await db.runAsync( "UPDATE students SET next_of_kin_details = ?, is_profile_complete = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [nokDetails, studentId] );
             req.flash('success_msg', '✨ Update Successful! ✨ Next of Kin details updated successfully! 🎉');
             res.redirect('/student/dashboard');
         } catch (err) {
             console.error("Error updating student NOK details:", err);
             req.flash('error_msg', '❌ Operation Failed! ❌ An error occurred while updating your Next of Kin details. 😔');
-            req.flash('nokName', nokName); // Re-flash for persistence
+            req.flash('nokName', nokName);
             req.flash('nokRelationship', nokRelationship);
             req.flash('nokPhone', nokPhone);
             req.flash('nokEmail', nokEmail);
@@ -845,5 +906,3 @@ module.exports = {
     renderEditNokForm, handleUpdateNok,
     retrieveStudentCredentials
 };
-
-[end of src/controllers/authStudentController.js]
