@@ -191,13 +191,13 @@
 
                                     <form action="/student/retrieve-credentials" method="POST" id="retrieveCredentialsForm">
                                         <div class="form-floating mb-3">
-                                            <input type="email" class="form-control" id="newStudentEmail" name="email" placeholder="Email Address" required>
-                                            <label for="newStudentEmail"><i class="fas fa-envelope me-2"></i>Email Address</label>
+                                            <input type="email" class="form-control" id="newStudentEmail" name="email" placeholder="Email Address" required value="<%= locals.formData && locals.formData.email ? locals.formData.email : '' %>">
+                                            <label for="newStudentEmail"><i class="fas fa-envelope me-2"></i>Registered Email Address</label>
                                         </div>
 
                                         <div class="form-floating mb-4">
-                                            <input type="text" class="form-control" id="newStudentFirstName" name="firstName" placeholder="First Name" required>
-                                            <label for="newStudentFirstName"><i class="fas fa-user me-2"></i>First Name</label>
+                                            <input type="text" class="form-control" id="newStudentAnyName" name="anyName" placeholder="Any Registered Name" required value="<%= locals.formData && locals.formData.anyName ? locals.formData.anyName : '' %>">
+                                            <label for="newStudentAnyName"><i class="fas fa-user me-2"></i>Any Registered Name (First, Second, or Surname)</label>
                                         </div>
 
                                         <div class="d-grid">

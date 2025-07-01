@@ -4,6 +4,7 @@ const db = require('../config/database');
 const { body, validationResult } = require('express-validator');
 const { getJwtSecret } = require('../utils/jwtHelper'); // Import getJwtSecret
 const crypto = require('crypto'); // Ensure crypto is imported at the top for token hashing
+const validator = require('validator'); // For email validation
 
 // Student Login
 const loginStudent = async (req, res) => {
@@ -497,24 +498,72 @@ const handleUpdateNok = async (req, res) => { /* ... जस का तस ... */
         res.redirect('/student/dashboard');
     } catch (err) { console.error("Error updating student NOK details:", err); req.flash('error_msg', 'An error occurred while updating your Next of Kin details.'); res.redirect('/student/profile/edit-nok'); }
 };
-const retrieveStudentCredentials = async (req, res) => { /* ... जस का तस ... */
-    const { email, firstName } = req.body;
-    const activeTab = 'new-student-panel';
+
+const retrieveStudentCredentials = async (req, res) => {
+    const { email, anyName } = req.body; // Changed from firstName to anyName
+    const activeTab = 'new-student-panel'; // To redirect back to the correct tab on student login page
     const errorRedirectUrl = `/student/login?activeTab=${activeTab}#${activeTab}`;
     const successRedirectUrl = `/student/login?activeTab=${activeTab}#${activeTab}`;
-    if (!email || !firstName) { req.flash('error', 'Email and First Name are required.'); return res.redirect(errorRedirectUrl); }
-    try {
-        const student = await db.getAsync( "SELECT id, registration_number, requires_password_change, credentials_retrieved_once FROM students WHERE lower(email) = lower(?) AND lower(first_name) = lower(?)", [email.trim(), firstName.trim()] );
-        if (!student) { req.flash('error', 'No matching student record found.'); return res.redirect(errorRedirectUrl); }
-        if (!student.requires_password_change) { req.flash('error', 'Account setup already completed.'); return res.redirect(errorRedirectUrl); }
-        if (student.credentials_retrieved_once) { req.flash('error', 'Initial credentials already retrieved.'); return res.redirect(errorRedirectUrl); }
-        await db.runAsync("UPDATE students SET credentials_retrieved_once = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [student.id]);
-        const successMessage = `Your credentials: <br>Registration Number: <strong>${student.registration_number}</strong><br>Default Password: <strong>${process.env.DEFAULT_STUDENT_PASSWORD}</strong><br>Please login and change your password immediately.`;
-        req.flash('success_msg', successMessage);
-        return res.redirect(successRedirectUrl);
-    } catch (err) { console.error("Error retrieving student credentials:", err); req.flash('error', 'An error occurred.'); return res.redirect(errorRedirectUrl); }
-};
 
+    req.flash('formData', { email, anyName }); // Flash input back for form repopulation
+
+    if (!email || !anyName) {
+        req.flash('error', 'Email and a Name (First, Second, or Surname) are required.');
+        return res.redirect(errorRedirectUrl);
+    }
+    if (!validator.isEmail(email)) {
+        req.flash('error', 'Invalid email format.');
+        return res.redirect(errorRedirectUrl);
+    }
+
+    try {
+        // Query checks email and any of the name fields (case-insensitive for names)
+        // Also checks requires_password_change = TRUE (or 1) and credentials_retrieved_once = FALSE (or 0 or NULL)
+        // Assuming SQLite boolean FALSE is 0 and TRUE is 1. NULL for credentials_retrieved_once also means not retrieved.
+        const student = await db.getAsync(
+            `SELECT id, registration_number, first_name, surname, requires_password_change,
+                    IFNULL(credentials_retrieved_once, 0) as credentials_retrieved_once
+             FROM students
+             WHERE lower(email) = lower(?)
+               AND (lower(first_name) = lower(?) OR lower(second_name) = lower(?) OR lower(surname) = lower(?))`,
+            [email.trim(), anyName.trim().toLowerCase(), anyName.trim().toLowerCase(), anyName.trim().toLowerCase()]
+        );
+
+        if (!student) {
+            req.flash('error', 'No matching student record found with the provided email and name, or criteria for retrieval not met.');
+            return res.redirect(errorRedirectUrl);
+        }
+
+        const requiresChange = student.requires_password_change === 1 || student.requires_password_change === true;
+        const alreadyRetrieved = student.credentials_retrieved_once === 1 || student.credentials_retrieved_once === true;
+
+        if (!requiresChange) {
+            req.flash('error', 'Account setup has already been completed. Please use the regular login or "Reset Password" if you forgot your password.');
+            return res.redirect(errorRedirectUrl);
+        }
+        if (alreadyRetrieved) {
+            req.flash('error', 'Initial credentials have already been retrieved for this account. Please use the regular login or "Reset Password".');
+            return res.redirect(errorRedirectUrl);
+        }
+
+        // Mark as retrieved
+        await db.runAsync("UPDATE students SET credentials_retrieved_once = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [student.id]);
+
+        const successMessage =
+            `Dear <strong>${student.first_name} ${student.surname}</strong>, your initial login details are:
+             <br>Registration Number: <strong style="color:green;">${student.registration_number}</strong>
+             <br>Default Password: <strong style="color:green;">${process.env.DEFAULT_STUDENT_PASSWORD}</strong>
+             <br><strong class='text-danger'>Please login immediately using the 'Login' tab and change your password.</strong>`;
+        req.flash('success_msg', successMessage); // Use success_msg for consistency with flash-messages partial
+        req.flash('formData', {}); // Clear form data on success
+        return res.redirect(successRedirectUrl); // Redirect to login page, success message will show on new-student-panel
+
+    } catch (err) {
+        console.error("Error retrieving student credentials:", err);
+        req.flash('error', 'An error occurred while retrieving credentials. Please try again.');
+        return res.redirect(errorRedirectUrl);
+    }
+};
 
 module.exports = {
     loginStudent, logoutStudent,
