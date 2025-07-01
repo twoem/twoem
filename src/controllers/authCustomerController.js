@@ -106,12 +106,18 @@ const logoutCustomer = (req, res) => {
 
 // Render initial password change form
 const renderChangePasswordInitialForm = (req, res) => {
-    res.render('pages/customer/change-password-initial', { // Path: views/pages/customer/change-password-initial.ejs
+    const viewData = {
         title: 'Change Your Password',
-        customer: req.customer, // req.customer populated by authCustomer middleware
-        // errors: [],
+        customer: req.customer,
         defaultCustomerPassword: process.env.DEFAULT_CUSTOMER_PASSWORD || "Mynet@2020",
-        passwordMinLength: process.env.CUSTOMER_PASSWORD_MIN_LENGTH || 8
+        passwordMinLength: process.env.CUSTOMER_PASSWORD_MIN_LENGTH || 8,
+        errors: req.flash('error_msg') ? [{ msg: req.flash('error_msg') }] : [] // Adapt if more detailed errors needed
+    };
+    res.render('layouts/customer_layout', {
+        title: 'Change Your Password',
+        bodyView: 'pages/customer/change-password-initial',
+        customer: req.customer,
+        viewData: viewData
     });
 };
 
