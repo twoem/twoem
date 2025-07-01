@@ -24,24 +24,29 @@ const renderCustomerLoginPage = (req, res) => {
 
 // Handle customer login
 const loginCustomer = async (req, res) => {
-    const { password } = req.body;
-    const phoneNumber = req.body.phoneNumber ? req.body.phoneNumber.trim() : "";
+    const { loginIdentifier, password } = req.body;
 
-    if (!phoneNumber || !password) {
-        req.flash('error_msg', '⚠️ Phone number and password are required.');
+    if (!loginIdentifier || !password) {
+        req.flash('error_msg', '⚠️ Please enter your Phone/Email/Account Number and Password.');
         return res.redirect('/customer/login');
     }
 
-    if (!/^(0[17])\d{8}$/.test(phoneNumber)) {
+    // Basic validation: if it looks like a phone number, validate its format.
+    // More sophisticated type detection (email regex, account number pattern) could be added.
+    if (/^\d+$/.test(loginIdentifier) && !/^(0[17])\d{8}$/.test(loginIdentifier)) {
         req.flash('error_msg', '⚠️ Invalid phone number format. Must be 10 digits starting with 01 or 07.');
         return res.redirect('/customer/login');
     }
 
     try {
-        const customer = await db.getAsync("SELECT * FROM customers WHERE phone_number = ?", [phoneNumber]);
+        // Try to find customer by phone, email, or account number
+        const customer = await db.getAsync(
+            "SELECT * FROM customers WHERE phone_number = ? OR email = ? OR account_number = ?",
+            [loginIdentifier, loginIdentifier.toLowerCase(), loginIdentifier]
+        );
 
         if (!customer || !(await bcrypt.compare(password, customer.password_hash))) {
-            req.flash('error_msg', '⚠️Oops! The Username or password seems incorrect. 🧐');
+            req.flash('error_msg', '⚠️Oops! The login details or password seem incorrect. 🧐');
             return res.redirect('/customer/login');
         }
 

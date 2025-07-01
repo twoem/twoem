@@ -175,9 +175,21 @@
                                             <label for="forgotEmail"><i class="fas fa-envelope me-2"></i>Email Address</label>
                                         </div>
 
+                                        <div class="mb-3">
+                                            <label class="form-label d-block">Preferred Reset Method:</label>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="resetMethod" id="resetOtp" value="otp" checked>
+                                                <label class="form-check-label" for="resetOtp">Send OTP to my Email</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="resetMethod" id="resetLink" value="link">
+                                                <label class="form-check-label" for="resetLink">Send Reset Link to my Email</label>
+                                            </div>
+                                        </div>
+
                                         <div class="d-grid">
                                             <button type="submit" class="btn btn-warning login-btn">
-                                                <i class="fas fa-paper-plane me-2"></i>Send Reset Code
+                                                <i class="fas fa-paper-plane me-2"></i>Send Reset Instructions
                                             </button>
                                         </div>
                                     </form>
