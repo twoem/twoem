@@ -1,25 +1,14 @@
 <%- include('../../partials/customerHeader', { title: title, customer: customer }) %>
 
-<div class="container mt-4">
+<% /* Using the container from customerHeader.ejs which has py-4 */ %>
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-7">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
+            <div class="card shadow-lg" style="border: none; border-radius: 0.75rem;">
+                <div class="card-header text-white" style="background-color: var(--lavender-darker-purple); border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem;">
                     <h4 class="mb-0"><i class="fas fa-user-edit me-2"></i>Update Your Profile</h4>
                 </div>
-                <div class="card-body">
-                    <% if (messages && messages.error) { %>
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <%- messages.error %>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    <% } %>
-                    <% if (messages && messages.success) { %>
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <%- messages.success %>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    <% } %>
+                <div class="card-body" style="background-color: var(--lavender-lightest-yellow);">
+                    <%- include('../../partials/flash-messages') %>
 
                     <form action="/portal/customer/profile/edit" method="POST">
                         <div class="mb-3">
@@ -61,15 +50,14 @@
                             <input type="text" class="form-control" id="location" name="location" value="<%= formData && formData.location ? formData.location : customer.location %>" required>
                         </div>
 
-                        <div class="d-flex justify-content-between">
-                            <a href="/portal/customer/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="/portal/customer/dashboard" class="btn btn-outline-secondary" style="border-color: var(--lavender-muted-green); color: var(--lavender-muted-green);"><i class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
+                            <button type="submit" class="btn" style="background-color: var(--lavender-vibrant-purple); color: white;"><i class="fas fa-save me-2"></i>Save Changes</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
+<% /* Container div from customerHeader is closed in customerFooter */ %>
 <%- include('../../partials/customerFooter') %>

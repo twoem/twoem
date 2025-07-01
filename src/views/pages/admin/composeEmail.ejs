@@ -1,0 +1,51 @@
+<%- include('../../partials/adminHeader') %>
+
+<div class="container-fluid mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Compose Email</li>
+        </ol>
+    </nav>
+
+    <h2><i class="fas fa-envelope-open-text"></i> Compose Email</h2>
+    <hr>
+
+    <%- include('../../partials/flash-messages') %>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form action="/admin/compose-email" method="POST">
+                <div class="mb-3">
+                    <label for="toEmail" class="form-label">To (Recipient Email Address) <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="toEmail" name="toEmail"
+                           value="<%= formData && formData.toEmail ? formData.toEmail : '' %>"
+                           placeholder="recipient@example.com" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="subject" name="subject"
+                           value="<%= formData && formData.subject ? formData.subject : '' %>"
+                           placeholder="Email Subject" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="emailBody" class="form-label">Email Body (HTML is allowed) <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="emailBody" name="emailBody" rows="10"
+                              placeholder="Compose your email here. You can use HTML tags for formatting."
+                              required><%= formData && formData.emailBody ? formData.emailBody : '' %></textarea>
+                    <div class="form-text">
+                        For advanced formatting, you can use HTML tags (e.g., &lt;strong&gt;bold&lt;/strong&gt;, &lt;br&gt; for line break, &lt;p&gt; for paragraph, &lt;a href='...'&gt;link&lt;/a&gt;).
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send Email</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/adminFooter') %>

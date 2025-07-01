@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 const validator = require('validator'); // Added for email validation
 const Customer = require('../models/customerModel'); // Import Mongoose Customer model
 const mongoose = require('mongoose'); // Required for ObjectId.isValid if used for admin ID logging
+const { sendEmailWithTemplate } = require('../config/mailer'); // For sending emails
 
 async function logAdminAction(admin_id, action_type, description, target_entity_type, target_entity_id, ip_address) {
     try {
@@ -92,9 +93,9 @@ const registerStudent = async (req, res) => {
         let registrationNumber;
         let isUnique = false;
         while (!isUnique) {
-            const timestampPart = Date.now().toString(36).slice(-4).toUpperCase();
+            // Generate XXXX part: 4 random uppercase hex characters
             const randomPart = randomBytes(2).toString('hex').toUpperCase();
-            registrationNumber = `TWOEM${timestampPart}${randomPart}`;
+            registrationNumber = `TWOEM-${randomPart}`;
             const existingReg = await db.getAsync("SELECT id FROM students WHERE registration_number = ?", [registrationNumber]);
             if (!existingReg) isUnique = true;
         }
@@ -132,17 +133,311 @@ const registerStudent = async (req, res) => {
             req.ip
         );
 
+        const studentId = result.lastID; // Get the newly created student's ID
+
+        // Auto-enroll in "Computer Classes"
+        const courseNameToEnroll = "Computer Classes";
+        const computerCourse = await db.getAsync("SELECT id FROM courses WHERE name = ?", [courseNameToEnroll]);
+
+        if (computerCourse) {
+            const enrollmentSql = `
+                INSERT INTO enrollments (
+                    student_id, course_id, enrollment_date,
+                    unit_intro_to_computer_marks, unit_keyboard_mouse_marks, unit_ms_word_marks,
+                    unit_ms_excel_marks, unit_ms_publisher_marks, unit_ms_powerpoint_marks,
+                    unit_ms_access_marks, unit_internet_email_marks,
+                    exam_theory_marks, exam_practical_marks,
+                    updated_at
+                ) VALUES (?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, CURRENT_TIMESTAMP)
+            `;
+            // Use student's enrolledDate for enrollment_date if available, otherwise current date
+            const studentEnrolledDate = new Date(enrolledDate).toISOString().split('T')[0];
+
+            await db.runAsync(enrollmentSql, [studentId, computerCourse.id, studentEnrolledDate]);
+            logAdminAction(
+                req.admin.id,
+                'STUDENT_AUTO_ENROLLED',
+                `Student ${firstName} ${surname} (ID: ${studentId}) auto-enrolled in ${courseNameToEnroll} (ID: ${computerCourse.id})`,
+                'enrollment',
+                null, // Or the new enrollment ID if we could get it easily from SQLite runAsync
+                req.ip
+            );
+            req.flash('success_msg', `Student ${firstName} ${surname} registered successfully with RegNo: ${registrationNumber} and auto-enrolled in ${courseNameToEnroll}.`);
+        } else {
+            console.warn(`Course "${courseNameToEnroll}" not found. Student ${firstName} ${surname} (ID: ${studentId}) was not auto-enrolled.`);
+            req.flash('success_msg', `Student ${firstName} ${surname} registered successfully with RegNo: ${registrationNumber}. Auto-enrollment in "${courseNameToEnroll}" failed as course was not found.`);
+        }
+
         req.flash('formData', {}); // Clear flashed form data on success
-        req.flash('success_msg', `Student ${firstName} ${surname} (${email}) registered successfully with Registration Number: ${registrationNumber}.`);
         res.redirect('/admin/register-student');
 
     } catch (err) {
-        console.error("Error registering student:", err);
+        console.error("Error registering student or during auto-enrollment:", err);
         req.flash('error', 'An error occurred while registering the student: ' + err.message);
         res.redirect('/admin/register-student');
     }
 };
 
+// --- Computer Class Marks Management ---
+const computerClassUnitFields = [
+    'unit_intro_to_computer_marks', 'unit_keyboard_mouse_marks', 'unit_ms_word_marks',
+    'unit_ms_excel_marks', 'unit_ms_publisher_marks', 'unit_ms_powerpoint_marks',
+    'unit_ms_access_marks', 'unit_internet_email_marks'
+];
+const computerClassExamFields = ['exam_theory_marks', 'exam_practical_marks'];
+
+const renderComputerClassMarksForm = async (req, res) => {
+    const { enrollmentId } = req.params;
+    try {
+        const enrollment = await db.getAsync("SELECT * FROM enrollments WHERE id = ?", [enrollmentId]);
+        if (!enrollment) {
+            req.flash('error_msg', 'Enrollment record not found.');
+            return res.redirect('/admin/students'); // Or a more relevant page
+        }
+        const student = await db.getAsync("SELECT * FROM students WHERE id = ?", [enrollment.student_id]);
+        const course = await db.getAsync("SELECT * FROM courses WHERE id = ?", [enrollment.course_id]);
+
+        if (!student || !course) {
+            req.flash('error_msg', 'Student or Course not found for this enrollment.');
+            return res.redirect('/admin/students');
+        }
+        // Ensure course is "Computer Classes" or handle appropriately
+        if (course.name !== "Computer Classes") {
+            req.flash('error_msg', 'This marks management page is specifically for "Computer Classes".');
+            // Redirect to a generic marks page or student's enrollment list
+            return res.redirect(`/admin/students/view/${student.id}`);
+        }
+
+        const flashedFormData = req.flash('formData')[0]; // Get flashed data if any
+        const currentEnrollmentData = flashedFormData || enrollment;
+
+
+        res.render('pages/admin/students/manageComputerClassMarks', {
+            title: `Manage Marks: ${course.name}`,
+            admin: req.admin,
+            student,
+            course,
+            enrollment: currentEnrollmentData, // Pass potentially flashed data or db data
+            messages: { // Pass flash messages
+                error: req.flash('error_msg'),
+                success: req.flash('success_msg')
+            }
+        });
+    } catch (err) {
+        console.error("Error rendering computer class marks form:", err);
+        req.flash('error_msg', 'Failed to load marks management page.');
+        res.redirect('/admin/students'); // Fallback redirect
+    }
+};
+
+const saveComputerClassMarks = async (req, res) => {
+    const { enrollmentId } = req.params;
+    const marksData = {};
+    let allMarksPresent = true;
+    let validationErrors = [];
+
+    [...computerClassUnitFields, ...computerClassExamFields].forEach(field => {
+        const value = req.body[field];
+        if (value === undefined || value === null || value.trim() === '') {
+            marksData[field] = null; // Store as null if empty
+            // For calculation purposes, we might need to distinguish between not-yet-filled and intentionally zero
+            // For now, empty means not filled for "allMarksPresent" check
+            if (computerClassUnitFields.includes(field) || computerClassExamFields.includes(field)) {
+                 // allMarksPresent = false; // Only consider required fields for this flag if needed
+            }
+        } else {
+            const numValue = parseInt(value, 10);
+            if (isNaN(numValue) || numValue < 0 || numValue > 100) {
+                validationErrors.push(`Invalid marks for ${field.replace(/_/g, ' ')}. Must be between 0 and 100.`);
+            }
+            marksData[field] = numValue;
+        }
+    });
+
+    // Check if all unit and exam marks are provided for final grade calculation
+    allMarksPresent = [...computerClassUnitFields, ...computerClassExamFields].every(field => marksData[field] !== null);
+
+
+    if (validationErrors.length > 0) {
+        req.flash('error_msg', validationErrors.join('<br>'));
+        req.flash('formData', req.body); // Flash back the submitted data
+        return res.redirect(`/admin/enrollments/${enrollmentId}/computer-class-marks`);
+    }
+
+    try {
+        const enrollment = await db.getAsync("SELECT * FROM enrollments WHERE id = ?", [enrollmentId]);
+        if (!enrollment) {
+            req.flash('error_msg', 'Enrollment not found.');
+            return res.redirect('/admin/students');
+        }
+
+        let finalGrade = enrollment.final_grade; // Keep existing final grade unless recalculated
+
+        if (allMarksPresent) {
+            let unitSum = 0;
+            computerClassUnitFields.forEach(field => unitSum += (marksData[field] || 0));
+            const unitsContribution = (unitSum / (computerClassUnitFields.length * 100)) * 30;
+
+            let examSum = 0;
+            computerClassExamFields.forEach(field => examSum += (marksData[field] || 0));
+            const examsContribution = (examSum / (computerClassExamFields.length * 100)) * 70;
+
+            const finalPercentage = unitsContribution + examsContribution;
+            const passingGradeThreshold = parseInt(process.env.PASSING_GRADE) || 60;
+            finalGrade = finalPercentage >= passingGradeThreshold ? 'Pass' : 'Fail';
+        } else {
+            // If not all marks are present, but some marks were updated, we might not want to auto-set to 'Incomplete'
+            // The "Finish Course" button will handle the explicit "Incomplete" or "Completed" status.
+            // So, if not all marks are present, finalGrade remains what it was, or null if never set.
+            // If it was 'Pass' or 'Fail' and now marks are removed, it should ideally become null or 'Incomplete'.
+            // For simplicity on just saving marks: if not all present, don't auto-fail, keep existing or null.
+            if (finalGrade === 'Pass' || finalGrade === 'Fail') { // If it was Pass/Fail, but now marks are missing
+                 finalGrade = null; // Revert to null (pending)
+            }
+        }
+
+        const updateFields = [];
+        const updateValues = [];
+        for (const key in marksData) {
+            updateFields.push(`${key} = ?`);
+            updateValues.push(marksData[key]);
+        }
+        updateFields.push("final_grade = ?");
+        updateValues.push(finalGrade);
+        updateValues.push(enrollmentId);
+
+        const sql = `UPDATE enrollments SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+        await db.runAsync(sql, updateValues);
+
+        logAdminAction(req.admin.id, 'STUDENT_MARKS_UPDATED', `Admin ${req.admin.name} updated marks for enrollment ID ${enrollmentId}.`, 'enrollment', enrollmentId, req.ip);
+        req.flash('success_msg', 'Marks updated successfully.');
+        res.redirect(`/admin/enrollments/${enrollmentId}/computer-class-marks`);
+
+    } catch (err) {
+        console.error("Error saving computer class marks:", err);
+        req.flash('error_msg', 'Failed to save marks: ' + err.message);
+        res.redirect(`/admin/enrollments/${enrollmentId}/computer-class-marks`);
+    }
+};
+
+const finishCourseForStudent = async (req, res) => {
+    const { enrollmentId } = req.params;
+    try {
+        const enrollment = await db.getAsync("SELECT * FROM enrollments WHERE id = ?", [enrollmentId]);
+        if (!enrollment) {
+            req.flash('error_msg', 'Enrollment not found.');
+            return res.redirect('/admin/students'); // Or appropriate error page
+        }
+
+        let allMarksProvided = true;
+        let unitSum = 0;
+        computerClassUnitFields.forEach(field => {
+            if (enrollment[field] === null || enrollment[field] === undefined) allMarksProvided = false;
+            unitSum += (enrollment[field] || 0);
+        });
+        computerClassExamFields.forEach(field => {
+            if (enrollment[field] === null || enrollment[field] === undefined) allMarksProvided = false;
+        });
+
+        let finalGradeToSet;
+        let message;
+
+        if (allMarksProvided) {
+            const unitsContribution = (unitSum / (computerClassUnitFields.length * 100)) * 30;
+            const examTheory = enrollment.exam_theory_marks || 0;
+            const examPractical = enrollment.exam_practical_marks || 0;
+            const examsContribution = ((examTheory + examPractical) / (computerClassExamFields.length * 100)) * 70;
+            const finalPercentage = unitsContribution + examsContribution;
+            const passingGradeThreshold = parseInt(process.env.PASSING_GRADE) || 60;
+
+            finalGradeToSet = finalPercentage >= passingGradeThreshold ? 'Pass' : 'Fail';
+            message = `Course marked as finished. Final Grade: ${finalGradeToSet} (${finalPercentage.toFixed(2)}%).`;
+        } else {
+            finalGradeToSet = 'Incomplete';
+            message = 'Course marked as finished, but some marks are missing. Status set to Incomplete.';
+        }
+
+        await db.runAsync("UPDATE enrollments SET final_grade = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [finalGradeToSet, enrollmentId]);
+
+        logAdminAction(req.admin.id, 'STUDENT_COURSE_FINISHED', `Admin ${req.admin.name} marked course as finished for enrollment ID ${enrollmentId}. Status: ${finalGradeToSet}`, 'enrollment', enrollmentId, req.ip);
+        req.flash('success_msg', message);
+        res.redirect(`/admin/enrollments/${enrollmentId}/computer-class-marks`);
+
+    } catch (err) {
+        console.error("Error finishing course for student:", err);
+        req.flash('error_msg', 'Failed to finish course: ' + err.message);
+        res.redirect(`/admin/enrollments/${enrollmentId}/computer-class-marks`);
+    }
+};
+// --- End Computer Class Marks Management ---
+
+// --- Admin Compose Email ---
+const renderComposeEmailForm = (req, res) => {
+    const formData = req.flash('formData')[0] || {};
+    const errors = req.flash('error_msg') || req.flash('error') || []; // Consolidate error messages
+    const success = req.flash('success_msg');
+
+    res.render('pages/admin/composeEmail', {
+        title: 'Compose Email',
+        admin: req.admin,
+        formData,
+        errors: Array.isArray(errors) ? errors : (errors ? [errors] : []), // Ensure errors is an array
+        success: success.length > 0 ? success[0] : null
+    });
+};
+
+const handleSendComposedEmail = async (req, res) => {
+    const { toEmail, subject, emailBody } = req.body;
+    const adminUser = req.admin; // Admin performing the action
+
+    req.flash('formData', { toEmail, subject, emailBody }); // Flash input back
+
+    if (!toEmail || !subject || !emailBody) {
+        req.flash('error_msg', 'Recipient email, subject, and body are required.');
+        return res.redirect('/admin/compose-email');
+    }
+    if (!validator.isEmail(toEmail)) {
+        req.flash('error_msg', 'Invalid recipient email address format.');
+        return res.redirect('/admin/compose-email');
+    }
+
+    try {
+        await sendEmailWithTemplate({
+            to: toEmail,
+            subject: subject,
+            templateName: 'adminComposedEmail', // Use the new general template
+            data: {
+                subjectLine: subject, // For the <title> tag in the email template
+                htmlBody: emailBody,  // The admin-composed HTML
+                // logoUrl and siteUrl will be added by sendEmailWithTemplate if configured
+            },
+            // Reply-To could be the admin's email or a general support email
+            replyTo: process.env.REPLY_TO_EMAIL || adminUser.email
+        });
+
+        await logAdminAction(
+            adminUser.id,
+            'ADMIN_COMPOSED_EMAIL_SENT',
+            `Admin ${adminUser.name} sent an email to ${toEmail} with subject: "${subject}"`,
+            'email', // Target entity type
+            null,    // Target entity ID (n/a for a composed email like this)
+            req.ip
+        );
+
+        req.flash('formData', {}); // Clear form data on success
+        req.flash('success_msg', `Email successfully sent to ${toEmail}.`);
+        res.redirect('/admin/compose-email');
+
+    } catch (error) {
+        console.error('Failed to send composed email:', error);
+        req.flash('error_msg', 'Sorry, there was an error sending the email. Please try again later.');
+        res.redirect('/admin/compose-email');
+    }
+};
+// --- End Admin Compose Email ---
+
+
+const listCustomers = async (req, res) => {
 const renderViewCustomerDetailsPage = async (req, res) => {
     try {
         const customerId = req.params.id;
@@ -1099,11 +1394,18 @@ const updateWifiSettings = [ /* ... Existing ... */
         }
     }
 ];
-const listDownloadableDocuments = async (req, res) => { /* ... Existing ... */
+const listDownloadableDocuments = async (req, res) => {
     try {
-        const documents = await db.allAsync("SELECT * FROM downloadable_documents ORDER BY created_at DESC");
+        // Ensure title and description are selected
+        const documents = await db.allAsync("SELECT id, title, description, file_url, type, expiry_date, created_at FROM downloadable_documents ORDER BY created_at DESC");
         res.render('pages/admin/documents/index', {
-            title: 'Manage Downloadable Documents', admin: req.admin, documents
+            title: 'Manage Downloadable Documents',
+            admin: req.admin,
+            documents,
+            messages: { // Pass flash messages
+                error: req.flash('error_msg'),
+                success: req.flash('success_msg')
+            }
         });
     } catch (err) {
         console.error("Error fetching downloadable documents:", err);
@@ -1119,68 +1421,142 @@ const renderCreateDocumentForm = (req, res) => { /* ... Existing ... */
 };
 const createDocument = [ /* ... Existing ... */
     body('title').trim().notEmpty().withMessage('Document title is required.'),
+    body('title').trim().notEmpty().withMessage('Document title is required.'), // Added title validation
+    body('description').trim().notEmpty().withMessage('Description is required.'), // Added description validation
     body('file_url').trim().notEmpty().withMessage('File URL is required.').isURL().withMessage('Must be a valid URL.'),
     body('type').isIn(['public', 'eulogy']).withMessage('Invalid document type.'),
-    body('description').trim().optional({ checkFalsy: true }),
+    // body('description').trim().optional({ checkFalsy: true }), // Description is now required
     body('expiry_date').optional({ checkFalsy: true }).isISO8601().toDate().withMessage('Invalid expiry date format.'),
     async (req, res) => {
         const errors = validationResult(req);
         let { title, description, file_url, type, expiry_date } = req.body;
+
+        // For repopulating form, ensure all values are available for req.flash('formData')
+        const formDataToFlash = { title_val: title, description_val: description, file_url_val: file_url, type_val: type, expiry_date_val: expiry_date };
+        req.flash('formData', formDataToFlash);
+
+
         if (!errors.isEmpty()) {
-            return res.status(400).render('pages/admin/documents/add', { title: 'Add Downloadable Document', admin: req.admin, errors: errors.array(), title_val: title, description_val: description, file_url_val: file_url, type_val: type, expiry_date_val: expiry_date });
+             req.flash('errors', errors.array()); // Flash actual errors
+            return res.status(400).redirect('/admin/documents/add');
         }
         if (type === 'public') expiry_date = null;
         else if (type === 'eulogy' && !expiry_date) { let defaultExpiry = new Date(); defaultExpiry.setDate(defaultExpiry.getDate() + 7); expiry_date = defaultExpiry.toISOString().split('T')[0]; }
+
         try {
-            const result = await db.runAsync( `INSERT INTO downloadable_documents (title, description, file_url, type, expiry_date, uploaded_by_admin_id, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`, [title, description, file_url, type, expiry_date, req.admin.id] );
+            const result = await db.runAsync(
+                `INSERT INTO downloadable_documents (title, description, file_url, type, expiry_date, uploaded_by_admin_id, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+                [title, description, file_url, type, expiry_date, req.admin.id]
+            );
             logAdminAction(req.admin.id, 'DOCUMENT_CREATED', `Admin ${req.admin.name} added document: ${title}`, 'downloadable_document', result.lastID, req.ip);
             req.flash('success_msg', 'Document entry added successfully.');
+            req.flash('formData', {}); // Clear form data on success
             res.redirect('/admin/documents');
         } catch (err) {
-            console.error("Error adding document entry:", err); req.flash('error_msg', 'Failed to add document entry. ' + err.message);
-            res.status(500).render('pages/admin/documents/add', { title: 'Add Downloadable Document', admin: req.admin, errors: [{msg: 'Failed to add document entry. ' + err.message}], title_val: title, description_val: description, file_url_val: file_url, type_val: type, expiry_date_val: expiry_date });
+            console.error("Error adding document entry:", err);
+            req.flash('error_msg', 'Failed to add document entry. ' + err.message);
+            // formData is already flashed
+            res.status(500).redirect('/admin/documents/add');
         }
     }
 ];
-const renderEditDocumentForm = async (req, res) => { /* ... Existing ... */
+
+const renderEditDocumentForm = async (req, res) => {
     const docId = req.params.id;
     try {
         const document = await db.getAsync("SELECT * FROM downloadable_documents WHERE id = ?", [docId]);
-        if (!document) { req.flash('error_msg', 'Document entry not found.'); return res.redirect('/admin/documents');}
-        if (document.expiry_date) document.expiry_date_formatted = new Date(document.expiry_date).toISOString().split('T')[0];
-        res.render('pages/admin/documents/edit', { title: 'Edit Downloadable Document', admin: req.admin, document, errors: [] });
+        if (!document) {
+            req.flash('error_msg', 'Document entry not found.');
+            return res.redirect('/admin/documents');
+        }
+        if (document.expiry_date) {
+            document.expiry_date_formatted = new Date(document.expiry_date).toISOString().split('T')[0];
+        }
+
+        // For repopulating form on error, or initial load
+        const formData = req.flash('formData')[0];
+        const errors = req.flash('errors') || [];
+
+        res.render('pages/admin/documents/edit', {
+            title: 'Edit Downloadable Document',
+            admin: req.admin,
+            // If formData exists (from a failed validation attempt), use its values, else use document's values
+            document: formData ? {
+                id: docId, // Keep original ID
+                title: formData.title_val !== undefined ? formData.title_val : document.title,
+                description: formData.description_val !== undefined ? formData.description_val : document.description,
+                file_url: formData.file_url_val !== undefined ? formData.file_url_val : document.file_url,
+                type: formData.type_val !== undefined ? formData.type_val : document.type,
+                expiry_date_formatted: formData.expiry_date_val !== undefined ? formData.expiry_date_val : document.expiry_date_formatted,
+                // Keep original non-form fields if needed for view logic
+                created_at: document.created_at,
+                uploaded_by_admin_id: document.uploaded_by_admin_id
+            } : document,
+            errors: errors
+        });
     } catch (err) {
         console.error("Error fetching document for edit:", err);
         req.flash('error_msg', 'Failed to load document details for editing.');
         res.redirect('/admin/documents');
     }
 };
-const updateDocument = [ /* ... Existing ... */
-    body('title').trim().notEmpty().withMessage('Document title is required.'),
+const updateDocument = [
+    body('title').trim().notEmpty().withMessage('Document title is required.'), // Keep/ensure title validation
+    body('description').trim().notEmpty().withMessage('Description is required.'), // Add description validation
     body('file_url').trim().notEmpty().withMessage('File URL is required.').isURL().withMessage('Must be a valid URL.'),
     body('type').isIn(['public', 'eulogy']).withMessage('Invalid document type.'),
-    body('description').trim().optional({ checkFalsy: true }),
     body('expiry_date').optional({ checkFalsy: true }).isISO8601().toDate().withMessage('Invalid expiry date format.'),
     async (req, res) => {
         const docId = req.params.id;
         const errors = validationResult(req);
+        // 'title' and 'description' are now part of req.body extraction
         let { title, description, file_url, type, expiry_date } = req.body;
+
         if (!errors.isEmpty()) {
-            const documentToReRender = await db.getAsync("SELECT * FROM downloadable_documents WHERE id = ?", [docId]).catch(()=> ({id: docId}));
-             if (documentToReRender && documentToReRender.expiry_date) documentToReRender.expiry_date_formatted = new Date(documentToReRender.expiry_date).toISOString().split('T')[0];
-            return res.status(400).render('pages/admin/documents/edit', { title: 'Edit Downloadable Document', admin: req.admin, document: { ...documentToReRender, title, description, file_url, type, expiry_date_formatted: expiry_date }, errors: errors.array() });
+            // Fetch original document to help repopulate form correctly if needed, merging with submitted values
+            const documentCurrentVals = await db.getAsync("SELECT * FROM downloadable_documents WHERE id = ?", [docId]).catch(()=> ({id: docId}));
+            if (documentCurrentVals.expiry_date) documentCurrentVals.expiry_date_formatted = new Date(documentCurrentVals.expiry_date).toISOString().split('T')[0];
+
+            return res.status(400).render('pages/admin/documents/edit', {
+                title: 'Edit Downloadable Document',
+                admin: req.admin,
+                document: { // Pass merged data for form repopulation
+                    ...documentCurrentVals, // original values
+                    title: title, // submitted potentially erroneous value
+                    description: description,
+                    file_url: file_url,
+                    type: type,
+                    expiry_date_formatted: expiry_date // submitted expiry date
+                },
+                errors: errors.array()
+            });
         }
+
         if (type === 'public') expiry_date = null;
-        else if (type === 'eulogy' && !expiry_date) expiry_date = null;
+        else if (type === 'eulogy' && !expiry_date) expiry_date = null; // If eulogy and no date, make it null (or keep existing)
+
         try {
-            const result = await db.runAsync( `UPDATE downloadable_documents SET title = ?, description = ?, file_url = ?, type = ?, expiry_date = ?, uploaded_by_admin_id = ? WHERE id = ?`, [title, description, file_url, type, expiry_date, req.admin.id, docId] );
-            if (result.changes === 0) req.flash('error_msg', 'Document entry not found or no changes made.');
-            else { logAdminAction(req.admin.id, 'DOCUMENT_UPDATED', `Admin ${req.admin.name} updated document: ${title}`, 'downloadable_document', docId, req.ip); req.flash('success_msg', 'Document entry updated successfully.'); }
+            // SQL needs to be updated for new 'title', 'description' columns
+            const result = await db.runAsync(
+                `UPDATE downloadable_documents SET
+                    title = ?, description = ?, file_url = ?, type = ?, expiry_date = ?,
+                    uploaded_by_admin_id = ?, updated_at = CURRENT_TIMESTAMP
+                 WHERE id = ?`,
+                [title, description, file_url, type, expiry_date, req.admin.id, docId]
+            );
+
+            if (result.changes === 0) {
+                req.flash('error_msg', 'Document entry not found or no changes made.');
+            } else {
+                logAdminAction(req.admin.id, 'DOCUMENT_UPDATED', `Admin ${req.admin.name} updated document: ${title}`, 'downloadable_document', docId, req.ip);
+                req.flash('success_msg', 'Document entry updated successfully.');
+            }
             res.redirect('/admin/documents');
         } catch (err) {
             console.error("Error updating document entry:", err);
             req.flash('error_msg', 'Failed to update document entry. ' + err.message);
-            res.redirect(`/admin/documents/edit/${docId}`);
+            res.redirect(`/admin/documents/edit/${docId}`); // Redirect back to edit page on error
         }
     }
 ];
@@ -1600,5 +1976,14 @@ module.exports = {
     renderViewCustomerDetailsPage,
     updateCustomerDetails,
     logCustomerPayment,
-    toggleCustomerStatus
+    toggleCustomerStatus,
+
+    // New marks management for Computer Classes
+    renderComputerClassMarksForm,
+    saveComputerClassMarks,
+    finishCourseForStudent,
+
+    // Admin Compose Email
+    renderComposeEmailForm,
+    handleSendComposedEmail
 };

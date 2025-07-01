@@ -16,6 +16,9 @@ router.get('/downloads', mainController.renderDownloadsPage);
 router.get('/gallery', mainController.renderGalleryPage);
 router.get('/data-protection', mainController.renderDataProtectionPage);
 
+// Route for download redirection
+router.get('/redirect', mainController.handleRedirect);
+
 // Placeholder routes for dashboards - these will likely move to their own route files
 // and include authentication middleware once implemented.
 // For now, they are here for basic navigation structure.

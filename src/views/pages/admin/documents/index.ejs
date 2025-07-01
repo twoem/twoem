@@ -1,10 +1,8 @@
-<%- include('../../../partials/header', { title: 'Manage Downloadable Documents' }) %>
-<%- include('../../../partials/navbar') %>
+<%- include('../../../partials/adminHeader', { title: title, admin: admin }) %>
 
-<main class="container mt-5">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
             <li class="breadcrumb-item active" aria-current="page">Manage Downloadable Documents</li>
         </ol>
     </nav>
@@ -25,6 +23,7 @@
                     <tr>
                         <th scope="col">ID</th>
                         <th scope="col">Title</th>
+                        <th scope="col">Description</th>
                         <th scope="col">Type</th>
                         <th scope="col">URL</th>
                         <th scope="col">Expiry Date</th>
@@ -38,6 +37,7 @@
                         <tr>
                             <td><%= doc.id %></td>
                             <td><%= doc.title %></td>
+                            <td><%= doc.description && doc.description.length > 50 ? doc.description.substring(0, 47) + '...' : doc.description %></td>
                             <td>
                                 <span class="badge bg-<%= doc.type === 'eulogy' ? 'warning text-dark' : 'info' %>">
                                     <%= doc.type.charAt(0).toUpperCase() + doc.type.slice(1) %>
@@ -65,6 +65,5 @@
     <% } else { %>
         <div class="alert alert-info">No document entries found. <a href="/admin/documents/add">Add the first document entry.</a></div>
     <% } %>
-</main>
 
-<%- include('../../../partials/footer') %>
+<%- include('../../../partials/adminFooter') %>

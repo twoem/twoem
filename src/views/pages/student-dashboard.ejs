@@ -1,19 +1,14 @@
-<%- include('../partials/header', { title: 'Student Dashboard' }) %>
-<%- include('../partials/navbar') %>
+<%- include('../partials/studentHeader', { title: 'Student Dashboard', student: student }) %>
 
-<main class="container mt-5">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Student Dashboard</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <% if (locals.student && locals.student.firstName) { %>
-                <span class="me-3">Hello, <strong><%= student.firstName %></strong>!</span>
-            <% } else { %>
-                <span class="me-3">Hello, Student!</span>
-            <% } %>
-            <form action="/student/logout" method="POST" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button>
-            </form>
-        </div>
+<% /* Container-fluid is opened in studentHeader.ejs */ %>
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom" style="border-color: var(--lavender-light-blue) !important;">
+        <h1 class="h2" style="color: var(--lavender-darker-purple);">Student Dashboard</h1>
+        <% if (locals.student && locals.student.first_name) { %> <% /* Changed to first_name to match DB */ %>
+            <span class="fs-5" style="color: var(--lavender-muted-green);">Welcome, <strong><%= student.first_name %></strong>!</span>
+        <% } else { %>
+            <span class="fs-5" style="color: var(--lavender-muted-green);">Welcome, Student!</span>
+        <% } %>
+        <% /* Logout is now in the studentHeader dropdown */ %>
     </div>
 
     <!-- First Login Tasks - these will be handled by redirects before reaching dashboard -->
@@ -70,6 +65,4 @@
         </div>
     </div>
 
-</main>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/studentFooter') %>

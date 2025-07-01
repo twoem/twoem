@@ -149,6 +149,39 @@ const renderGalleryPage = (req, res) => {
     res.render('pages/gallery', { title: 'Gallery' });
 };
 
+const handleRedirect = (req, res) => {
+    const targetUrl = req.query.url;
+    const docTitle = req.query.title || 'Document'; // Default title if not provided
+
+    if (!targetUrl) {
+        // Handle missing URL, perhaps redirect to downloads or show an error
+        req.flash('error_msg', 'Invalid redirection link: Target URL is missing.');
+        return res.redirect('/downloads');
+    }
+
+    // Basic validation for URL to prevent obviously malicious inputs (though proper validation is complex)
+    // This is a very basic check. For production, consider more robust URL validation.
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+        req.flash('error_msg', 'Invalid redirection link: URL must start with http:// or https://.');
+        return res.redirect('/downloads');
+    }
+
+    try {
+        // Attempt to parse URL to catch some malformed ones early
+        new URL(targetUrl);
+    } catch (e) {
+        req.flash('error_msg', 'Invalid redirection link: URL is malformed.');
+        return res.redirect('/downloads');
+    }
+
+
+    res.render('pages/redirect', {
+        title: `Redirecting to ${docTitle}...`,
+        docTitle: docTitle,
+        targetUrl: targetUrl
+    });
+};
+
 module.exports = {
     renderHomePage,
     renderContactPage,
@@ -161,4 +194,5 @@ module.exports = {
     renderAdminDashboardPage,   //
     renderDataProtectionPage,
     renderGalleryPage,
+    handleRedirect,
 };

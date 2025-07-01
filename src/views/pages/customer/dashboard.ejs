@@ -1,27 +1,15 @@
 <%- include('../partials/customerHeader', { title: title, customer: customer }) %>
 
-<div class="container mt-4">
-    <% if (messages && messages.success) { %>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <%- messages.success %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <% } %>
-    <% if (messages && messages.info) { %>
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-            <%- messages.info %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <% } %>
+<% /* Main container is opened in customerHeader.ejs and closed in customerFooter.ejs */ %>
+    <%- include('../partials/flash-messages') %>
 
     <div class="row">
         <div class="col-12">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Welcome Back, <%= customer.firstName %>!</h4>
-                </div>
-                <div class="card-body">
-                    <p>This is your Mynet Customer Portal. Manage your internet subscription, view payment history, and update your details.</p>
+            <div class="card shadow-lg mb-4" style="border-radius: 0.75rem; background-color: var(--lavender-light-blue);">
+                <div class="card-body text-center" style="color: var(--lavender-nav-text);">
+                    <img src="/logo.png" alt="Mynet Logo" style="max-width: 80px; margin-bottom: 0.5rem;">
+                    <h3 class="mb-0 fw-bold" style="color: var(--lavender-darker-purple);">Welcome Back, <%= customer.firstName %>!</h3>
+                    <p class="lead mb-0" style="font-size: 1.1rem;">Your Mynet Customer Portal Dashboard.</p>
                 </div>
             </div>
         </div>
@@ -29,10 +17,10 @@
 
     <div class="row">
         <!-- Customer Details Card -->
-        <div class="col-md-7">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Your Account Details</h5>
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm h-100" style="border-radius: 0.75rem; background-color: var(--lavender-lightest-yellow);">
+                <div class="card-header" style="background-color: var(--lavender-very-light); border-bottom: 1px solid var(--lavender-light-blue);">
+                    <h5 class="mb-0 fw-bold" style="color: var(--lavender-darker-purple);"><i class="fas fa-user-circle me-2"></i>Your Account Details</h5>
                 </div>
                 <div class="card-body">
                     <dl class="row">
@@ -45,7 +33,7 @@
                         <% } %>
 
                         <dt class="col-sm-4">Account Number:</dt>
-                        <dd class="col-sm-8"><%= customer.accountNumber %></dd>
+                        <dd class="col-sm-8"><strong style="color: var(--lavender-darker-purple);"><%= customer.accountNumber %></strong></dd>
 
                         <dt class="col-sm-4">Phone Number:</dt>
                         <dd class="col-sm-8"><%= customer.phoneNumber %></dd>
@@ -60,54 +48,55 @@
                         <dd class="col-sm-8"><%= new Date(customer.installationDate).toLocaleDateString() %></dd>
 
                         <dt class="col-sm-4">Current Balance:</dt>
-                        <dd class="col-sm-8">KES <%= customer.currentBalance ? customer.currentBalance.toFixed(2) : '0.00' %></dd>
+                        <dd class="col-sm-8 fw-bold <%= customer.currentBalance < 0 ? 'text-danger' : 'text-success' %>">
+                            KES <%= customer.currentBalance ? customer.currentBalance.toFixed(2) : '0.00' %>
+                        </dd>
 
                         <dt class="col-sm-4">Monthly Payment:</dt>
                         <dd class="col-sm-8">KES <%= customer.paymentPerMonth ? customer.paymentPerMonth.toFixed(2) : '0.00' %></dd>
                     </dl>
-                    <a href="/portal/customer/profile/edit" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i> Update Details</a>
+                    <a href="/portal/customer/profile/edit" class="btn btn-sm mt-2" style="background-color: var(--lavender-muted-green); color: white;"><i class="fas fa-edit me-1"></i> Update Details</a>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Actions/Subscription Status Summary -->
-        <div class="col-md-5">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-wifi me-2"></i>Subscription Overview</h5>
+        <!-- Quick Actions & Summaries -->
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm mb-4" style="border-radius: 0.75rem; background-color: var(--lavender-lightest-yellow);">
+                <div class="card-header" style="background-color: var(--lavender-very-light); border-bottom: 1px solid var(--lavender-light-blue);">
+                    <h5 class="mb-0 fw-bold" style="color: var(--lavender-darker-purple);"><i class="fas fa-wifi me-2"></i>Subscription Overview</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Status:</strong> <span class="badge bg-<%= customer.isActive && (!customer.disconnectionDate || new Date(customer.disconnectionDate) > new Date()) ? 'success' : 'danger' %>">
+                    <p><strong>Status:</strong> <span class="badge fs-6 <%= customer.isActive && (!customer.disconnectionDate || new Date(customer.disconnectionDate) > new Date()) ? 'bg-success' : 'bg-danger' %>">
                         <%= customer.isActive && (!customer.disconnectionDate || new Date(customer.disconnectionDate) > new Date()) ? 'Active' : 'Disconnected/Pending' %>
                     </span></p>
-                    <% if (customer.disconnectionDate && new Date(customer.disconnectionDate) > new Date()) { %>
-                        <p class="text-warning"><strong>Disconnection Due:</strong> <%= new Date(customer.disconnectionDate).toLocaleDateString() %></p>
+                    <% if (customer.disconnectionDate && new Date(customer.disconnectionDate) > new Date() && customer.isActive) { %>
+                        <p class="text-warning fw-bold">Disconnection Due: <%= new Date(customer.disconnectionDate).toLocaleDateString() %></p>
                     <% } else if (customer.disconnectionDate && new Date(customer.disconnectionDate) <= new Date()) { %>
-                         <p class="text-danger"><strong>Account Disconnected On:</strong> <%= new Date(customer.disconnectionDate).toLocaleDateString() %></p>
+                         <p class="text-danger fw-bold">Account Disconnected On: <%= new Date(customer.disconnectionDate).toLocaleDateString() %></p>
                     <% } %>
-                    <a href="/portal/customer/subscription" class="btn btn-info btn-sm mb-2 d-block"><i class="fas fa-file-invoice-dollar"></i> View Subscription & Payments</a>
-                    <a href="/portal/customer/pay" class="btn btn-success btn-sm d-block"><i class="fas fa-credit-card"></i> Make Payment</a>
+                    <a href="/portal/customer/subscription" class="btn d-block mb-2" style="background-color: var(--lavender-light-blue); color: var(--lavender-nav-text);"><i class="fas fa-file-invoice-dollar me-2"></i>View Subscription & Payments</a>
+                    <a href="/portal/customer/pay" class="btn d-block" style="background-color: var(--lavender-vibrant-purple); color: white;"><i class="fas fa-credit-card me-2"></i>Make Payment</a>
                 </div>
             </div>
-             <div class="card shadow-sm mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Payments</h5>
+             <div class="card shadow-sm" style="border-radius: 0.75rem; background-color: var(--lavender-lightest-yellow);">
+                <div class="card-header" style="background-color: var(--lavender-very-light); border-bottom: 1px solid var(--lavender-light-blue);">
+                    <h5 class="mb-0 fw-bold" style="color: var(--lavender-darker-purple);"><i class="fas fa-history me-2"></i>Recent Payments</h5>
                 </div>
-                <ul class="list-group list-group-flush">
+                <ul class="list-group list-group-flush" style="border-radius: 0 0 0.75rem 0.75rem;">
                     <% if (customer.paymentLogs && customer.paymentLogs.length > 0) { %>
-                        <% customer.paymentLogs.slice(0, 3).forEach(log => { %> <!-- Show last 3 -->
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <% customer.paymentLogs.slice(0, 3).forEach(log => { %>
+                            <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color: var(--lavender-lightest-yellow);">
                                 <span><%= new Date(log.paymentDate).toLocaleDateString() %> - <%= log.mode %></span>
-                                <span class="badge bg-secondary rounded-pill">KES <%= log.amount.toFixed(2) %></span>
+                                <span class="badge rounded-pill" style="background-color: var(--lavender-muted-green); color: white;">KES <%= log.amount.toFixed(2) %></span>
                             </li>
                         <% }); %>
                     <% } else { %>
-                        <li class="list-group-item">No payment history found.</li>
+                        <li class="list-group-item" style="background-color: var(--lavender-lightest-yellow);">No payment history found.</li>
                     <% } %>
                 </ul>
             </div>
         </div>
     </div>
-</div>
 
 <%- include('../partials/customerFooter') %>

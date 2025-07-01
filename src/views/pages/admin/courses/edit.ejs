@@ -1,12 +1,10 @@
-<%- include('../../../partials/header', { title: 'Edit Course' }) %>
-<%- include('../../../partials/navbar') %> <%# Consider admin specific navbar/header later %>
+<%- include('../../../partials/adminHeader', { title: title, admin: admin }) %>
 
-<main class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
                     <li class="breadcrumb-item"><a href="/admin/courses">Manage Courses</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Edit Course: <%= course ? course.name : '...' %></li>
                 </ol>
@@ -34,8 +32,16 @@
             <% } else { %>
                 <div class="alert alert-warning">Course details not found. <a href="/admin/courses">Return to course list.</a></div>
             <% } %>
+
+            <div class="card shadow-sm mt-3"> <%# Added card wrapper %>
+                <div class="card-body">
+                     <form action="/admin/courses/edit/<%= course.id %>" method="POST">
+                        <%- include('./form', { course: course, errors: locals.errors || [] }) %>
+                         <%# The form partial should contain the submit buttons %>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-</main>
 
-<%- include('../../../partials/footer') %>
+<%- include('../../../partials/adminFooter') %>

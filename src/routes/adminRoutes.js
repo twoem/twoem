@@ -52,6 +52,10 @@ router.get('/emails/test', authAdmin, adminController.renderEmailTestPage);
 router.post('/emails/test', authAdmin, adminController.testEmailTemplate);
 router.get('/emails/logs', authAdmin, adminController.viewEmailLogs);
 
+// Admin Compose Custom Email
+router.get('/compose-email', authAdmin, adminController.renderComposeEmailForm);
+router.post('/compose-email', authAdmin, adminController.handleSendComposedEmail);
+
 // Student Management Routes
 router.get('/students', authAdmin, adminController.listStudents);
 router.get('/students/:id', authAdmin, adminController.viewStudentDetails);
@@ -139,8 +143,14 @@ router.post('/students/enrollments/remove/:enrollmentId', authAdmin, adminContro
 router.post('/students/reset-password/:studentId', authAdmin, adminController.adminResetStudentPassword);
 
 // Admin - Academic Records (Marks) Management Routes
-router.get('/enrollments/:enrollmentId/marks', authAdmin, adminController.renderEnterMarksForm);
-router.post('/enrollments/:enrollmentId/marks', authAdmin, adminController.saveMarks); // saveMarks includes validation
+// router.get('/enrollments/:enrollmentId/marks', authAdmin, adminController.renderEnterMarksForm); // Old generic marks form
+// router.post('/enrollments/:enrollmentId/marks', authAdmin, adminController.saveMarks); // Old generic save marks
+
+// New Specific Marks Management for "Computer Classes"
+router.get('/enrollments/:enrollmentId/computer-class-marks', authAdmin, adminController.renderComputerClassMarksForm);
+router.post('/enrollments/:enrollmentId/computer-class-marks', authAdmin, adminController.saveComputerClassMarks);
+router.post('/enrollments/:enrollmentId/finish-course', authAdmin, adminController.finishCourseForStudent);
+
 
 // Admin - Fee Management Routes
 router.get('/students/:studentId/fees/log', authAdmin, adminController.renderLogFeeForm);

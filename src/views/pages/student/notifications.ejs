@@ -1,7 +1,5 @@
-<%- include('../../partials/header', { title: title }) %>
-<%- include('../../partials/navbar') %>
+<%- include('../../partials/studentHeader', { title: title, student: student }) %>
 
-<main class="container mt-5">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/student/dashboard">Dashboard</a></li>
@@ -52,8 +50,7 @@
     <% } %>
 
     <div class="mt-4">
-        <a href="/student/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        <a href="/student/dashboard" class="btn btn-outline-secondary" style="border-color: var(--lavender-muted-green); color: var(--lavender-muted-green);"><i class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
     </div>
-</main>
 
-<%- include('../../partials/footer') %>
+<%- include('../../partials/studentFooter') %>

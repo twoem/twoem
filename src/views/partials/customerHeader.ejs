@@ -9,61 +9,108 @@
     <link rel="stylesheet" href="/css/style.css"> <!-- Main site style -->
     <!-- Add any customer portal specific styles here or in a separate CSS file -->
     <style>
-        body { padding-top: 56px; /* Adjust if navbar height changes */ }
-        .portal-navbar {
-            background-color: #007bff; /* Placeholder color */
+        :root {
+            --lavender-lightest-yellow: #FDFBD4;
+            --lavender-muted-green: #BDB96A;
+            --lavender-light-blue: #C1BFFF;
+            --lavender-very-light: #DBD4FF;
+            --lavender-vibrant-purple: #CF6DFC;
+            --lavender-darker-purple: #a358d3; /* Derived for contrast */
+            --lavender-nav-text: #495057; /* Darker text for light backgrounds */
         }
-        .portal-navbar .navbar-brand,
-        .portal-navbar .nav-link {
-            color: #fff;
+
+        body {
+            padding-top: 70px; /* Adjust if navbar height changes */
+            background-color: var(--lavender-very-light); /* Overall page background */
         }
-        .portal-navbar .nav-link:hover {
-            color: #f0f0f0;
+        .customer-portal-navbar {
+            background-color: var(--lavender-light-blue); /* Light Lavender Blue */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .navbar-brand img {
-            max-height: 40px;
-            margin-right: 10px;
+        .customer-portal-navbar .navbar-brand,
+        .customer-portal-navbar .nav-link {
+            color: var(--lavender-nav-text); /* Darker text for readability */
+            font-weight: 500;
         }
+        .customer-portal-navbar .navbar-brand img {
+            max-height: 30px; /* Slightly smaller logo */
+            margin-right: 8px;
+        }
+        .customer-portal-navbar .nav-link:hover,
+        .customer-portal-navbar .nav-link.active {
+            color: var(--lavender-vibrant-purple); /* Vibrant Purple for hover/active */
+        }
+        .customer-portal-navbar .navbar-toggler {
+            border-color: rgba(0,0,0,0.1);
+        }
+        .customer-portal-navbar .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(73, 80, 87, 0.7)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+        .dropdown-menu {
+            background-color: var(--lavender-very-light);
+            border-color: var(--lavender-light-blue);
+        }
+        .dropdown-item:hover {
+            background-color: var(--lavender-light-blue);
+            color: var(--lavender-nav-text);
+        }
+        .main-site-link-desktop {
+             border-left: 1px solid var(--lavender-muted-green);
+             margin-left: 15px;
+             padding-left: 15px;
+        }
+        .main-site-link-mobile {
+            border-top: 1px solid var(--lavender-muted-green);
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
     </style>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
 
-<nav class="navbar navbar-expand-lg portal-navbar fixed-top">
-    <div class="container">
-        <a class="navbar-brand" href="/portal/customer/dashboard">
-            <img src="/logo.png" alt="Mynet Logo"> Mynet Customer Portal
+<nav class="navbar navbar-expand-lg customer-portal-navbar fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/portal/customer/dashboard">
+            <img src="/logo.png" alt="Mynet Logo"> Customer Portal
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#customerNavbar" aria-controls="customerNavbar" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#customerPortalNavbar" aria-controls="customerPortalNavbar" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="customerNavbar">
-            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <div class="collapse navbar-collapse" id="customerPortalNavbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link <%= title === 'Dashboard' ? 'active' : '' %>" href="/portal/customer/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    <a class="nav-link <%= title === 'Dashboard' ? 'active' : '' %>" href="/portal/customer/dashboard"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <%= title === 'Subscription' ? 'active' : '' %>" href="/portal/customer/subscription"><i class="fas fa-file-invoice-dollar"></i> Subscription</a>
+                    <a class="nav-link <%= title === 'Subscription Status' ? 'active' : '' %>" href="/portal/customer/subscription"><i class="fas fa-file-invoice-dollar me-1"></i>Subscription</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <%= title === 'Make Payment' ? 'active' : '' %>" href="/portal/customer/pay"><i class="fas fa-credit-card"></i> Make Payment</a>
+                    <a class="nav-link <%= title === 'Make Payment' ? 'active' : '' %>" href="/portal/customer/pay"><i class="fas fa-credit-card me-1"></i>Make Payment</a>
                 </li>
+            </ul>
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user-circle"></i> <%= customer ? customer.firstName : 'Account' %>
+                    <a class="nav-link dropdown-toggle" href="#" id="customerAccountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle me-1"></i><%= customer ? customer.firstName : 'Account' %>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="/portal/customer/profile/edit"><i class="fas fa-user-edit"></i> Edit Profile</a></li>
-                        <li><a class="dropdown-item" href="/portal/customer/change-password"><i class="fas fa-key"></i> Change Password</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="customerAccountDropdown">
+                        <li><a class="dropdown-item" href="/portal/customer/profile/edit"><i class="fas fa-user-edit me-2"></i>Edit Profile</a></li>
+                        <li><a class="dropdown-item" href="/portal/customer/change-password"><i class="fas fa-key me-2"></i>Change Password</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/portal/customer/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                        <li><a class="dropdown-item" href="/portal/customer/logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                     </ul>
                 </li>
-                 <li class="nav-item">
-                    <a class="nav-link" href="/" title="Back to Main Website"><i class="fas fa-home"></i> Main Site</a>
+                 <li class="nav-item d-none d-lg-block main-site-link-desktop">
+                    <a class="nav-link" href="/" title="Back to Main Website"><i class="fas fa-home me-1"></i>Main Site</a>
+                </li>
+                <li class="nav-item d-lg-none main-site-link-mobile">
+                    <a class="nav-link" href="/" title="Back to Main Website"><i class="fas fa-home me-1"></i>Main Site</a>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
-<div style="padding-top: 20px;"> <!-- Body padding placeholder -->
-</div>
+
+<!-- Content starts after navbar -->
+<div class="container flex-grow-1 py-4">

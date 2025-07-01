@@ -1,0 +1,128 @@
+<%- include('../../partials/studentHeader', { title: title, student: student }) %>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/student/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">My Academics</li>
+        </ol>
+    </nav>
+
+    <h2>My Academics - <%= courseName %></h2>
+    <hr style="border-color: var(--lavender-light-blue);">
+
+    <%- include('../../partials/flash-messages') %>
+
+    <% if (enrollmentData) { %>
+        <div class="row">
+            <div class="col-lg-8">
+                <h4 class="fw-bold mb-3" style="color: var(--lavender-darker-purple);">Unit Marks</h4>
+                <div class="table-responsive card shadow-sm" style="border-radius: 0.5rem;">
+                    <table class="table table-bordered table-hover mb-0">
+                        <thead style="background-color: var(--lavender-very-light);">
+                            <tr>
+                                <th style="color: var(--lavender-darker-purple);">Unit Name</th>
+                                <th class="text-center" style="color: var(--lavender-darker-purple);">Marks (out of 100)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% units.forEach(unit => { %>
+                                <tr>
+                                    <td><%= unit.name %></td>
+                                    <td class="text-center <%= unit.status === 'Pending' ? 'text-muted fst-italic' : (unit.marks < PASSING_GRADE ? 'text-danger fw-bold' : 'text-success') %>">
+                                        <%= unit.status %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                         <% if (unitsRawTotal !== null) { %>
+                            <tfoot>
+                                <tr class="table-secondary">
+                                    <td class="fw-bold text-end">Units Raw Total:</td>
+                                    <td class="text-center fw-bold"><%= unitsRawTotal %> / <%= units.length * 100 %></td>
+                                </tr>
+                            </tfoot>
+                        <% } %>
+                    </table>
+                </div>
+
+                <h4 class="fw-bold mt-4 mb-3" style="color: var(--lavender-darker-purple);">Exam Marks</h4>
+                <div class="table-responsive card shadow-sm" style="border-radius: 0.5rem;">
+                    <table class="table table-bordered table-hover mb-0">
+                        <thead style="background-color: var(--lavender-very-light);">
+                            <tr>
+                                <th style="color: var(--lavender-darker-purple);">Exam Component</th>
+                                <th class="text-center" style="color: var(--lavender-darker-purple);">Marks (out of 100)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% exams.forEach(exam => { %>
+                                <tr>
+                                    <td><%= exam.name %></td>
+                                    <td class="text-center <%= exam.status === 'Pending' ? 'text-muted fst-italic' : (exam.marks < PASSING_GRADE ? 'text-danger fw-bold' : 'text-success') %>">
+                                        <%= exam.status %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm" style="border-radius: 0.75rem; background-color: var(--lavender-lightest-yellow);">
+                    <div class="card-header" style="background-color: var(--lavender-very-light); border-bottom: 1px solid var(--lavender-light-blue);">
+                        <h5 class="mb-0 fw-bold" style="color: var(--lavender-darker-purple);"><i class="fas fa-poll-h me-2"></i>Summary</h5>
+                    </div>
+                    <ul class="list-group list-group-flush" style="border-radius: 0 0 0.75rem 0.75rem;">
+                        <li class="list-group-item" style="background-color: var(--lavender-lightest-yellow);">
+                            <strong>Course Status:</strong>
+                            <span class="fw-bold
+                                <% if (courseStatus.includes('Completed (Pass)')) { %>text-success<% } %>
+                                <% else if (courseStatus.includes('Fail') || courseStatus.includes('Incomplete')) { %>text-danger<% } %>
+                                <% else if (courseStatus.includes('Pending')) { %>text-warning<% } %>
+                                <% else { %>text-info<% } %>">
+                                <%= courseStatus %>
+                            </span>
+                        </li>
+                        <% if (unitsContribution !== null) { %>
+                            <li class="list-group-item" style="background-color: var(--lavender-lightest-yellow);">
+                                <strong>Units Contribution (30%):</strong>
+                                <span class="fw-bold"><%= unitsContribution.toFixed(2) %> / 30.00</span>
+                            </li>
+                        <% } else { %>
+                             <li class="list-group-item text-muted" style="background-color: var(--lavender-lightest-yellow);">Units Contribution: Pending all unit marks</li>
+                        <% } %>
+                        <% if (examsContribution !== null) { %>
+                             <li class="list-group-item" style="background-color: var(--lavender-lightest-yellow);">
+                                <strong>Exams Contribution (70%):</strong>
+                                <span class="fw-bold"><%= examsContribution.toFixed(2) %> / 70.00</span>
+                            </li>
+                        <% } else { %>
+                            <li class="list-group-item text-muted" style="background-color: var(--lavender-lightest-yellow);">Exams Contribution: Pending all exam marks</li>
+                        <% } %>
+                        <% if (finalGradePercent !== null) { %>
+                            <li class="list-group-item" style="background-color: var(--lavender-very-light); border-top: 2px solid var(--lavender-light-blue);">
+                                <strong class="h5" style="color: var(--lavender-darker-purple);">Final Grade:</strong>
+                                <span class="h5 fw-bold <%= finalGradePercent < PASSING_GRADE ? 'text-danger' : 'text-success' %>">
+                                    <%= finalGradePercent.toFixed(2) %>%
+                                </span>
+                            </li>
+                        <% } else { %>
+                             <li class="list-group-item text-muted" style="background-color: var(--lavender-lightest-yellow);">Final Grade: Pending all marks</li>
+                        <% } %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    <% } else if (courseStatus === 'Not Enrolled') { %>
+        <div class="alert alert-warning">
+            You are not currently enrolled in the "<%= courseName %>" course.
+            Please contact administration if you believe this is an error.
+        </div>
+    <% } else { %>
+        <div class="alert alert-info">
+            Academic records for "<%= courseName %>" are not yet available or enrollment is pending.
+        </div>
+    <% } %>
+
+<%- include('../../partials/studentFooter') %>

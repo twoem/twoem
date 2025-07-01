@@ -1,6 +1,5 @@
-<%- include('../../partials/adminHeader') %>
+<%- include('../../partials/adminHeader', { title: title, admin: admin }) %>
 
-<div class="container-fluid mt-4">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
@@ -9,21 +8,10 @@
         </ol>
     </nav>
 
-    <h3>Customer Details: <%= customer.firstName %> <%= customer.lastName %> (#<%= customer.accountNumber %>)</h3>
+    <h3>Customer Details: <%= customer.firstName %> <%= customer.lastName %> (<%= customer.accountNumber %>)</h3>
     <hr>
 
-    <% if (messages && messages.error) { %>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <%- messages.error %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <% } %>
-    <% if (messages && messages.success) { %>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <%- messages.success %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <% } %>
+    <%- include('../../partials/flash-messages') %>
 
     <div class="row">
         <!-- Edit Customer Details Form -->
@@ -162,6 +150,5 @@
             </div>
         </div>
     </div>
-</div>
 
 <%- include('../../partials/adminFooter') %>

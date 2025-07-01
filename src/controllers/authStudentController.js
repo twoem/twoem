@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/database');
 const { body, validationResult } = require('express-validator');
 const { getJwtSecret } = require('../utils/jwtHelper'); // Import getJwtSecret
+const crypto = require('crypto'); // Ensure crypto is imported at the top for token hashing
 
 // Student Login
 const loginStudent = async (req, res) => {
@@ -133,17 +134,30 @@ const handleForgotPassword = async (req, res) => { /* ... जस का तस .
             req.flash('error', 'No student found with that registration number and email address.');
             return res.redirect(loginRedirectUrl);
         }
-        const otp = generateOtp();
+        const otp = generateOtp(); // 6-digit OTP
         const otpHash = await bcrypt.hash(otp, 10);
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-        await db.runAsync("INSERT INTO password_reset_tokens (student_id, token_hash, expires_at) VALUES (?, ?, ?)", [student.id, otpHash, expiresAt.toISOString()]);
+        const urlToken = require('crypto').randomBytes(32).toString('hex'); // Secure token for URL
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+
+        // Conceptually, password_reset_tokens table needs a 'url_token' TEXT UNIQUE column
+        await db.runAsync(
+            "INSERT INTO password_reset_tokens (student_id, token_hash, url_token, expires_at) VALUES (?, ?, ?, ?)",
+            [student.id, otpHash, urlToken, expiresAt.toISOString()]
+        );
 
         const { sendEmailWithTemplate } = require('../config/mailer');
-        const emailSubject = "Your Password Reset OTP - Twoem Online Productions";
-        const emailData = { studentName: student.first_name, otp: otp };
+        const emailSubject = "Password Reset Instructions - Twoem Online Productions";
+        // Construct the reset link for the email
+        const resetLink = `${req.protocol}://${req.get('host')}/student/reset-password-with-token/${urlToken}`;
+
+        const emailData = {
+            studentName: student.first_name,
+            otp: otp,
+            resetLink: resetLink // Pass the new reset link to the template
+        };
         await sendEmailWithTemplate({ to: student.email, subject: emailSubject, templateName: 'otp-email', data: emailData });
 
-        req.flash('success_msg', 'OTP sent to your email. Please check your inbox.');
+        req.flash('success_msg', 'Password reset instructions (OTP and link) sent to your email. Please check your inbox.');
         res.redirect(`/student/reset-password-form?regNo=${encodeURIComponent(registrationNumber)}`);
     } catch (err) {
         console.error("Forgot password error:", err);
@@ -252,15 +266,152 @@ const viewMyFees = async (req, res) => { /* ... जस का तस ... */
         res.render('pages/student/fees', { title: 'My Fee Statement', student: req.student, fees: fees || [], overallBalance });
     } catch (err) { console.error("Error fetching student fee records:", err); req.flash('error_msg', 'Could not retrieve fee statement.'); res.redirect('/student/dashboard'); }
 };
-const viewMyAcademics = async (req, res) => { /* ... जस का तस ... */
-    const studentId = req.student.id;
+
+// Define the names of the unit columns for "Computer Classes"
+const computerClassUnits = [
+    { dbCol: 'unit_intro_to_computer_marks', name: 'Introduction to Computer' },
+    { dbCol: 'unit_keyboard_mouse_marks', name: 'Keyboard and Mouse Management' },
+    { dbCol: 'unit_ms_word_marks', name: 'Ms Word' },
+    { dbCol: 'unit_ms_excel_marks', name: 'Ms Excel' },
+    { dbCol: 'unit_ms_publisher_marks', name: 'Ms Publisher' },
+    { dbCol: 'unit_ms_powerpoint_marks', name: 'Ms PowerPoint' },
+    { dbCol: 'unit_ms_access_marks', name: 'Ms Access' },
+    { dbCol: 'unit_internet_email_marks', name: 'Internet and Email' }
+];
+const examColumns = [
+    { dbCol: 'exam_theory_marks', name: 'Theory Exam' },
+    { dbCol: 'exam_practical_marks', name: 'Practical Exam' }
+];
+
+const viewMyAcademics = async (req, res) => { // Renamed from renderMyAcademicsPage to match route
     try {
-        const student = await db.getAsync("SELECT id, first_name FROM students WHERE id = ?", [studentId]);
-        if (!student) { req.flash('error_msg', 'Student record not found.'); return res.redirect('/student/login'); }
-        const enrollments = await db.allAsync(`SELECT e.id as enrollment_id, c.name AS course_name, e.enrollment_date, e.coursework_marks, e.main_exam_marks, ((COALESCE(e.coursework_marks, 0) * 0.3) + (COALESCE(e.main_exam_marks, 0) * 0.7)) AS total_score, e.final_grade, e.certificate_issued_at FROM enrollments e JOIN courses c ON e.course_id = c.id WHERE e.student_id = ? ORDER BY c.name`, [studentId]);
-        res.render('pages/student/academics', { title: 'My Academic Records', student: req.student, enrollments: enrollments || [], PASSING_GRADE: parseInt(process.env.PASSING_GRADE) || 60 });
-    } catch (err) { console.error("Error fetching student academic records:", err); req.flash('error_msg', 'Could not retrieve academic records.'); res.redirect('/student/dashboard'); }
+        const studentId = req.student.id; // From authStudent middleware
+        const courseNameToView = "Computer Classes";
+
+        const course = await db.getAsync("SELECT id FROM courses WHERE name = ?", [courseNameToView]);
+        if (!course) {
+            req.flash('error_msg', `Course "${courseNameToView}" not found. Cannot display academics.`);
+            return res.redirect('/student/dashboard');
+        }
+
+        // Fetch enrollment, ensuring all new unit/exam columns are selected
+        const enrollment = await db.getAsync(
+            `SELECT *, unit_intro_to_computer_marks, unit_keyboard_mouse_marks, unit_ms_word_marks,
+             unit_ms_excel_marks, unit_ms_publisher_marks, unit_ms_powerpoint_marks,
+             unit_ms_access_marks, unit_internet_email_marks,
+             exam_theory_marks, exam_practical_marks
+             FROM enrollments WHERE student_id = ? AND course_id = ?`,
+            [studentId, course.id]
+        );
+
+        if (!enrollment) {
+            req.flash('info_msg', `You are not currently enrolled in "${courseNameToView}".`);
+            return res.render('pages/student/my-academics', { // Ensure this view exists
+                title: 'My Academics',
+                student: req.student,
+                courseName: courseNameToView,
+                enrollmentData: null,
+                units: [],
+                exams: [],
+                unitsRawTotal: null,
+                finalGradePercent: null,
+                courseStatus: 'Not Enrolled',
+                messages: { error: req.flash('error_msg'), success: req.flash('success_msg'), info: req.flash('info_msg') },
+                PASSING_GRADE: parseInt(process.env.PASSING_GRADE) || 60
+            });
+        }
+
+        let unitsData = [];
+        let allUnitMarksProvided = true;
+        let unitsRawTotal = 0;
+
+        computerClassUnits.forEach(unit => {
+            const marks = enrollment[unit.dbCol];
+            unitsData.push({
+                name: unit.name,
+                marks: marks,
+                status: marks === null || marks === undefined ? 'Pending' : marks
+            });
+            if (marks === null || marks === undefined) {
+                allUnitMarksProvided = false;
+            } else {
+                unitsRawTotal += marks;
+            }
+        });
+
+        let examsData = [];
+        let allExamMarksProvided = true;
+
+        examColumns.forEach(exam => {
+            const marks = enrollment[exam.dbCol];
+            examsData.push({
+                name: exam.name,
+                marks: marks,
+                status: marks === null || marks === undefined ? 'Pending' : marks
+            });
+            if (marks === null || marks === undefined) {
+                allExamMarksProvided = false;
+            }
+        });
+
+        let unitsContribution = null;
+        let examsContribution = null;
+        let finalGradePercent = null;
+        let courseStatus = "Ongoing";
+
+        if (allUnitMarksProvided) {
+            unitsContribution = (unitsRawTotal / (computerClassUnits.length * 100)) * 30;
+        }
+
+        if (allExamMarksProvided) {
+            const theoryMarks = enrollment.exam_theory_marks || 0;
+            const practicalMarks = enrollment.exam_practical_marks || 0;
+            examsContribution = ((theoryMarks + practicalMarks) / (examColumns.length * 100)) * 70;
+        }
+
+        if (allUnitMarksProvided && allExamMarksProvided) {
+            finalGradePercent = (unitsContribution !== null ? unitsContribution : 0) + (examsContribution !== null ? examsContribution : 0) ;
+            courseStatus = "Completed";
+
+            if (enrollment.final_grade) { // If admin set a final grade status
+                 courseStatus = `Completed (${enrollment.final_grade})`;
+            } else if (finalGradePercent < (parseInt(process.env.PASSING_GRADE) || 60)) {
+                courseStatus = "Completed (Fail)";
+            } else {
+                 courseStatus = "Completed (Pass)";
+            }
+        } else if (unitsData.some(u => u.marks !== null) || examsData.some(e => e.marks !== null)) {
+            courseStatus = "Ongoing (Marks Pending)";
+        } else {
+            courseStatus = "Ongoing (Awaiting Marks)";
+        }
+
+        // This admin-set status will be implemented later
+        // if (enrollment.status_by_admin === 'Incomplete') courseStatus = "Incomplete";
+
+        res.render('pages/student/my-academics', { // Ensure this view exists
+            title: 'My Academics',
+            student: req.student,
+            courseName: courseNameToView,
+            enrollmentData: enrollment,
+            units: unitsData,
+            exams: examsData,
+            unitsRawTotal: allUnitMarksProvided ? unitsRawTotal : null,
+            unitsContribution: unitsContribution,
+            examsContribution: examsContribution,
+            finalGradePercent: finalGradePercent,
+            courseStatus: courseStatus,
+            PASSING_GRADE: parseInt(process.env.PASSING_GRADE) || 60,
+            messages: { error: req.flash('error_msg'), success: req.flash('success_msg'), info: req.flash('info_msg') }
+        });
+
+    } catch (err) {
+        console.error("Error fetching student academic data:", err);
+        req.flash('error_msg', 'Failed to load academic details.');
+        res.redirect('/student/dashboard');
+    }
 };
+
 const viewWifiCredentials = async (req, res) => { /* ... जस का तस ... */
     try {
         const settingKeys = ['wifi_ssid', 'wifi_password_plaintext', 'wifi_disclaimer'];
@@ -376,5 +527,101 @@ module.exports = {
     renderMyCertificatesPage, downloadCertificate,
     renderChangePasswordForm, handleChangePassword,
     renderEditNokForm, handleUpdateNok,
-    retrieveStudentCredentials
+    retrieveStudentCredentials,
+    renderResetPasswordWithTokenForm,
+    handleResetPasswordWithToken
+};
+
+// --- Implementation for Token-Based Password Reset ---
+
+const renderResetPasswordWithTokenForm = async (req, res) => {
+    const { urlToken } = req.params;
+    try {
+        // Find the token record by the URL token
+        const tokenRecord = await db.getAsync(
+            "SELECT * FROM password_reset_tokens WHERE url_token = ? AND used = FALSE AND expires_at > datetime('now')",
+            [urlToken]
+        );
+
+        if (!tokenRecord) {
+            req.flash('error_msg', 'This password reset link is invalid or has expired. Please try requesting a new one.');
+            return res.redirect('/student/login?activeTab=forgot-password-panel#forgot-password-panel');
+        }
+
+        // Token is valid, render the form
+        res.render('pages/student/reset-password-token-form', {
+            title: 'Set New Password',
+            urlToken: urlToken, // Pass token to be included in the form POST action or hidden field
+            passwordMinLength: process.env.PASSWORD_MIN_LENGTH || 8,
+            // messages are handled by global middleware + flash
+        });
+
+    } catch (err) {
+        console.error("Error rendering reset password form (with token):", err);
+        req.flash('error_msg', 'An error occurred. Please try again.');
+        res.redirect('/student/login');
+    }
+};
+
+const handleResetPasswordWithToken = async (req, res) => {
+    const { urlToken } = req.params; // Token from URL (if in POST action) or from hidden field in req.body.urlToken
+    const submittedToken = req.body.urlToken || urlToken; // Prefer body token if available
+    const { newPassword, confirmNewPassword } = req.body;
+
+    const errorRedirectUrl = `/student/reset-password-with-token/${submittedToken}`;
+
+    if (!newPassword || !confirmNewPassword) {
+        req.flash('error_msg', 'Both password fields are required.');
+        return res.redirect(errorRedirectUrl);
+    }
+    if (newPassword.length < (parseInt(process.env.PASSWORD_MIN_LENGTH) || 8)) {
+        req.flash('error_msg', `New password must be at least ${process.env.PASSWORD_MIN_LENGTH || 8} characters long.`);
+        return res.redirect(errorRedirectUrl);
+    }
+    if (newPassword !== confirmNewPassword) {
+        req.flash('error_msg', 'New passwords do not match.');
+        return res.redirect(errorRedirectUrl);
+    }
+
+    try {
+        // Verify the token again
+        const tokenRecord = await db.getAsync(
+            "SELECT * FROM password_reset_tokens WHERE url_token = ? AND used = FALSE AND expires_at > datetime('now')",
+            [submittedToken]
+        );
+
+        if (!tokenRecord) {
+            req.flash('error_msg', 'Invalid or expired password reset session. Please request a new reset link.');
+            return res.redirect('/student/login?activeTab=forgot-password-panel#forgot-password-panel');
+        }
+
+        // Check if new password is same as default (if student is still on default)
+        const studentForCheck = await db.getAsync("SELECT password_hash, requires_password_change FROM students WHERE id = ?", [tokenRecord.student_id]);
+        if (studentForCheck && studentForCheck.requires_password_change) {
+             const isStillOnDefault = await bcrypt.compare(process.env.DEFAULT_STUDENT_PASSWORD, studentForCheck.password_hash);
+             if (isStillOnDefault && newPassword === process.env.DEFAULT_STUDENT_PASSWORD) {
+                req.flash('error_msg', 'New password cannot be the same as the default password.');
+                return res.redirect(errorRedirectUrl);
+            }
+        }
+
+
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+        // Update student's password and clear requires_password_change flag
+        await db.runAsync(
+            "UPDATE students SET password_hash = ?, requires_password_change = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            [newPasswordHash, tokenRecord.student_id]
+        );
+
+        // Mark the token as used
+        await db.runAsync("UPDATE password_reset_tokens SET used = TRUE WHERE id = ?", [tokenRecord.id]);
+
+        req.flash('success_msg', 'Your password has been successfully reset! Please login with your new password.');
+        res.redirect('/student/login');
+
+    } catch (err) {
+        console.error("Error handling reset password with token:", err);
+        req.flash('error_msg', 'An error occurred while resetting your password. Please try again.');
+        res.redirect(errorRedirectUrl);
+    }
 };

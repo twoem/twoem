@@ -11,8 +11,11 @@
 </div>
 
 <div class="mb-3">
-    <label for="description" class="form-label">Description (Optional)</label>
-    <textarea class="form-control" id="description" name="description" rows="3"><%= typeof document !== 'undefined' ? document.description : (locals.description_val || '') %></textarea>
+    <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+    <textarea class="form-control" id="description" name="description" rows="3" required><%= typeof document !== 'undefined' ? document.description : (locals.description_val || '') %></textarea>
+    <% if (locals.errors && errors.find(e => e.param === 'description')) { %>
+        <div class="text-danger small mt-1"><%= errors.find(e => e.param === 'description').msg %></div>
+    <% } %>
 </div>
 
 <div class="mb-3">

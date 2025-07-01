@@ -28,8 +28,12 @@ router.post('/retrieve-credentials', authStudentController.retrieveStudentCreden
 
 // Forgot Password / Reset Password Routes
 router.post('/forgot-password', authStudentController.handleForgotPassword);
-router.get('/reset-password-form', authStudentController.renderResetPasswordForm);
-router.post('/reset-password', authStudentController.handleResetPassword);
+router.get('/reset-password-form', authStudentController.renderResetPasswordForm); // For OTP + RegNo
+router.post('/reset-password', authStudentController.handleResetPassword); // For OTP + RegNo submission
+
+// New route for direct token link
+router.get('/reset-password-with-token/:urlToken', authStudentController.renderResetPasswordWithTokenForm);
+router.post('/reset-password-with-token/:urlToken', authStudentController.handleResetPasswordWithToken);
 
 // --- Protected Student Routes (Auth Required) ---
 

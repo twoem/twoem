@@ -1,10 +1,8 @@
-<%- include('../../partials/header', { title: 'Register New Student' }) %>
-<%- include('../../partials/navbar') %> <% /* Assuming admin navbar might be different or conditional later */ %>
-<%# Or use a specific admin partial: include('../../partials/admin-header') %>
+<%- include('../../partials/adminHeader', { title: title, admin: admin }) %>
+<% /* adminHeader now includes the main container-fluid div. Individual pages just add their content. */ %>
 
-<main class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-7">
+        <div class="col-md-10 col-lg-8"> <% /* Slightly wider for forms */ %>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
@@ -69,9 +67,14 @@
                 </div>
             </form>
                 </div> <%# card-body %>
+                <div class="card-footer">
+                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/admin/dashboard" class="btn btn-outline-secondary me-md-2"><i class="fas fa-times me-1"></i>Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-user-plus me-2"></i>Register Student</button>
+                    </div>
+                </div>
             </div> <%# card %>
         </div>
     </div>
-</main>
 
-<%- include('../../partials/footer') %>
+<%- include('../../partials/adminFooter') %> <% /* Assuming adminFooter is similar or will be created */ %>
