@@ -14,61 +14,61 @@
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="firstName" name="firstName" required>
+                <input type="text" class="form-control" id="firstName" name="firstName" value="<%= locals.formData && formData.firstName ? formData.firstName : '' %>" required>
             </div>
             <div class="col-md-6 mb-3">
                 <label for="secondName" class="form-label">Second Name (Optional)</label>
-                <input type="text" class="form-control" id="secondName" name="secondName">
+                <input type="text" class="form-control" id="secondName" name="secondName" value="<%= locals.formData && formData.secondName ? formData.secondName : '' %>">
             </div>
         </div>
 
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="lastName" name="lastName" required>
+                <input type="text" class="form-control" id="lastName" name="lastName" value="<%= locals.formData && formData.lastName ? formData.lastName : '' %>" required>
             </div>
             <div class="col-md-6 mb-3">
                 <label for="organisationName" class="form-label">Organisation's Name (Optional)</label>
-                <input type="text" class="form-control" id="organisationName" name="organisationName">
+                <input type="text" class="form-control" id="organisationName" name="organisationName" value="<%= locals.formData && formData.organisationName ? formData.organisationName : '' %>">
             </div>
         </div>
 
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="phoneNumber" class="form-label">Phone Number (07... or 01...) <span class="text-danger">*</span></label>
-                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" pattern="^(0[17])\d{8}$" title="Phone number must be 10 digits and start with 01 or 07." required>
+                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" pattern="^(0[17])\d{8}$" title="Phone number must be 10 digits and start with 01 or 07." value="<%= locals.formData && formData.phoneNumber ? formData.phoneNumber : '' %>" required>
             </div>
             <div class="col-md-6 mb-3">
                 <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                <input type="email" class="form-control" id="email" name="email" required>
+                <input type="email" class="form-control" id="email" name="email" value="<%= locals.formData && formData.email ? formData.email : '' %>" required>
             </div>
         </div>
 
         <div class="mb-3">
             <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="location" name="location" required>
+            <input type="text" class="form-control" id="location" name="location" value="<%= locals.formData && formData.location ? formData.location : '' %>" required>
         </div>
 
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="installationDate" class="form-label">Installation Date <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" id="installationDate" name="installationDate" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                <input type="date" class="form-control" id="installationDate" name="installationDate" value="<%= locals.formData && formData.installationDate ? formData.installationDate : new Date().toISOString().split('T')[0] %>" required>
             </div>
             <div class="col-md-6 mb-3">
                 <label for="paymentPerMonth" class="form-label">Payment Per Month (KES) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" id="paymentPerMonth" name="paymentPerMonth" min="0" required>
+                <input type="number" class="form-control" id="paymentPerMonth" name="paymentPerMonth" value="<%= locals.formData && formData.paymentPerMonth ? formData.paymentPerMonth : '' %>" min="0" required>
             </div>
         </div>
 
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="accountNumber" class="form-label">Account Number <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="accountNumber" name="accountNumber" required>
+                <input type="text" class="form-control" id="accountNumber" name="accountNumber" value="<%= locals.formData && formData.accountNumber ? formData.accountNumber : '' %>" required>
                 <small class="form-text text-muted">Assign a unique account number for the customer.</small>
             </div>
             <div class="col-md-6 mb-3">
                 <label for="initialAccountBalance" class="form-label">Initial Account Balance (KES) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" id="initialAccountBalance" name="initialAccountBalance" step="any" required>
+                <input type="number" class="form-control" id="initialAccountBalance" name="initialAccountBalance" value="<%= locals.formData && formData.initialAccountBalance ? formData.initialAccountBalance : '' %>" step="any" required>
                 <small class="form-text text-muted">Can be negative, 0, or positive.</small>
             </div>
         </div>

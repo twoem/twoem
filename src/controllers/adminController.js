@@ -588,29 +588,111 @@ module.exports = {
     adminResetStudentPassword,
     viewActionLogs,
     renderSendEmailForm, sendBulkEmail, renderEmailTestPage, testEmailTemplate, viewEmailLogs,
-    // Placeholders for missing customer functions
+    // Customer Management Functions
     renderAddCustomerForm: (req, res) => {
-        // TODO: Implement actual form rendering
-        // For now, send a basic response or render a simple placeholder view if available
-        // Example: res.render('pages/admin/customers/add', { title: 'Add New Customer', admin: req.admin, errors: [], formData: {} });
-        res.status(501).send('Customer registration form (renderAddCustomerForm) is not yet implemented.');
+        res.render('pages/admin/addCustomer', {
+            title: 'Add New Customer',
+            admin: req.admin, // For adminHeader partial
+            formData: {}, // Empty for initial render
+            errors: []    // Empty for initial render
+        });
     },
-    registerCustomer: async (req, res) => {
-        // TODO: Implement actual customer registration logic (validation, save to DB, etc.)
-        // Example: Similar to registerStudent but for Customer model
-        // const { firstName, lastName, email, phoneNumber, ... } = req.body;
-        // Validation logic here...
-        // try {
-        //   const newCustomer = new Customer({ ... });
-        //   await newCustomer.save();
-        //   logAdminAction(req.admin.id, 'CUSTOMER_REGISTERED', `Admin ${req.admin.name} registered customer: ${firstName} ${lastName}`, 'customer', newCustomer._id, req.ip);
-        //   req.flash('success_msg', 'Customer registered successfully.');
-        //   res.redirect('/admin/customers');
-        // } catch (err) {
-        //   console.error("Error registering customer:", err);
-        //   req.flash('error_msg', 'Failed to register customer: ' + err.message);
-        //   res.redirect('/admin/customers/add'); // Or back to the form with errors
-        // }
-        res.status(501).send('Customer registration (registerCustomer) is not yet implemented.');
-    }
+    registerCustomer: [
+        // Validation middleware
+        body('firstName').trim().notEmpty().withMessage('First name is required.'),
+        body('lastName').trim().notEmpty().withMessage('Last name is required.'),
+        body('email').trim().isEmail().withMessage('Valid email is required.').normalizeEmail()
+            .custom(async (value) => {
+                const customer = await Customer.findOne({ email: value });
+                if (customer) {
+                    return Promise.reject('Email address already in use.');
+                }
+            }),
+        body('phoneNumber').trim().notEmpty().withMessage('Phone number is required.')
+            .matches(/^(0[17])\d{8}$/).withMessage('Phone number must be 10 digits and start with 01 or 07.')
+            .custom(async (value) => {
+                const customer = await Customer.findOne({ phoneNumber: value });
+                if (customer) {
+                    return Promise.reject('Phone number already in use.');
+                }
+            }),
+        body('location').trim().notEmpty().withMessage('Location is required.'),
+        body('installationDate').isISO8601().toDate().withMessage('Valid installation date is required.'),
+        body('paymentPerMonth').isFloat({ gt: 0 }).withMessage('Payment per month must be a positive number.'),
+        body('accountNumber').trim().notEmpty().withMessage('Account number is required.')
+            .custom(async (value) => {
+                const customer = await Customer.findOne({ accountNumber: value });
+                if (customer) {
+                    return Promise.reject('Account number already in use.');
+                }
+            }),
+        body('initialAccountBalance').isNumeric().withMessage('Initial account balance must be a number.'),
+        body('secondName').trim().optional(),
+        body('organisationName').trim().optional(),
+
+        async (req, res) => {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                req.flash('error', errors.array().map(e => e.msg));
+                req.flash('formData', req.body);
+                return res.redirect('/admin/customers/add');
+            }
+
+            const {
+                firstName, secondName, lastName, organisationName,
+                phoneNumber, email, location, installationDate,
+                paymentPerMonth, accountNumber, initialAccountBalance
+            } = req.body;
+
+            try {
+                const defaultPassword = process.env.DEFAULT_CUSTOMER_PASSWORD || 'Mynet@2020';
+
+                const newCustomer = new Customer({
+                    firstName,
+                    secondName: secondName || undefined,
+                    lastName,
+                    organisationName: organisationName || undefined,
+                    phoneNumber,
+                    email, // Already normalized by validator
+                    location,
+                    installationDate: new Date(installationDate),
+                    paymentPerMonth: parseFloat(paymentPerMonth),
+                    accountNumber,
+                    initialAccountBalance: parseFloat(initialAccountBalance),
+                    password: defaultPassword, // Model pre-save hook will hash this
+                    // currentBalance will be set by pre-save hook from initialAccountBalance
+                    // firstLogin defaults to true in model
+                    // isActive defaults to true in model
+                });
+
+                const savedCustomer = await newCustomer.save();
+
+                // Log admin action
+                await logAdminAction(
+                    req.admin.id,
+                    'CUSTOMER_CREATED',
+                    `Admin ${req.admin.name} registered new customer: ${savedCustomer.firstName} ${savedCustomer.lastName} (Acc: ${savedCustomer.accountNumber})`,
+                    'customer',
+                    savedCustomer._id.toString(),
+                    req.ip
+                );
+
+                req.flash('success_msg', `Customer ${savedCustomer.firstName} ${savedCustomer.lastName} registered successfully with Account Number: ${savedCustomer.accountNumber}.`);
+                res.redirect('/admin/customers');
+
+            } catch (err) {
+                console.error("Error registering customer:", err);
+                // Handle potential errors during save (e.g., if a unique index conflict somehow wasn't caught by custom validator - though unlikely)
+                let errorMessages = ['Failed to register customer. Please try again.'];
+                if (err.code === 11000) { // Duplicate key error
+                    errorMessages = ['A customer with some of the provided unique details (Email, Phone, or Account Number) already exists.'];
+                } else if (err.name === 'ValidationError') {
+                    errorMessages = Object.values(err.errors).map(e => e.message);
+                }
+                req.flash('error', errorMessages);
+                req.flash('formData', req.body);
+                res.redirect('/admin/customers/add');
+            }
+        }
+    ]
 };
