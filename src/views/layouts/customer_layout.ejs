@@ -1,0 +1,18 @@
+<%- include('../partials/header', { title: typeof title !== 'undefined' ? title : 'Customer Portal' }) %>
+
+<%- include('../partials/navbar') %> <%# General site navbar at the very top %>
+
+<div class="customer-layout-container d-flex">
+    <%- include('../partials/customer_sidebar') %>
+
+    <main class="customer-main-content flex-grow-1 p-3 p-md-4">
+        <%- include('../partials/flash-messages') %>
+        <% if (typeof bodyView !== 'undefined' && bodyView) { %>
+            <%- include(`../${bodyView}`, typeof viewData !== 'undefined' ? viewData : {}) %>
+        <% } else { %>
+            <p class="text-danger">Error: bodyView not specified for customer_layout.</p>
+        <% } %>
+    </main>
+</div>
+
+<%- include('../partials/footer') %>

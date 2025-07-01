@@ -816,3 +816,92 @@ h6 { font-size: 1rem; }
     }
     /* .student-main-content might need margin adjustment when sidebar is open on mobile */
 }
+
+/* Customer Portal Layout Styles */
+.customer-layout-container {
+    min-height: 100vh;
+}
+
+.customer-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    background-color: #f0fff0; /* Light mint/honeydew green */
+    border-right: 1px solid #c8e6c9; /* Soft green border */
+    display: flex;
+    flex-direction: column;
+}
+
+.customer-sidebar .sidebar-header {
+    border-bottom: 1px solid rgba(40, 167, 69, 0.2); /* Lighter version of accent */
+}
+.customer-sidebar .sidebar-header .navbar-brand span {
+    color: #28a745; /* Success green for brand text */
+}
+.customer-sidebar .sidebar-header h5 { /* Customer name */
+    color: #28a745;
+}
+
+
+.customer-sidebar .nav-link {
+    color: #388e3c; /* Darker green for text */
+    padding: 0.7rem 1.25rem;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    margin-bottom: 2px;
+}
+
+.customer-sidebar .nav-link:hover {
+    color: #1b5e20; /* Even darker green for hover text */
+    background-color: rgba(40, 167, 69, 0.1); /* Light green accent on hover */
+}
+
+.customer-sidebar .nav-link.active {
+    color: white;
+    font-weight: 600;
+    background: #28a745; /* Solid success green for active */
+    /* Or use a gradient: background: linear-gradient(135deg, #28a745 0%, #388e3c 100%); */
+    box-shadow: var(--shadow-sm);
+}
+
+.customer-sidebar .nav-link i.fas {
+    width: 22px;
+    text-align: center;
+}
+
+.customer-sidebar .nav-heading {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #4caf50; /* Medium green for headings */
+    opacity: 0.9;
+}
+.customer-sidebar .btn-outline-danger {
+    border-color: var(--danger) !important;
+    color: var(--danger) !important;
+}
+.customer-sidebar .btn-outline-danger:hover {
+    background-color: var(--danger) !important;
+    color: white !important;
+}
+
+.customer-main-content {
+    background-color: #ffffff;
+}
+
+/* Responsive: On smaller screens for customer sidebar */
+@media (max-width: 992px) { /* Bootstrap's lg breakpoint */
+    .customer-sidebar {
+        position: fixed;
+        left: -260px;
+        z-index: 1030;
+        transition: left 0.3s ease-in-out;
+    }
+    .customer-sidebar.open { /* A class to toggle visibility */
+        left: 0;
+    }
+}

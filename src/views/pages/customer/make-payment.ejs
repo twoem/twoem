@@ -1,51 +1,69 @@
-<%- include('../../partials/header', { title: title, customer: customer }) %>
-<%- include('../../partials/navbar') %>
+<%# This page is rendered within layouts/customer_layout.ejs %>
+<%# viewData from the controller is available here %>
+<% const accountDetails = viewData.accountDetails; %>
+<% const businessNo = viewData.businessNo; %>
 
-<div class="container mt-4">
-    <%# Flash messages are now included globally via header.ejs %>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/customer/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= viewData.title || 'Make Payment' %></li>
+    </ol>
+</nav>
 
-    <div class="row">
-        <div class="col-md-7 mb-4">
-            <div class="card shadow-sm h-100">
+<div class="d-flex justify-content-between align-items-center mb-3">
+     <h1 class="h2"><i class="fas fa-money-check-alt me-2" style="color: #28a745;"></i><%= viewData.title || 'Make Payment' %></h1>
+</div>
+<hr class="my-4">
+
+<% if (viewData.errorLoading) { %>
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error Loading Page!</h4>
+        <p>We encountered an issue trying to load the payment page. Please try again later.</p>
+        <% if (viewData.errorMessage) { %>
+            <p class="mb-0"><small>Details: <%= viewData.errorMessage %></small></p>
+        <% } %>
+    </div>
+<% } else if (accountDetails) { %>
+    <div class="row g-4">
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm h-100 payment-instructions-card">
                 <div class="card-header bg-success text-white">
-                    <h3 class="mb-0"><i class="fab fa-paypal me-2"></i><%= title %></h3>
+                    <h4 class="h5 mb-0"><i class="fab fa-paypal me-2"></i>How to Pay via M-Pesa</h4>
                 </div>
                 <div class="card-body">
-                    <h4>How to Pay via M-Pesa:</h4>
-                    <ol class="list-group list-group-numbered mb-4">
-                        <li class="list-group-item">Go to M-Pesa menu on your phone (SIM Toolkit, mySafaricom App, or *334#).</li>
-                        <li class="list-group-item">Select "Lipa na M-Pesa".</li>
-                        <li class="list-group-item">Select "Pay Bill".</li>
+                    <ol class="list-group list-group-flush">
+                        <li class="list-group-item">1. Go to M-Pesa menu on your phone (SIM Toolkit, mySafaricom App, or *334#).</li>
+                        <li class="list-group-item">2. Select "Lipa na M-Pesa".</li>
+                        <li class="list-group-item">3. Select "Pay Bill".</li>
                         <li class="list-group-item">
-                            Enter Business Number: <strong class="text-primary fs-5"><%= businessNo %></strong>
+                            4. Enter Business Number: <br><strong class="text-primary fs-4 ps-3"><%= businessNo %></strong>
                         </li>
                         <li class="list-group-item">
-                            Enter Account Number: <strong class="text-primary fs-5"><%= accountDetails.account_number %></strong>
+                            5. Enter Account Number: <br><strong class="text-primary fs-4 ps-3"><%= accountDetails.account_number %></strong>
                         </li>
-                        <li class="list-group-item">Enter the amount you wish to pay.</li>
-                        <li class="list-group-item">Enter your M-Pesa PIN and confirm.</li>
-                        <li class="list-group-item">You will receive a confirmation SMS from M-Pesa.</li>
+                        <li class="list-group-item">6. Enter the amount you wish to pay.</li>
+                        <li class="list-group-item">7. Enter your M-Pesa PIN and confirm.</li>
+                        <li class="list-group-item">8. You will receive a confirmation SMS from M-Pesa.</li>
                     </ol>
 
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-1"></i>
-                        After making the payment, please submit the M-Pesa transaction code/message below so we can verify and update your account promptly.
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        After making the payment, please submit the M-Pesa transaction code/message using the form on this page so we can verify and update your account promptly.
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-5 mb-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-receipt me-2"></i>Submit Transaction Code</h4>
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm h-100 submit-code-card">
+                <div class="card-header" style="background-color: #17a2b8; color: white;">
+                    <h4 class="h5 mb-0"><i class="fas fa-receipt me-2"></i>Submit Transaction Code</h4>
                 </div>
                 <div class="card-body">
-                     <p>
-                        <strong>Account Holder:</strong> <%= accountDetails.first_name %> <%= accountDetails.last_name %><br>
-                        <strong>Account Number:</strong> <%= accountDetails.account_number %><br>
+                     <p class="small">
+                        <strong>Account:</strong> <%= accountDetails.first_name || '' %> <%= accountDetails.last_name || '' %> (<%= accountDetails.account_number %>)<br>
                         <strong>Current Balance:</strong>
-                        <span class="<%= accountDetails.current_balance > 0 ? 'text-danger fw-bold' : (accountDetails.current_balance < 0 ? 'text-success fw-bold' : '') %>">
+                        <span class="fw-bold <%= accountDetails.current_balance > 0 ? 'text-danger' : (accountDetails.current_balance < 0 ? 'text-success' : '') %>">
                             KES <%= accountDetails.current_balance.toFixed(2) %>
                         </span>
                     </p>
@@ -56,24 +74,41 @@
 
                         <div class="mb-3">
                             <label for="transactionCode" class="form-label">M-Pesa Transaction Code/Message <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="transactionCode" name="transactionCode" rows="3" placeholder="e.g., QWERTY1234 Confirmed. Ksh1500.00 sent to BUSINESS_NO for account YOUR_ACCOUNT_NO..." required></textarea>
+                            <textarea class="form-control" id="transactionCode" name="transactionCode" rows="4" placeholder="e.g., QWERTY1234 Confirmed. Ksh1500.00 sent to <%= businessNo %> for account <%= accountDetails.account_number %>..." required></textarea>
                             <small class="form-text text-muted">Please copy the full M-Pesa message or just the code.</small>
                         </div>
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane me-1"></i> Submit Code for Verification
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane me-2"></i> Submit for Verification
                             </button>
                         </div>
                     </form>
                 </div>
-                <div class="card-footer">
-                     <a href="/customer/dashboard" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-                    </a>
-                </div>
             </div>
         </div>
     </div>
+<% } else if (!viewData.errorLoading) { %>
+    <div class="alert alert-info">Could not load payment information. Please try again or contact support.</div>
+<% } %>
+
+
+<div class="mt-4">
+    <a href="/customer/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
 </div>
 
-<%- include('../../partials/footer') %>
+<style>
+    .payment-instructions-card .list-group-item {
+        border-left: 0;
+        border-right: 0;
+        padding-left: 0.5rem;
+    }
+    .payment-instructions-card .list-group-item:first-child {
+        border-top: 0;
+    }
+     .payment-instructions-card .list-group-item:last-child {
+        border-bottom: 0;
+    }
+    .submit-code-card textarea {
+        font-size: 0.9rem;
+    }
+</style>

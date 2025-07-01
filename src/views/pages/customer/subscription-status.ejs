@@ -1,40 +1,58 @@
-<%- include('../../partials/header', { title: title, customer: customer }) %>
-<%- include('../../partials/navbar') %>
+<%# This page is rendered within layouts/customer_layout.ejs %>
+<%# viewData from the controller is available here %>
+<% const accountDetails = viewData.accountDetails; %>
+<% const paymentLogs = viewData.paymentLogs; %>
 
-<div class="container mt-4">
-    <%# Flash messages are now included globally via header.ejs %>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/customer/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= viewData.title || 'Subscription Status' %></li>
+    </ol>
+</nav>
 
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h2"><i class="fas fa-file-contract me-2" style="color: #28a745;"></i><%= viewData.title || 'Subscription Status' %></h1>
+</div>
+<hr class="my-4">
+
+<% if (viewData.errorLoading) { %>
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error Loading Data!</h4>
+        <p>We encountered an issue trying to load your subscription details. Please try again later.</p>
+        <% if (viewData.errorMessage) { %>
+            <p class="mb-0"><small>Details: <%= viewData.errorMessage %></small></p>
+        <% } %>
+    </div>
+<% } else if (accountDetails) { %>
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h3 class="mb-0"><i class="fas fa-wifi me-2"></i><%= title %></h3>
-            <a href="/customer/dashboard" class="btn btn-light btn-sm">
-                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-            </a>
+        <div class="card-header bg-light">
+            <h4 class="h5 mb-0">Account Overview</h4>
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-6">
-                    <h4>Account Overview</h4>
-                    <p><strong>Account Number:</strong> <%= accountDetails.account_number %></p>
+                <div class="col-md-7">
+                    <p><strong>Account Number:</strong> <span class="fw-bold"><%= accountDetails.account_number %></span></p>
                     <p><strong>Current Balance:</strong>
-                        <span class="<%= accountDetails.current_balance > 0 ? 'text-danger fw-bold' : (accountDetails.current_balance < 0 ? 'text-success fw-bold' : '') %>">
+                        <span class="fw-bold fs-5 <%= accountDetails.current_balance > 0 ? 'text-danger' : (accountDetails.current_balance < 0 ? 'text-success' : '') %>">
                             KES <%= accountDetails.current_balance.toFixed(2) %>
                         </span>
                         <% if (accountDetails.current_balance < 0) { %><small class="text-success ms-1">(Credit)</small><% } %>
                         <% if (accountDetails.current_balance > 0) { %><small class="text-danger ms-1">(Due)</small><% } %>
                     </p>
-                     <% if (accountDetails.grace_period_ends_at && new Date(accountDetails.grace_period_ends_at) >= new Date()) { %>
-                        <p class="text-warning"><strong>Grace Period Ends:</strong> <%= new Date(accountDetails.grace_period_ends_at).toLocaleDateString() %></p>
+                     <% if (accountDetails.grace_period_ends_at && new Date(accountDetails.grace_period_ends_at) >= new Date() && accountDetails.current_balance > 0) { %>
+                        <p class="text-warning"><i class="fas fa-exclamation-circle me-1"></i><strong>Grace Period Ends:</strong> <%= new Date(accountDetails.grace_period_ends_at).toLocaleDateString() %></p>
                     <% } %>
                     <% if (accountDetails.disconnection_date) { %>
-                        <p class="text-danger"><strong>Scheduled Disconnection:</strong> <%= new Date(accountDetails.disconnection_date).toLocaleDateString() %></p>
+                        <p class="text-danger"><i class="fas fa-power-off me-1"></i><strong>Scheduled Disconnection:</strong> <%= new Date(accountDetails.disconnection_date).toLocaleDateString() %></p>
                     <% } else if (accountDetails.current_balance <=0) { %>
-                         <p class="text-success"><strong>Status:</strong> Active</p>
+                         <p class="text-success"><i class="fas fa-check-circle me-1"></i><strong>Status:</strong> Active</p>
+                    <% } else if (accountDetails.current_balance > 0 && (!accountDetails.grace_period_ends_at || new Date(accountDetails.grace_period_ends_at) < new Date())) { %>
+                        <p class="text-danger"><i class="fas fa-exclamation-triangle me-1"></i><strong>Status:</strong> Overdue</p>
                     <% } %>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <a href="/customer/make-payment" class="btn btn-success mt-3">
-                        <i class="fas fa-credit-card me-1"></i> Make a Payment
+                <div class="col-md-5 text-md-end align-self-center">
+                    <a href="/customer/make-payment" class="btn btn-success btn-lg">
+                        <i class="fas fa-credit-card me-2"></i> Make a Payment
                     </a>
                 </div>
             </div>
@@ -42,13 +60,13 @@
     </div>
 
     <div class="card shadow-sm">
-        <div class="card-header bg-info text-white">
-            <h4 class="mb-0"><i class="fas fa-history me-2"></i>Payment History</h4>
+        <div class="card-header bg-light">
+            <h4 class="h5 mb-0"><i class="fas fa-history me-2"></i>Payment History</h4>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             <% if (paymentLogs && paymentLogs.length > 0) { %>
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped">
+                    <table class="table table-hover table-striped mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>Payment Date</th>
@@ -67,9 +85,9 @@
                                     <td><%= log.transaction_code || 'N/A' %></td>
                                     <td>
                                         <% if (log.verified_at) { %>
-                                            <span class="badge bg-success">Verified on <%= new Date(log.verified_at).toLocaleDateString() %></span>
+                                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Verified on <%= new Date(log.verified_at).toLocaleDateString() %></span>
                                         <% } else if (log.payment_mode && log.payment_mode.includes('Pending')) { %>
-                                            <span class="badge bg-warning text-dark">Pending Verification</span>
+                                            <span class="badge bg-warning text-dark"><i class="fas fa-hourglass-half me-1"></i>Pending Verification</span>
                                         <% } else { %>
                                              <span class="badge bg-secondary">Unknown</span>
                                         <% } %>
@@ -80,12 +98,16 @@
                     </table>
                 </div>
             <% } else { %>
-                <div class="alert alert-light text-center">
+                <div class="alert alert-light text-center m-3">
                     <i class="fas fa-info-circle me-2"></i>No payment history found for this account.
                 </div>
             <% } %>
         </div>
     </div>
-</div>
+<% } else if (!viewData.errorLoading) { %>
+    <div class="alert alert-info">Could not load your subscription details.</div>
+<% } %>
 
-<%- include('../../partials/footer') %>
+<div class="mt-4">
+    <a href="/customer/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
+</div>

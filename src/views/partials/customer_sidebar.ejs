@@ -1,0 +1,38 @@
+<aside class="customer-sidebar shadow-sm">
+    <div class="sidebar-header p-3 border-bottom text-center">
+        <% if (locals.customer && (customer.first_name || customer.organisation_name)) { %>
+            <img src="https://ui-avatars.com/api/?name=<%= encodeURIComponent(customer.organisation_name || customer.first_name) %>+<%= encodeURIComponent(customer.last_name || '') %>&background=28a745&color=fff&size=64&rounded=true" alt="Customer Avatar" class="img-fluid rounded-circle mb-2" style="width: 64px; height: 64px;">
+            <h5 class="fs-6 mb-0">
+                <strong>
+                    <%= customer.organisation_name ? customer.organisation_name : `${customer.first_name || ''} ${customer.last_name || ''}`.trim() %>
+                </strong>
+            </h5>
+            <p class="small text-muted mb-0">Acc: <%= customer.account_number %></p>
+        <% } else { %>
+            <a href="/customer/dashboard" class="navbar-brand d-flex align-items-center justify-content-center">
+                <img src="/logo.png" alt="Twoem Logo" width="30" height="30" class="me-2">
+                <span class="fs-5 fw-bold" style="color: #28a745;">Customer Portal</span>
+            </a>
+        <% } %>
+    </div>
+    <nav class="nav flex-column p-3">
+        <a class="nav-link active" href="/customer/dashboard"><i class="fas fa-tachometer-alt fa-fw me-2"></i>Dashboard</a>
+        <a class="nav-link" href="/customer/internet-subscription-status"><i class="fas fa-wifi fa-fw me-2"></i>Subscription Status</a>
+        <a class="nav-link" href="/customer/make-payment"><i class="fas fa-credit-card fa-fw me-2"></i>Make Payment</a>
+
+        <h6 class="nav-heading px-3 mt-4 mb-1 text-muted text-uppercase">Account</h6>
+        <% if (locals.customer && customer.requires_password_change) { %>
+             <a class="nav-link text-warning" href="/customer/change-password-initial"><i class="fas fa-exclamation-triangle fa-fw me-2"></i>Change Default Password</a>
+        <% } else { %>
+            <a class="nav-link" href="#"><i class="fas fa-key fa-fw me-2"></i>Change Password <span class="badge bg-secondary ms-1">Soon</span></a>
+        <% } %>
+        <%# Future links: <a class="nav-link" href="/customer/profile"><i class="fas fa-user-edit fa-fw me-2"></i>Edit Profile</a> %>
+
+        <hr class="my-3">
+        <a class="nav-link" href="/"><i class="fas fa-arrow-circle-left fa-fw me-2"></i>Back to Main Site</a>
+
+        <form action="/customer/logout" method="POST" class="mt-auto p-3">
+            <button type="submit" class="btn btn-sm btn-outline-danger w-100"><i class="fas fa-sign-out-alt fa-fw me-2"></i>Logout</button>
+        </form>
+    </nav>
+</aside>

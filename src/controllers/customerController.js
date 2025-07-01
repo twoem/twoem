@@ -34,19 +34,31 @@ const renderDashboard = async (req, res) => {
         }
 
 
-        res.render('pages/customer/dashboard', { // Path: views/pages/customer/dashboard.ejs
+        const viewData = {
             title: 'My Dashboard',
-            customer: req.customer, // from auth middleware (contains basic info)
             profile: customer, // from DB (contains detailed info)
             calculatedDisconnectionDate: calculatedDisconnectionDate,
             gracePeriodMessage: gracePeriodMessage,
-            // errors: [],
-            // success_msg: req.flash('success_msg') // Handled by global flash
+            customer: req.customer // For potential use in view if needed (e.g. name from token)
+        };
+
+        res.render('layouts/customer_layout', { // Path: views/pages/customer/dashboard.ejs
+            title: 'My Dashboard', // For browser <title>
+            bodyView: 'pages/customer/dashboard',
+            customer: req.customer, // For layout/sidebar
+            viewData: viewData
         });
     } catch (err) {
         console.error("Error rendering customer dashboard:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load dashboard information. ${err.message} 😔`);
-        res.redirect('/customer/login'); // Redirect to login, as dashboard is critical
+        // Fallback or redirect
+        const errorViewData = { title: 'My Dashboard - Error', profile: null, customer: req.customer, errorLoading: true, errorMessage: err.message };
+        res.status(500).render('layouts/customer_layout', {
+            title: 'Dashboard Error',
+            bodyView: 'pages/customer/dashboard',
+            customer: req.customer,
+            viewData: errorViewData
+        });
     }
 };
 
@@ -63,18 +75,29 @@ const renderSubscriptionStatus = async (req, res) => {
         }
 
         // Similar logic for disconnection date as in dashboard can be applied here or refined.
-
-        res.render('pages/customer/subscription-status', { // Path: views/pages/customer/subscription-status.ejs
+        const viewData = {
             title: 'My Subscription Status',
-            customer: req.customer,
             accountDetails: customer,
             paymentLogs: paymentLogs,
-            // calculatedDisconnectionDate, gracePeriodMessage can be passed here too
+            customer: req.customer // for potential use in view
+        };
+
+        res.render('layouts/customer_layout', {
+            title: 'My Subscription Status', // For browser <title>
+            bodyView: 'pages/customer/subscription-status',
+            customer: req.customer, // For layout/sidebar
+            viewData: viewData
         });
     } catch (err) {
         console.error("Error rendering subscription status:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load subscription details. ${err.message} 😔`);
-        res.redirect('/customer/dashboard');
+        const errorViewData = { title: 'My Subscription Status - Error', accountDetails: null, paymentLogs: [], customer: req.customer, errorLoading: true, errorMessage: err.message };
+        res.status(500).render('layouts/customer_layout', {
+            title: 'Error Subscription Status',
+            bodyView: 'pages/customer/subscription-status',
+            customer: req.customer, // Corrected to req.customer
+            viewData: errorViewData
+        });
     }
 };
 
@@ -94,12 +117,23 @@ const renderMakePaymentPage = async (req, res) => {
             customer: req.customer, // from auth
             accountDetails: customer, // from DB
             businessNo: process.env.BUSINESS_NO || 'YOUR_PAYBILL_HERE', // From .env
-            // errors: []
+        };
+        res.render('layouts/customer_layout', {
+            title: 'Make a Payment', // For browser <title>
+            bodyView: 'pages/customer/make-payment',
+            customer: req.customer, // For layout/sidebar
+            viewData: viewData
         });
     } catch (err) {
         console.error("Error rendering make payment page:", err);
         req.flash('error_msg', `⚠️ Failed to Load Data! We couldn’t load payment page. ${err.message} 😔`);
-        res.redirect('/customer/dashboard');
+        const errorViewData = { title: 'Make a Payment - Error', customer: req.customer, accountDetails: null, businessNo: 'Error', errorLoading: true, errorMessage: err.message };
+        res.status(500).render('layouts/customer_layout', {
+            title: 'Error Loading Payment Page',
+            bodyView: 'pages/customer/make-payment',
+            customer: req.customer,
+            viewData: errorViewData
+        });
     }
 };
 
