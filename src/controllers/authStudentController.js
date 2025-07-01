@@ -479,14 +479,14 @@ const handleUpdateNok = async (req, res) => { /* ... जस का तस ... */
     }
 };
 const retrieveStudentCredentials = async (req, res) => {
-    const { email, anyName } = req.body; // 'anyName' from the new form
-    // Redirect to the main login page; flash messages will appear there.
-    // The student-login.ejs script can be enhanced to pick up a query param if we want to force a tab.
-    const redirectUrl = '/student/login?activeTab=new-student-panel#new-student-panel';
+    const { email, anyName } = req.body;
+    const baseRedirectUrl = '/student/login';
+    const paramsForRedirect = new URLSearchParams();
+    paramsForRedirect.append('activeTab', 'new-student-panel');
 
     if (!email || !anyName) {
         req.flash('error_msg', '⚠️ Email and a Name are required.');
-        return res.redirect(redirectUrl);
+        return res.redirect(`${baseRedirectUrl}?${paramsForRedirect.toString()}#new-student-panel`);
     }
 
     try {
@@ -501,39 +501,38 @@ const retrieveStudentCredentials = async (req, res) => {
 
         if (!student) {
             req.flash('error_msg', '⚠️ No matching student record found with the provided Email and Name.');
-            return res.redirect(redirectUrl);
+            return res.redirect(`${baseRedirectUrl}?${paramsForRedirect.toString()}#new-student-panel`);
         }
 
-        // This check might be too restrictive if they already changed pw but want to see regNo again.
-        // The original requirement was about *initial* credential retrieval.
-        // If they changed password, requires_password_change would be FALSE.
-        // Let's assume if requires_password_change is FALSE, they've already been through initial setup.
         if (!student.requires_password_change && student.credentials_retrieved_once) {
-             req.flash('info_msg', 'ℹ️ Account setup appears complete and initial credentials previously retrieved. If you forgot your password, please use the "Forgot Password" link on the login page.');
-            return res.redirect('/student/login'); // Send to main login
+            req.flash('info_msg', 'ℹ️ Account setup appears complete and initial credentials previously retrieved. If you forgot your password, please use the "Forgot Password" link on the login page.');
+            paramsForRedirect.delete('activeTab'); // Default to login tab for this message
+            return res.redirect(`${baseRedirectUrl}?${paramsForRedirect.toString()}`);
         }
 
         if (student.credentials_retrieved_once) {
             req.flash('info_msg', 'ℹ️ Initial credentials for this account have already been retrieved. If you have forgotten your password, please use the "Forgot Password" link on the login page.');
-            return res.redirect('/student/login'); // Send to main login page with info
+            paramsForRedirect.delete('activeTab'); // Default to login tab for this message
+            return res.redirect(`${baseRedirectUrl}?${paramsForRedirect.toString()}`);
         }
 
-        // If we reach here, it's a valid first-time retrieval
         await db.runAsync("UPDATE students SET credentials_retrieved_once = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [student.id]);
 
         const studentFullName = `${student.first_name} ${student.second_name || ''} ${student.surname || ''}`.replace(/\s+/g, ' ').trim();
-        const successMessage = `<h4><i class="fas fa-check-circle text-success me-2"></i>Credentials Retrieved for ${studentFullName}!</h4>
-                                <p class="mb-1"><strong>Registration Number:</strong> <mark>${student.registration_number}</mark></p>
-                                <p class="mb-0"><strong>Default Password:</strong> <mark>${process.env.DEFAULT_STUDENT_PASSWORD}</mark></p>
-                                <hr>
-                                <p class="small text-danger mb-0">Please login immediately and change this default password.</p>`;
-        req.flash('success_msg', successMessage); // Pass as HTML
-        return res.redirect(redirectUrl);
+
+        // Add retrieved credentials to redirect query params instead of flashing them
+        paramsForRedirect.append('retrievedStudentName', studentFullName);
+        paramsForRedirect.append('retrievedRegNo', student.registration_number);
+        paramsForRedirect.append('retrievedPassword', process.env.DEFAULT_STUDENT_PASSWORD);
+
+        req.flash('info_msg', 'Please note down your credentials and change your password upon first login.'); // A general info message
+
+        return res.redirect(`${baseRedirectUrl}?${paramsForRedirect.toString()}#new-student-panel`);
 
     } catch (err) {
         console.error("Error retrieving student credentials:", err);
         req.flash('error_msg', '❌ Operation Failed! ❌ An error occurred while retrieving credentials. Please try again. 😔');
-        return res.redirect(redirectUrl);
+        return res.redirect(`${baseRedirectUrl}?${paramsForRedirect.toString()}#new-student-panel`);
     }
 };
 

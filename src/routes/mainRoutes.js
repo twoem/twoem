@@ -13,6 +13,7 @@ router.post('/contact/send', mainController.handleContactForm);
 // Routes for other main pages
 router.get('/services', mainController.renderServicesPage);
 router.get('/downloads', mainController.renderDownloadsPage);
+router.get('/download-redirect/:documentId', mainController.handleDownloadRedirect); // New route
 router.get('/gallery', mainController.renderGalleryPage);
 router.get('/data-protection', mainController.renderDataProtectionPage);
 

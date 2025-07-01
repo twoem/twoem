@@ -9,38 +9,43 @@
         </div>
     </div>
 
-    <div class="container"> <%# Content container starts here %>
+    <div class="container">
         <div class="row">
             <div class="col-12 text-center">
                 <p class="lead mb-5">Find public documents, eulogies, and other resources available for download from Twoem Online Productions.</p>
-
-                <%- include('../partials/flash-messages') %> <% /* For error_msg from controller */ %>
+                <%- include('../partials/flash-messages') %>
             </div>
         </div>
-        <div class="row">
-            <div class="col-lg-10 mx-auto">
-                <h3 class="mt-0 mb-3"><i class="fas fa-file-alt text-primary me-2"></i>Public Documents</h3>
+
+        <% if ( (publicDocs && publicDocs.length > 0) || (eulogyDocs && eulogyDocs.length > 0) ) { %>
             <% if (publicDocs && publicDocs.length > 0) { %>
-                <div class="list-group mb-4 shadow-sm">
+                <h3 class="mt-0 mb-4 text-center section-title gradient-text">
+                    <i class="fas fa-file-alt me-2"></i>Public Documents
+                </h3>
+                <div class="row g-4 mb-5">
                     <% publicDocs.forEach(function(doc) { %>
-                        <a href="<%= doc.file_url %>" class="list-group-item list-group-item-action" target="_blank" rel="noopener noreferrer">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1"><%= doc.title %></h5>
-                                <small class="text-muted"><%= new Date(doc.created_at).toLocaleDateString() %></small>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100 shadow-lg download-card">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title gradient-text"><%= doc.title %></h5>
+                                    <p class="card-text small text-muted flex-grow-1"><%= doc.description || 'No description available.' %></p>
+                                    <p class="card-text"><small class="text-muted">Uploaded: <%= new Date(doc.created_at).toLocaleDateString() %></small></p>
+                                    <a href="/download-redirect/<%= doc.id %>" class="btn btn-primary mt-auto stretched-link">
+                                        <i class="fas fa-download me-2"></i>Download
+                                    </a>
+                                </div>
                             </div>
-                            <% if (doc.description) { %><p class="mb-1 text-muted small"><%= doc.description %></p><% } %>
-                            <small class="text-primary"><i class="fas fa-link me-1"></i><%= doc.file_url %></small>
-                        </a>
+                        </div>
                     <% }); %>
                 </div>
-            <% } else { %>
-                <div class="alert alert-info">No public documents currently available.</div>
             <% } %>
 
-            <h3 class="mt-5"><i class="fas fa-book-dead text-secondary me-2"></i>Eulogy Documents</h3>
-            <p>These documents are available for a limited time.</p>
             <% if (eulogyDocs && eulogyDocs.length > 0) { %>
-                <div class="list-group shadow-sm">
+                <h3 class="mt-5 mb-4 text-center section-title gradient-text">
+                    <i class="fas fa-book-dead me-2"></i>Eulogy Documents
+                </h3>
+                <p class="text-center text-muted mb-4">These documents are available for a limited time.</p>
+                <div class="row g-4">
                     <% eulogyDocs.forEach(function(doc) {
                         let expiryText = '';
                         let effectiveExpiry;
@@ -48,29 +53,58 @@
                             effectiveExpiry = new Date(doc.expiry_date);
                         } else {
                             effectiveExpiry = new Date(doc.created_at);
-                            effectiveExpiry.setDate(effectiveExpiry.getDate() + 7);
+                            effectiveExpiry.setDate(effectiveExpiry.getDate() + 7); // Default 7 days
                         }
-                        const daysRemaining = Math.ceil((effectiveExpiry - new Date()) / (1000 * 60 * 60 * 24));
+                        const daysRemaining = Math.ceil((effectiveExpiry.setHours(23,59,59,999) - new Date()) / (1000 * 60 * 60 * 24));
                         if (daysRemaining <= 0) expiryText = 'Expired';
                         else if (daysRemaining === 1) expiryText = 'Expires today';
-                        else if (daysRemaining <= 7) expiryText = `Expires in ${daysRemaining} days`;
-                        else expiryText = `Expires on ${effectiveExpiry.toLocaleDateString()}`;
+                        else expiryText = `Expires in ${daysRemaining} days (${effectiveExpiry.toLocaleDateString()})`;
                     %>
-                        <a href="<%= doc.file_url %>" class="list-group-item list-group-item-action" target="_blank" rel="noopener noreferrer">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1"><%= doc.title %></h5>
-                                <small class="text-danger"><%= expiryText %></small>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100 shadow-lg download-card eulogy">
+                                 <div class="card-header bg-secondary text-white small text-center py-1">Eulogy - <%= expiryText %></div>
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title gradient-text"><%= doc.title %></h5>
+                                    <p class="card-text small text-muted flex-grow-1"><%= doc.description || 'No description available.' %></p>
+                                     <p class="card-text"><small class="text-muted">Posted: <%= new Date(doc.created_at).toLocaleDateString() %></small></p>
+                                    <a href="/download-redirect/<%= doc.id %>" class="btn btn-primary mt-auto stretched-link">
+                                        <i class="fas fa-download me-2"></i>Download
+                                    </a>
+                                </div>
                             </div>
-                            <% if (doc.description) { %><p class="mb-1 text-muted small"><%= doc.description %></p><% } %>
-                            <small class="text-primary"><i class="fas fa-link me-1"></i><%= doc.file_url %></small>
-                        </a>
+                        </div>
                     <% }); %>
                 </div>
-            <% } else { %>
-                <div class="alert alert-info">No eulogy documents currently available.</div>
             <% } %>
-        </div>
+        <% } else { %>
+            <div class="alert alert-info text-center col-md-8 mx-auto">
+                <i class="fas fa-info-circle fa-2x me-2 align-middle"></i>
+                <span class="align-middle">No documents are currently available for download. Please check back later.</span>
+            </div>
+        <% } %>
     </div>
 </main>
+
+<style>
+    .download-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        border-radius: var(--border-radius-lg);
+    }
+    .download-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-xl) !important;
+    }
+    .download-card .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    .download-card.eulogy {
+        border-top: 4px solid var(--secondary-color);
+    }
+    .section-title {
+        font-weight: 700;
+    }
+</style>
 
 <%- include('../partials/footer') %>

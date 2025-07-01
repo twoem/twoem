@@ -67,9 +67,13 @@ const renderAdminLoginPage = (req, res) => {
 // Renders the student login page
 const renderStudentLoginPage = (req, res) => {
     // Flash messages and activeTab (if set by a redirect to here with query param)
+    // Also check for retrieved credentials from query params
     res.render('pages/student-login', {
         title: 'Student Portal Login',
-        activeTab: req.query.activeTab // For activating specific tab on load
+        activeTab: req.query.activeTab, // For activating specific tab on load
+        retrievedStudentName: req.query.retrievedStudentName,
+        retrievedRegNo: req.query.retrievedRegNo,
+        retrievedPassword: req.query.retrievedPassword
     });
 };
 
@@ -161,4 +165,45 @@ module.exports = {
     renderAdminDashboardPage,   //
     renderDataProtectionPage,
     renderGalleryPage,
+
+    handleDownloadRedirect: async (req, res) => {
+        const { documentId } = req.params;
+        try {
+            const doc = await db.getAsync("SELECT * FROM downloadable_documents WHERE id = ?", [documentId]);
+
+            if (!doc) {
+                req.flash('error_msg', '⚠️ Document not found.');
+                return res.redirect('/downloads');
+            }
+
+            // Check for expiry if it's a eulogy
+            if (doc.type === 'eulogy') {
+                let effectiveExpiryDate;
+                if (doc.expiry_date) {
+                    effectiveExpiryDate = new Date(doc.expiry_date);
+                } else { // Default to 7 days from creation if no specific expiry for eulogy
+                    effectiveExpiryDate = new Date(doc.created_at);
+                    effectiveExpiryDate.setDate(effectiveExpiryDate.getDate() + 7);
+                }
+                if (effectiveExpiryDate < new Date()) {
+                    req.flash('error_msg', '⚠️ This download link has expired.');
+                    return res.redirect('/downloads');
+                }
+            }
+
+            res.render('pages/interstitial-download', {
+                title: `Preparing: ${doc.title}`,
+                docTitle: doc.title,
+                docDescription: doc.description,
+                docUrl: doc.file_url,
+                // Pass other necessary locals for header/navbar if your partials need them
+                // Assuming global middleware handles user objects like admin, student, customer for navbar
+            });
+
+        } catch (err) {
+            console.error("Error handling download redirect:", err);
+            req.flash('error_msg', '❌ An error occurred while preparing your download.');
+            res.redirect('/downloads');
+        }
+    }
 };

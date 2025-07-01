@@ -1,0 +1,56 @@
+<%- include('../partials/header', { title: 'Preparing Your Download' }) %>
+<%- include('../partials/navbar') %>
+
+<main class="container mt-5 mb-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-lg">
+                <div class="card-body p-5">
+                    <% if (locals.docTitle && locals.docUrl) { %>
+                        <div class="spinner-border text-primary mb-4" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h2 class="h3 mb-3">Preparing Your Download...</h2>
+                        <p class="lead">Your download for "<strong><%= docTitle %></strong>" is starting shortly.</p>
+                        <% if (locals.docDescription) { %>
+                            <p class="text-muted small mt-3"><em><%= docDescription %></em></p>
+                        <% } %>
+                        <p class="mt-4">If your download does not start automatically in <span id="countdown">5</span> seconds,
+                            <a href="<%= docUrl %>" rel="noopener noreferrer nofollow" id="manualDownloadLink">click here to download directly</a>.
+                        </p>
+
+                        <script>
+                            let countdown = 5;
+                            const countdownElement = document.getElementById('countdown');
+                            const manualLink = document.getElementById('manualDownloadLink');
+                            const targetUrl = "<%= docUrl.replace(/"/g, '\\"') %>"; // Basic escaping for URL in JS
+
+                            const intervalId = setInterval(() => {
+                                countdown--;
+                                if (countdownElement) {
+                                    countdownElement.textContent = countdown;
+                                }
+                                if (countdown <= 0) {
+                                    clearInterval(intervalId);
+                                    window.location.href = targetUrl;
+                                }
+                            }, 1000);
+
+                            // Fallback if JS is disabled (though redirect won't work)
+                            // Or, could use a meta refresh tag as a non-JS fallback, but JS is cleaner.
+                            manualLink.addEventListener('click', () => {
+                                clearInterval(intervalId); // Stop timer if manually clicked
+                            });
+                        </script>
+                    <% } else { %>
+                        <h2 class="h3 mb-3 text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Download Error</h2>
+                        <p class="lead"><%= locals.errorMessage || "The requested download is currently unavailable or could not be found." %></p>
+                        <a href="/downloads" class="btn btn-primary mt-3">Back to Downloads</a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>

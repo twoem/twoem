@@ -62,27 +62,41 @@ const path = require('path');
 
 const sendEmailWithTemplate = async ({ to, subject, templateName, data, replyTo }) => {
     // Construct the full path to the EJS template
-    const templatePath = path.join(__dirname, '../views/emails', `${templateName}.ejs`);
+    const specificTemplatePath = path.join(__dirname, '../views/emails', `${templateName}.ejs`);
+    const layoutTemplatePath = path.join(__dirname, '../views/emails/layouts', 'main-email-layout.ejs');
 
-    // Add siteUrl and logoUrl to data for use in template, if not already present
-    const emailData = {
+    // Data for the specific content template
+    const contentEmailData = {
         ...data,
         siteUrl: process.env.FRONTEND_URL || 'http://localhost:10000',
-        logoUrl: `${process.env.FRONTEND_URL || 'http://localhost:10000'}/logo.png` // Assuming logo is served
+        // logoUrl is now part of the main layout, but can be overridden if needed here
     };
 
     try {
-        const htmlContent = await ejs.renderFile(templatePath, emailData);
+        // 1. Render the specific email content to a string
+        const emailBodyContent = await ejs.renderFile(specificTemplatePath, contentEmailData);
 
-        return sendEmail({ // Use the existing sendEmail function
+        // 2. Data for the main layout
+        const layoutData = {
+            subject: subject,
+            preheaderText: data.preheaderText || subject, // Use subject as fallback for preheader
+            body: emailBodyContent, // Inject the rendered content
+            // siteUrl and logoUrl are hardcoded or use env in main-email-layout.ejs
+            // Pass any other layout-specific variables if needed
+        };
+
+        // Render the main layout with the specific content injected
+        const finalHtmlContent = await ejs.renderFile(layoutTemplatePath, layoutData);
+
+        return sendEmail({
             to,
             subject,
-            html: htmlContent,
+            html: finalHtmlContent,
             replyTo
         });
     } catch (renderError) {
-        console.error('Error rendering email template:', renderError);
-        throw renderError; // Re-throw to be caught by controller
+        console.error(`Error rendering email template (${templateName} with layout):`, renderError);
+        throw renderError;
     }
 };
 

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= locals.subject || 'Notification from Twoem Online Productions' %></title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100% !important;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            color: #333333;
+        }
+        .email-wrapper {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-collapse: collapse;
+        }
+        .email-header {
+            background-color: #007bff; /* Primary blue, adjust as needed */
+            padding: 20px;
+            text-align: center;
+        }
+        .email-header img {
+            max-width: 150px;
+            height: auto;
+        }
+        .email-body {
+            padding: 30px;
+            background-color: #ffffff;
+        }
+        .email-body h1, .email-body h2, .email-body h3 {
+            color: #0056b3;
+        }
+        .email-content-card {
+            background-color: #f9f9f9;
+            border: 1px solid #dddddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .email-footer {
+            background-color: #343a40; /* Dark grey */
+            color: #cccccc;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        .email-footer a {
+            color: #00 C8A0; /* Accent color for links in footer */
+            text-decoration: none;
+        }
+        .button {
+            display: inline-block;
+            background-color: #007bff;
+            color: #ffffff !important; /* Ensure text is white */
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .preheader { /* For email client preview text */
+            display:none !important;
+            visibility:hidden;
+            opacity:0;
+            color:transparent;
+            height:0;
+            width:0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Preheader text -->
+    <span class="preheader"><%= locals.preheaderText || 'Important update from Twoem Online Productions.' %></span>
+
+    <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td class="email-header">
+                <a href="<%= process.env.FRONTEND_URL || 'https://twoemonline.com' %>">
+                    <img src="https://i.ibb.co/MkHK0KMj/logo-modified-1.png" alt="Twoem Online Productions Logo">
+                </a>
+            </td>
+        </tr>
+        <tr>
+            <td class="email-body">
+                <%- body %> <%# This is where the specific email content will be injected %>
+            </td>
+        </tr>
+        <tr>
+            <td class="email-footer">
+                <p><strong>Twoem Online Productions</strong></p>
+                <p>
+                    Plaza Building, Opposite Total Petrol Station, Kagwe Town<br>
+                    Phone: <a href="tel:+254707330204">+254 707 330 204</a> |
+                    Email: <a href="mailto:info@twoemonline.com">info@twoemonline.com</a>
+                </p>
+                <p>&copy; <%= new Date().getFullYear() %> Twoem Online Productions. All rights reserved.</p>
+                <p><a href="<%= process.env.FRONTEND_URL || '#' %>/data-protection">Privacy Policy</a></p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
