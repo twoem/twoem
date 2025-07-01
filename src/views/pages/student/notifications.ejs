@@ -1,59 +1,68 @@
-<%- include('../../partials/header', { title: title }) %>
-<%- include('../../partials/navbar') %>
+<%# This page is rendered within layouts/student_layout.ejs %>
+<%# viewData from the controller is available here %>
+<% const notifications = viewData.notifications; %>
 
-<main class="container mt-5">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/student/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">My Notifications</li>
-        </ol>
-    </nav>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/student/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= viewData.title || 'My Notifications' %></li>
+    </ol>
+</nav>
 
-    <h2>My Notifications</h2>
-    <p>Important updates and announcements from Twoem Online Productions.</p>
-    <hr>
+<div class="d-flex justify-content-between align-items-center mb-3">
+     <h1 class="h2"><i class="fas fa-bell me-2"></i><%= viewData.title || 'My Notifications' %></h1>
+</div>
+<p class="text-muted">Important updates and announcements from Twoem Online Productions.</p>
+<hr class="my-4">
 
-    <%- include('../../partials/flash-messages') %>
 
-    <% if (notifications && notifications.length > 0) { %>
-        <div class="list-group">
-            <% notifications.forEach(function(notification) { %>
-                <div class="list-group-item list-group-item-action flex-column align-items-start mb-3 shadow-sm border-start border-primary border-4">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1 <%= !notification.read_at ? 'fw-bold' : '' %>">
-                            <i class="fas <%= !notification.read_at ? 'fa-bell text-primary' : 'fa-check-circle text-success' %> me-2"></i>
-                            <%= notification.title %>
-                        </h5>
-                        <small class="text-muted"><%= new Date(notification.created_at).toLocaleString() %></small>
-                    </div>
-                    <p class="mb-1 mt-2 <%= !notification.read_at ? '' : 'text-muted' %>"><%- notification.message.replace(/\n/g, '<br>') %></p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted">
-                            Sent by: Admin
-                            <% if (notification.target_audience_type !== 'all') { %>
-                                | Targeted:
-                                <% if (notification.target_audience_type === 'student_id') { %> You specifically <% } %>
-                                <% if (notification.target_audience_type === 'course_id') { %> Course ID <%= notification.target_audience_identifier %> <% } %>
-                            <% } %>
-                        </small>
-                        <% if (!notification.read_at) { %>
-                            <form action="/student/notifications/mark-read/<%= notification.id %>" method="POST" class="ms-auto">
-                                <button type="submit" class="btn btn-sm btn-outline-success py-0 px-1">Mark as Read</button>
-                            </form>
-                        <% } %>
-                    </div>
-                </div>
-            <% }); %>
-        </div>
-    <% } else { %>
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>You have no new notifications at this time.
-        </div>
-    <% } %>
-
-    <div class="mt-4">
-        <a href="/student/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+<% if (viewData.errorLoading) { %>
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error Loading Notifications!</h4>
+        <p>We encountered an issue trying to load your notifications. Please try again later.</p>
+        <% if (viewData.errorMessage) { %>
+            <p class="mb-0"><small>Details: <%= viewData.errorMessage %></small></p>
+        <% } %>
     </div>
-</main>
+<% } else if (notifications && notifications.length > 0) { %>
+    <div class="list-group">
+        <% notifications.forEach(function(notification) { %>
+            <div class="list-group-item list-group-item-action flex-column align-items-start mb-3 shadow-sm
+                        <%= !notification.read_at ? 'border-start border-primary border-4' : 'border-start border-light border-4' %>">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1 <%= !notification.read_at ? 'fw-bold text-primary' : '' %>">
+                        <i class="fas <%= !notification.read_at ? 'fa-bell' : 'fa-check-circle text-success' %> me-2"></i>
+                        <%= notification.title %>
+                    </h5>
+                    <small class="text-muted"><%= new Date(notification.created_at).toLocaleString() %></small>
+                </div>
+                <div class="mb-1 mt-2 <%= !notification.read_at ? '' : 'text-muted' %>"><%- notification.message.replace(/\n/g, '<br>') %></div>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted" style="font-size: 0.8em;">
+                        Sent by: Admin
+                        <% if (notification.target_audience_type !== 'all') { %>
+                            | Targeted:
+                            <% if (notification.target_audience_type === 'student_id') { %> You specifically <% } %>
+                            <% if (notification.target_audience_type === 'course_id') { %> Students in Course ID <%= notification.target_audience_identifier %> <% } %>
+                        <% } %>
+                    </small>
+                    <% if (!notification.read_at) { %>
+                        <form action="/student/notifications/mark-read/<%= notification.id %>" method="POST" class="ms-auto">
+                            <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 0.75rem;">Mark as Read</button>
+                        </form>
+                    <% } else { %>
+                        <small class="text-success ms-auto" style="font-size: 0.75rem;"><i class="fas fa-check"></i> Read on <%= new Date(notification.read_at).toLocaleDateString() %></small>
+                    <% } %>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+<% } else { %>
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>You have no notifications at this time.
+    </div>
+<% } %>
 
-<%- include('../../partials/footer') %>
+<div class="mt-4">
+    <a href="/student/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
+</div>

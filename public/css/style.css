@@ -719,3 +719,100 @@ h6 { font-size: 1rem; }
     } */
     /* For now, let's keep it simple and let it stack or overflow */
 }
+
+/* Student Portal Layout Styles */
+.student-layout-container {
+    min-height: 100vh;
+    /* background-color: #f0f4f8; /* Slightly different background for student area if needed */
+}
+
+.student-sidebar {
+    width: 260px; /* Slightly slimmer than admin */
+    flex-shrink: 0;
+    height: 100vh;
+    position: sticky;
+    top: 0; /* Adjust if main navbar height changes or is part of this sidebar's header */
+    overflow-y: auto;
+    background-color: var(--light-color); /* Using a light color from palette */
+    border-right: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+}
+
+.student-sidebar .sidebar-header {
+    /* background: var(--accent-gradient); */ /* Using accent gradient for student header */
+    /* color: white; */
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.student-sidebar .sidebar-header .navbar-brand .gradient-text {
+    background: var(--accent-gradient); /* Example: Student portal uses accent gradient for brand text */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+
+.student-sidebar .nav-link {
+    color: var(--text-muted);
+    padding: 0.7rem 1.25rem; /* Slightly more padding */
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    margin-bottom: 2px; /* Small gap between links */
+}
+
+.student-sidebar .nav-link:hover {
+    color: var(--accent-color); /* Using accent color for hover */
+    background-color: rgba(var(--accent-color-rgb, 79, 172, 254), 0.1); /* Accent color with low opacity */
+}
+
+.student-sidebar .nav-link.active {
+    color: white;
+    font-weight: 600;
+    background: var(--accent-gradient); /* Accent gradient for active link */
+    box-shadow: var(--shadow-sm);
+}
+/* Ensure :root has --accent-color-rgb if using rgba(var(--accent-color-rgb), ...) */
+/* :root { --accent-color-rgb: 79, 172, 254; } */ /* Add if not defined */
+
+.student-sidebar .nav-link i.fas {
+    width: 22px; /* Icon width */
+    text-align: center;
+}
+
+.student-sidebar .nav-heading {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+.student-sidebar .btn-outline-danger {
+    border-color: var(--danger) !important;
+    color: var(--danger) !important;
+}
+.student-sidebar .btn-outline-danger:hover {
+    background-color: var(--danger) !important;
+    color: white !important;
+}
+
+
+.student-main-content {
+    background-color: #ffffff;
+    /* transition: margin-left 0.3s ease-in-out; */ /* If sidebar can be toggled */
+}
+
+/* Responsive: On smaller screens for student sidebar */
+@media (max-width: 992px) { /* Bootstrap's lg breakpoint */
+    .student-sidebar {
+        position: fixed; /* Or absolute, depending on desired behavior */
+        left: -260px; /* Hidden by default */
+        z-index: 1030; /* Above most content, below modals if any */
+        transition: left 0.3s ease-in-out;
+         /* Add a toggle button to show/hide it */
+    }
+    .student-sidebar.open {
+        left: 0;
+    }
+    /* .student-main-content might need margin adjustment when sidebar is open on mobile */
+}

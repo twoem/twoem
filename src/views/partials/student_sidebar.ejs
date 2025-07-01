@@ -1,0 +1,34 @@
+<aside class="student-sidebar shadow-sm">
+    <div class="sidebar-header p-3 border-bottom text-center">
+        <% if (locals.student && student.first_name) { %>
+            <img src="https://ui-avatars.com/api/?name=<%= encodeURIComponent(student.first_name) %>+<%= encodeURIComponent(student.surname || student.registration_number || '') %>&background=0D8ABC&color=fff&size=64&rounded=true" alt="Student Avatar" class="img-fluid rounded-circle mb-2" style="width: 64px; height: 64px;">
+            <h5 class="fs-6 mb-0"><strong><%= student.first_name %> <%= student.surname || '' %></strong></h5>
+            <p class="small text-muted mb-0"><%= student.registration_number %></p>
+        <% } else { %>
+            <a href="/student/dashboard" class="navbar-brand d-flex align-items-center justify-content-center">
+                <img src="/logo.png" alt="Twoem Logo" width="30" height="30" class="me-2">
+                <span class="fs-5 fw-bold gradient-text">Student Portal</span>
+            </a>
+        <% } %>
+    </div>
+    <nav class="nav flex-column p-3">
+        <a class="nav-link active" href="/student/dashboard"><i class="fas fa-tachometer-alt fa-fw me-2"></i>Dashboard</a>
+        <a class="nav-link" href="/student/my-academics"><i class="fas fa-graduation-cap fa-fw me-2"></i>My Academics</a>
+        <a class="nav-link" href="/student/my-fees"><i class="fas fa-file-invoice-dollar fa-fw me-2"></i>My Fees</a>
+        <a class="nav-link" href="/student/notifications"><i class="fas fa-bell fa-fw me-2"></i>Notifications</a>
+        <a class="nav-link" href="/student/study-resources"><i class="fas fa-book-open fa-fw me-2"></i>Study Resources</a>
+        <a class="nav-link" href="/student/wifi-credentials"><i class="fas fa-wifi fa-fw me-2"></i>WiFi Credentials</a>
+        <a class="nav-link" href="/student/my-certificates"><i class="fas fa-certificate fa-fw me-2"></i>My Certificates</a>
+
+        <h6 class="nav-heading px-3 mt-4 mb-1 text-muted text-uppercase">Account Settings</h6>
+        <a class="nav-link" href="/student/profile/change-password"><i class="fas fa-key fa-fw me-2"></i>Change Password</a>
+        <a class="nav-link" href="/student/profile/edit-nok"><i class="fas fa-user-friends fa-fw me-2"></i>Update Next of Kin</a>
+
+        <hr class="my-3">
+        <a class="nav-link" href="/"><i class="fas fa-arrow-circle-left fa-fw me-2"></i>Back to Main Site</a>
+
+        <form action="/student/logout" method="POST" class="mt-auto p-3">
+            <button type="submit" class="btn btn-sm btn-outline-danger w-100"><i class="fas fa-sign-out-alt fa-fw me-2"></i>Logout</button>
+        </form>
+    </nav>
+</aside>

@@ -35,9 +35,19 @@ router.post('/reset-password', authStudentController.handleResetPassword);
 
 // GET Student dashboard
 router.get('/dashboard', authStudent, (req, res) => {
-    res.render('pages/student-dashboard', {
-        title: 'Student Dashboard',
+    // Data specific to the dashboard page content
+    const viewData = {
+        title: 'Student Dashboard', // For the h1 on the page, breadcrumbs etc.
         student: req.student
+        // Add any other specific data the dashboard page needs, e.g., summary stats
+    };
+
+    // Render using the new student_layout
+    res.render('layouts/student_layout', {
+        title: 'Student Dashboard', // For the browser <title> tag
+        bodyView: 'pages/student-dashboard', // The actual content EJS file
+        student: req.student, // For the layout/sidebar to use
+        viewData: viewData // Data for the bodyView
     });
 });
 

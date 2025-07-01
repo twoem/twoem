@@ -217,18 +217,44 @@ const listMyNotifications = async (req, res) => { /* ... जस का तस ..
     try {
         const enrolledCourses = await db.allAsync("SELECT course_id FROM enrollments WHERE student_id = ?", [studentId]);
         const enrolledCourseIds = enrolledCourses.map(ec => ec.course_id);
-        let queryParams = [studentId, studentId];
+        let queryParams = [studentId, studentId]; // studentId for join, studentId for target_audience_identifier
         let coursePlaceholders = '';
         if (enrolledCourseIds.length > 0) {
             coursePlaceholders = `OR (n.target_audience_type = 'course_id' AND n.target_audience_identifier IN (${enrolledCourseIds.map(() => '?').join(',')}))`;
             queryParams.push(...enrolledCourseIds);
         }
-        const notifications = await db.allAsync( `SELECT n.*, snr.read_at FROM notifications n LEFT JOIN student_notification_reads snr ON n.id = snr.notification_id AND snr.student_id = ? WHERE n.target_audience_type = 'all' OR (n.target_audience_type = 'student_id' AND n.target_audience_identifier = ?) ${coursePlaceholders} ORDER BY n.created_at DESC`, queryParams );
-        res.render('pages/student/notifications', { title: 'My Notifications', student: req.student, notifications });
+        const notifications = await db.allAsync(
+            `SELECT n.*, snr.read_at
+             FROM notifications n
+             LEFT JOIN student_notification_reads snr ON n.id = snr.notification_id AND snr.student_id = ?
+             WHERE n.target_audience_type = 'all'
+                OR (n.target_audience_type = 'student_id' AND n.target_audience_identifier = ?)
+                ${coursePlaceholders}
+             ORDER BY n.created_at DESC`,
+            queryParams
+        );
+
+        const viewData = {
+            title: 'My Notifications',
+            notifications: notifications,
+            student: req.student // For potential use in view if needed beyond layout
+        };
+        res.render('layouts/student_layout', {
+            title: 'My Notifications', // For browser <title>
+            bodyView: 'pages/student/notifications',
+            student: req.student, // For layout/sidebar
+            viewData: viewData
+        });
     } catch (err) {
         console.error("Error fetching student notifications:", err);
         req.flash('error_msg', '⚠️ Failed to Load Data! We couldn’t retrieve the notifications. 😔');
-        res.redirect('/student/dashboard');
+        const errorViewData = { title: 'My Notifications - Error', notifications: [], student: req.student, errorLoading: true, errorMessage: err.message };
+        res.status(500).render('layouts/student_layout', {
+            title: 'Error Loading Notifications',
+            bodyView: 'pages/student/notifications',
+            student: req.student,
+            viewData: errorViewData
+        });
     }
 };
 const markNotificationAsRead = async (req, res) => { /* ... जस का तस ... */
@@ -267,11 +293,28 @@ const listMyStudyResources = async (req, res) => { /* ... जस का तस .
             acc[courseKey].push(resource);
             return acc;
         }, {});
-        res.render('pages/student/study-resources', { title: 'My Study Resources', student: req.student, groupedResources });
+
+        const viewData = {
+            title: 'My Study Resources',
+            groupedResources: groupedResources,
+            student: req.student // For potential use in view
+        };
+        res.render('layouts/student_layout', {
+            title: 'My Study Resources', // For browser <title>
+            bodyView: 'pages/student/study-resources',
+            student: req.student, // For layout/sidebar
+            viewData: viewData
+        });
     } catch (err) {
         console.error("Error fetching student study resources:", err);
         req.flash('error_msg', '⚠️ Failed to Load Data! We couldn’t retrieve study resources. 😔');
-        res.redirect('/student/dashboard');
+        const errorViewData = { title: 'My Study Resources - Error', groupedResources: {}, student: req.student, errorLoading: true, errorMessage: err.message };
+        res.status(500).render('layouts/student_layout', {
+            title: 'Error Loading Resources',
+            bodyView: 'pages/student/study-resources',
+            student: req.student,
+            viewData: errorViewData
+        });
     }
 };
 const viewMyFees = async (req, res) => { /* ... जस का तस ... */
@@ -281,11 +324,30 @@ const viewMyFees = async (req, res) => { /* ... जस का तस ... */
         let totalCharged = 0, totalPaid = 0;
         fees.forEach(fee => { totalCharged += fee.total_amount || 0; totalPaid += fee.amount_paid || 0; });
         const overallBalance = totalCharged - totalPaid;
-        res.render('pages/student/fees', { title: 'My Fee Statement', student: req.student, fees: fees || [], overallBalance });
+
+        const viewData = {
+            title: 'My Fee Statement',
+            fees: fees || [],
+            overallBalance,
+            student: req.student // Student object might be needed for display name on page
+        };
+        res.render('layouts/student_layout', {
+            title: 'My Fee Statement', // For browser <title>
+            bodyView: 'pages/student/fees',
+            student: req.student, // For layout/sidebar
+            viewData: viewData
+        });
     } catch (err) {
         console.error("Error fetching student fee records:", err);
         req.flash('error_msg', '⚠️ Failed to Load Data! We couldn’t retrieve fee statement. 😔');
-        res.redirect('/student/dashboard');
+        // Optionally render error within layout
+         const errorViewData = { title: 'My Fee Statement - Error', fees: [], overallBalance: 0, student: req.student, errorLoading: true, errorMessage: err.message };
+        res.status(500).render('layouts/student_layout', {
+            title: 'Error Loading Fees',
+            bodyView: 'pages/student/fees',
+            student: req.student,
+            viewData: errorViewData
+        });
     }
 };
 const viewMyAcademics = async (req, res) => {
@@ -355,15 +417,21 @@ const viewMyAcademics = async (req, res) => {
              req.flash('info_msg', 'You are not currently enrolled in Computer Classes.');
         }
 
-        res.render('pages/student/academics', {
-            title: 'My Academic Records',
-            student: req.student, // For navbar/layout
+        const viewData = {
+            title: 'My Academic Records', // For page heading
             studentDetails: student, // For displaying name on page
             courseName: computerCourse.name,
             unitsWithMarks,
             examMarks,
             finalGrade: finalGradeDisplay,
             completionStatus: completionStatusDisplay
+        };
+
+        res.render('layouts/student_layout', {
+            title: 'My Academic Records', // For browser <title>
+            bodyView: 'pages/student/academics',
+            student: req.student, // For layout/sidebar
+            viewData: viewData
         });
 
     } catch (err) {
@@ -372,33 +440,115 @@ const viewMyAcademics = async (req, res) => {
         res.redirect('/student/dashboard');
     }
 };
-const viewWifiCredentials = async (req, res) => { /* ... जस का तस ... */
+const viewWifiCredentials = async (req, res) => {
     try {
         const settingKeys = ['wifi_ssid', 'wifi_password_plaintext', 'wifi_disclaimer'];
-        const settingsData = await db.allAsync( `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN (?, ?, ?)`, settingsKeys );
+        const settingsData = await db.allAsync( `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN (?, ?, ?)`, settingKeys );
         const settings = {};
         settingsData.forEach(row => { settings[row.setting_key] = row.setting_value; });
-        res.render('pages/student/wifi-credentials', { title: 'WiFi Credentials', student: req.student, wifi_ssid: settings.wifi_ssid || 'Not Set by Admin', wifi_password: settings.wifi_password_plaintext || 'Not Set by Admin', wifi_disclaimer: settings.wifi_disclaimer || '' });
+
+        const viewData = {
+            title: 'WiFi Credentials',
+            wifi_ssid: settings.wifi_ssid || 'Not Set by Admin',
+            wifi_password: settings.wifi_password_plaintext || 'Not Set by Admin',
+            wifi_disclaimer: settings.wifi_disclaimer || '',
+            student: req.student // For potential use in view if needed
+        };
+        res.render('layouts/student_layout', {
+            title: 'WiFi Credentials', // For browser <title>
+            bodyView: 'pages/student/wifi-credentials',
+            student: req.student, // For layout/sidebar
+            viewData: viewData
+        });
     } catch (err) {
         console.error("Error fetching WiFi credentials for student:", err);
         req.flash('error_msg', '⚠️ Failed to Load Data! We couldn’t retrieve WiFi information at this time. 😔');
-        res.redirect('/student/dashboard');
+        const errorViewData = {
+            title: 'WiFi Credentials - Error',
+            student: req.student,
+            errorLoading: true,
+            errorMessage: err.message,
+            wifi_ssid: 'Error', wifi_password: 'Error', wifi_disclaimer: ''
+        };
+        res.status(500).render('layouts/student_layout', {
+            title: 'Error Loading WiFi Info',
+            bodyView: 'pages/student/wifi-credentials',
+            student: req.student,
+            viewData: errorViewData
+        });
     }
 };
-const renderMyCertificatesPage = async (req, res) => { /* ... जस का तस ... */
+const renderMyCertificatesPage = async (req, res) => {
+const viewWifiCredentials = async (req, res) => {
+    try {
+        const settingKeys = ['wifi_ssid', 'wifi_password_plaintext', 'wifi_disclaimer'];
+        const settingsData = await db.allAsync( `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN (?, ?, ?)`, settingKeys );
+        const settings = {};
+        settingsData.forEach(row => { settings[row.setting_key] = row.setting_value; });
+
+        const viewData = {
+            title: 'WiFi Credentials',
+            wifi_ssid: settings.wifi_ssid || 'Not Set by Admin',
+            wifi_password: settings.wifi_password_plaintext || 'Not Set by Admin',
+            wifi_disclaimer: settings.wifi_disclaimer || '',
+            student: req.student // For potential use in view if needed
+        };
+        res.render('layouts/student_layout', {
+            title: 'WiFi Credentials', // For browser <title>
+            bodyView: 'pages/student/wifi-credentials',
+            student: req.student, // For layout/sidebar
+            viewData: viewData
+        });
+    } catch (err) {
+        console.error("Error fetching WiFi credentials for student:", err);
+        req.flash('error_msg', '⚠️ Failed to Load Data! We couldn’t retrieve WiFi information at this time. 😔');
+        const errorViewData = {
+            title: 'WiFi Credentials - Error',
+            student: req.student,
+            errorLoading: true,
+            errorMessage: err.message,
+            wifi_ssid: 'Error', wifi_password: 'Error', wifi_disclaimer: ''
+        };
+        res.status(500).render('layouts/student_layout', {
+            title: 'Error Loading WiFi Info',
+            bodyView: 'pages/student/wifi-credentials',
+            student: req.student,
+            viewData: errorViewData
+        });
+    }
+};
+const renderMyCertificatesPage = async (req, res) => {
     const studentId = req.student.id;
     try {
         const feeRecords = await db.allAsync("SELECT total_amount, amount_paid FROM fees WHERE student_id = ?", [studentId]);
         let totalCharged = 0; let totalPaid = 0;
         feeRecords.forEach(fee => { totalCharged += fee.total_amount || 0; totalPaid += fee.amount_paid || 0; });
         const feesCleared = (totalCharged - totalPaid) <= 0;
-        const passedEnrollments = await db.allAsync(`SELECT e.id as enrollment_id, c.name as course_name, e.final_grade, e.certificate_issued_at FROM enrollments e JOIN courses c ON e.course_id = c.id WHERE e.student_id = ? AND e.final_grade = 'Pass' ORDER BY c.name`, [studentId]);
+        const passedEnrollments = await db.allAsync(`SELECT e.id as enrollment_id, c.name as course_name, e.final_grade, e.certificate_issued_at FROM enrollments e JOIN courses c ON e.course_id = c.id WHERE e.student_id = ? AND e.final_grade = 'Pass' ORDER BY c.name`, [studentId]); // Assuming 'Pass' is one of the positive final grades
         const eligibleCertificates = passedEnrollments.map(pe => ({ ...pe, is_eligible_for_download: feesCleared }));
-        res.render('pages/student/certificates', { title: 'My Certificates', student: req.student, eligibleCertificates, feesCleared });
+
+        const viewData = {
+            title: 'My Certificates',
+            eligibleCertificates,
+            feesCleared,
+            student: req.student
+        };
+        res.render('layouts/student_layout', {
+            title: 'My Certificates', // For browser <title>
+            bodyView: 'pages/student/certificates',
+            student: req.student, // For layout/sidebar
+            viewData: viewData
+        });
     } catch (err) {
         console.error("Error fetching certificate eligibility:", err);
         req.flash('error_msg', '⚠️ Failed to Load Data! We couldn’t retrieve certificate information. 😔');
-        res.redirect('/student/dashboard');
+        const errorViewData = { title: 'My Certificates - Error', eligibleCertificates: [], feesCleared: false, student: req.student, errorLoading: true, errorMessage: err.message };
+        res.status(500).render('layouts/student_layout', {
+            title: 'Error Loading Certificates',
+            bodyView: 'pages/student/certificates',
+            student: req.student,
+            viewData: errorViewData
+        });
     }
 };
 const downloadCertificate = async (req, res) => { /* ... जस का तस ... */
@@ -419,11 +569,17 @@ const downloadCertificate = async (req, res) => { /* ... जस का तस ..
         res.redirect('/student/my-certificates');
     }
 };
-const renderChangePasswordForm = (req, res) => { /* ... जस का तस ... */
-    res.render('pages/student/profile/change-password', {
+const renderChangePasswordForm = (req, res) => {
+    const viewData = {
         title: 'Change Password',
-        student: req.student,
+        student: req.student, // req.student is already available from auth middleware
         passwordMinLength: process.env.PASSWORD_MIN_LENGTH || 8
+    };
+    res.render('layouts/student_layout', {
+        title: 'Change Password', // For browser <title>
+        bodyView: 'pages/student/profile/change-password',
+        student: req.student, // For layout/sidebar
+        viewData: viewData
     });
 };
 const handleChangePassword = async (req, res) => { /* ... जस का तस ... */
@@ -453,14 +609,46 @@ const handleChangePassword = async (req, res) => { /* ... जस का तस .
 const renderEditNokForm = async (req, res) => { /* ... जस का तस ... */
     const studentId = req.student.id;
     try {
-        const student = await db.getAsync("SELECT next_of_kin_details FROM students WHERE id = ?", [studentId]);
+        const studentData = await db.getAsync("SELECT next_of_kin_details FROM students WHERE id = ?", [studentId]);
         let currentNokDetails = {};
-        if (student && student.next_of_kin_details) { try { currentNokDetails = JSON.parse(student.next_of_kin_details); } catch (e) { console.error("Error parsing NOK details for student " + studentId, e); }}
-        res.render('pages/student/profile/edit-nok', { title: 'Update Next of Kin Details', student: req.student, currentNokDetails });
+        if (studentData && studentData.next_of_kin_details) {
+            try {
+                currentNokDetails = JSON.parse(studentData.next_of_kin_details);
+            } catch (e) {
+                console.error("Error parsing NOK details for student " + studentId, e);
+                // Keep currentNokDetails as {}
+            }
+        }
+        const viewData = {
+            title: 'Update Next of Kin Details',
+            student: req.student, // For display if needed, like name
+            currentNokDetails,
+            // For pre-filling form, use flashed old input if available, else currentNokDetails
+            oldInput: {
+                nokName: req.flash('nokName')[0] || currentNokDetails.name || '',
+                nokRelationship: req.flash('nokRelationship')[0] || currentNokDetails.relationship || '',
+                nokPhone: req.flash('nokPhone')[0] || currentNokDetails.phone || '',
+                nokEmail: req.flash('nokEmail')[0] || currentNokDetails.email || ''
+            },
+            errors: JSON.parse(req.flash('validation_errors')[0] || '[]')
+        };
+        res.render('layouts/student_layout', {
+            title: 'Update Next of Kin', // For browser <title>
+            bodyView: 'pages/student/profile/edit-nok',
+            student: req.student, // For layout/sidebar
+            viewData: viewData
+        });
     } catch (err) {
         console.error("Error fetching student NOK details for edit form:", err);
         req.flash('error_msg', '⚠️ Failed to Load Data! We couldn’t load your Next of Kin details. 😔');
-        res.redirect('/student/dashboard');
+        // Fallback rendering for critical error
+        const errorViewData = { title: 'Update Next of Kin - Error', student: req.student, currentNokDetails: {}, oldInput: {}, errors: [{msg: err.message}], errorLoading: true };
+         res.status(500).render('layouts/student_layout', {
+            title: 'Error Editing NOK',
+            bodyView: 'pages/student/profile/edit-nok',
+            student: req.student,
+            viewData: errorViewData
+        });
     }
 };
 const handleUpdateNok = async (req, res) => { /* ... जस का तस ... */

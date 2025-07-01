@@ -1,75 +1,103 @@
-<%- include('../partials/header', { title: 'Student Dashboard' }) %>
-<%- include('../partials/navbar') %>
+<%# This page is rendered within layouts/student_layout.ejs %>
+<%# viewData from the controller is available here (e.g., viewData.title, viewData.student) %>
+<% const student = viewData.student; %>
 
-<main class="container mt-5">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Student Dashboard</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <% if (locals.student && locals.student.firstName) { %>
-                <span class="me-3">Hello, <strong><%= student.firstName %></strong>!</span>
-            <% } else { %>
-                <span class="me-3">Hello, Student!</span>
-            <% } %>
-            <form action="/student/logout" method="POST" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button>
-            </form>
-        </div>
-    </div>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-tachometer-alt me-2"></i><%= viewData.title || 'Student Dashboard' %></h1>
+    <%# User info and logout are now part of the sidebar for student layout %>
+</div>
 
-    <!-- First Login Tasks - these will be handled by redirects before reaching dashboard -->
-    <!-- This dashboard is shown AFTER initial setup is complete -->
-     <% if (locals.message) { %><div class="alert alert-success"><%= message %></div><% } %>
-     <% if (locals.error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+<% if (student && student.firstName) { %>
+    <h4 class="mb-3">Welcome back, <span class="gradient-text"><%= student.firstName %></span>!</h4>
+<% } else { %>
+    <h4 class="mb-3">Welcome to your Student Dashboard!</h4>
+<% } %>
+<p class="lead">This is your personal hub. Access your academic records, fee statements, notifications, and essential study resources all in one place.</p>
+<hr class="my-4">
 
-    <div class="row">
-        <div class="col-md-8">
-             <% if (locals.student && locals.student.firstName) { %>
-                <h4>Welcome, <%= student.firstName %>!</h4>
-            <% } else { %>
-                <h4>Welcome!</h4>
-            <% } %>
-            <p>This is your personal dashboard. Here you can view your academic progress, fee statements, important notifications, and access study resources.</p>
-
-            <div class="card mt-4">
-                <div class="card-header">
-                    Notifications
-                </div>
-                <div class="card-body">
-                    <p class="card-text">No new notifications at this time. (Placeholder)</p>
-                    <!-- List notifications here -->
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="list-group">
-                <a href="/student/my-academics" class="list-group-item list-group-item-action">
-                    <i class="fas fa-graduation-cap me-2"></i>View Academic Scores
-                </a>
-                <a href="/student/my-certificates" class="list-group-item list-group-item-action">
-                    <i class="fas fa-certificate me-2"></i>My Certificates
-                </a>
-                <a href="/student/my-fees" class="list-group-item list-group-item-action">
-                    <i class="fas fa-file-invoice-dollar me-2"></i>Check Fees Balance
-                </a>
-                <a href="/student/notifications" class="list-group-item list-group-item-action">
-                    <i class="fas fa-bell me-2"></i>Read Notifications
-                </a>
-                <a href="/student/study-resources" class="list-group-item list-group-item-action">
-                    <i class="fas fa-book-open me-2"></i>Study Resources
-                </a>
-                <a href="/student/wifi-credentials" class="list-group-item list-group-item-action">
-                    <i class="fas fa-wifi me-2"></i>View WiFi Credentials
-                </a>
-                <a href="/student/profile/edit-nok" class="list-group-item list-group-item-action">
-                    <i class="fas fa-user-edit me-2"></i>Update Profile (Next of Kin)
-                </a>
-                <a href="/student/profile/change-password" class="list-group-item list-group-item-action">
-                    <i class="fas fa-key me-2"></i>Change Password
-                </a>
+<div class="row g-4">
+    <!-- Quick Access Cards - These can be replaced by the sidebar or be summary cards -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm dashboard-card">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3" style="background: var(--accent-gradient);"><i class="fas fa-graduation-cap"></i></div>
+                <h5 class="card-title">My Academics</h5>
+                <p class="card-text small text-muted">View your scores, grades, and overall academic performance.</p>
+                <a href="/student/my-academics" class="btn btn-outline-primary btn-sm stretched-link">View Academics</a>
             </div>
         </div>
     </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm dashboard-card">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3" style="background: var(--accent-gradient);"><i class="fas fa-file-invoice-dollar"></i></div>
+                <h5 class="card-title">My Fees</h5>
+                <p class="card-text small text-muted">Check your fee balance and payment history.</p>
+                <a href="/student/my-fees" class="btn btn-outline-primary btn-sm stretched-link">View Fee Statement</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm dashboard-card">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3" style="background: var(--accent-gradient);"><i class="fas fa-bell"></i></div>
+                <h5 class="card-title">Notifications</h5>
+                <p class="card-text small text-muted">Stay updated with important announcements.</p>
+                <a href="/student/notifications" class="btn btn-outline-primary btn-sm stretched-link">View Notifications</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm dashboard-card">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3" style="background: var(--accent-gradient);"><i class="fas fa-book-open"></i></div>
+                <h5 class="card-title">Study Resources</h5>
+                <p class="card-text small text-muted">Access learning materials and useful links.</p>
+                <a href="/student/study-resources" class="btn btn-outline-primary btn-sm stretched-link">Access Resources</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm dashboard-card">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3" style="background: var(--accent-gradient);"><i class="fas fa-certificate"></i></div>
+                <h5 class="card-title">My Certificates</h5>
+                <p class="card-text small text-muted">View and download your course completion certificates.</p>
+                <a href="/student/my-certificates" class="btn btn-outline-primary btn-sm stretched-link">View Certificates</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm dashboard-card">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3" style="background: var(--accent-gradient);"><i class="fas fa-wifi"></i></div>
+                <h5 class="card-title">WiFi Access</h5>
+                <p class="card-text small text-muted">Get the credentials for campus WiFi access.</p>
+                <a href="/student/wifi-credentials" class="btn btn-outline-primary btn-sm stretched-link">Get WiFi Details</a>
+            </div>
+        </div>
+    </div>
+</div>
 
-</main>
-
-<%- include('../partials/footer') %>
+<style>
+    .dashboard-card {
+        border: none;
+        border-radius: var(--border-radius-lg);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg) !important;
+    }
+    .dashboard-card .card-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.75rem;
+    }
+</style>

@@ -1,55 +1,75 @@
-<%- include('../../partials/header', { title: title }) %>
-<%- include('../../partials/navbar') %>
+<%# This page is rendered within layouts/student_layout.ejs %>
+<%# viewData from the controller is available here %>
+<% const groupedResources = viewData.groupedResources; %>
 
-<main class="container mt-5">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/student/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">My Study Resources</li>
-        </ol>
-    </nav>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/student/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= viewData.title || 'My Study Resources' %></li>
+    </ol>
+</nav>
 
-    <h2>My Study Resources</h2>
-    <p>Find study materials, documents, and helpful links related to your courses and general studies.</p>
-    <hr>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h2"><i class="fas fa-book-open me-2"></i><%= viewData.title || 'My Study Resources' %></h1>
+</div>
+<p class="text-muted">Find study materials, documents, and helpful links related to your courses and general studies.</p>
+<hr class="my-4">
 
-    <%- include('../../partials/flash-messages') %>
 
-    <% if (groupedResources && Object.keys(groupedResources).length > 0) { %>
-        <% Object.keys(groupedResources).sort().forEach(function(courseKey) { %>
-            <div class="mb-4">
-                <h4>
-                    <% if (courseKey === 'General Resources') { %>
-                        <i class="fas fa-globe me-2 text-secondary"></i>General Resources
-                    <% } else { %>
-                        <i class="fas fa-book me-2 text-primary"></i><%= courseKey %>
-                    <% } %>
-                </h4>
-                <div class="list-group">
-                    <% groupedResources[courseKey].forEach(function(resource) { %>
-                        <a href="<%= resource.resource_url %>" class="list-group-item list-group-item-action" target="_blank" rel="noopener noreferrer">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1"><%= resource.title %></h5>
-                                <small class="text-muted">Added: <%= new Date(resource.created_at).toLocaleDateString() %></small>
-                            </div>
-                            <% if (resource.description) { %>
-                                <p class="mb-1 text-muted small"><%= resource.description %></p>
-                            <% } %>
-                            <small class="text-primary"><i class="fas fa-link me-1"></i><%= resource.resource_url %></small>
-                        </a>
-                    <% }); %>
-                </div>
-            </div>
-        <% }); %>
-    <% } else { %>
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>No study resources are currently available for you.
-        </div>
-    <% } %>
-
-    <div class="mt-4">
-        <a href="/student/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+<% if (viewData.errorLoading) { %>
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error Loading Resources!</h4>
+        <p>We encountered an issue trying to load study resources. Please try again later.</p>
+        <% if (viewData.errorMessage) { %>
+            <p class="mb-0"><small>Details: <%= viewData.errorMessage %></small></p>
+        <% } %>
     </div>
-</main>
+<% } else if (groupedResources && Object.keys(groupedResources).length > 0) { %>
+    <% Object.keys(groupedResources).sort().forEach(function(courseKey) { %>
+        <div class="mb-5">
+            <h3 class="mb-3">
+                <% if (courseKey === 'General Resources') { %>
+                    <i class="fas fa-globe text-secondary me-2"></i>General Resources
+                <% } else { %>
+                    <i class="fas fa-chalkboard-teacher text-primary me-2"></i><%= courseKey %>
+                <% } %>
+            </h3>
+            <div class="row g-3">
+                <% groupedResources[courseKey].forEach(function(resource) { %>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm resource-card">
+                            <div class="card-body">
+                                <h5 class="card-title"><%= resource.title %></h5>
+                                <% if (resource.description) { %>
+                                    <p class="card-text small text-muted"><%= resource.description %></p>
+                                <% } %>
+                                <p class="card-text mb-2"><small class="text-muted">Added: <%= new Date(resource.created_at).toLocaleDateString() %></small></p>
+                                <a href="<%= resource.resource_url %>" class="btn btn-sm btn-outline-primary stretched-link" target="_blank" rel="noopener noreferrer">
+                                    <i class="fas fa-external-link-alt me-1"></i> Access Resource
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    <% }); %>
+<% } else { %>
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>No study resources are currently available for you.
+    </div>
+<% } %>
 
-<%- include('../../partials/footer') %>
+<div class="mt-4">
+    <a href="/student/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
+</div>
+
+<style>
+    .resource-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .resource-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md) !important;
+    }
+</style>

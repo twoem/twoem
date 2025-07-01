@@ -1,0 +1,20 @@
+<%- include('../partials/header', { title: typeof title !== 'undefined' ? title : 'Student Portal' }) %>
+
+<%# Student portal might use the main navbar or a specialized one %>
+<%# For a sidebar approach, the main navbar might be included here or within the student_sidebar itself if it's more of a combined header/sidebar %>
+<%- include('../partials/navbar') %> <%# Assuming general site navbar is still desired at the very top %>
+
+<div class="student-layout-container d-flex">
+    <%- include('../partials/student_sidebar') %>
+
+    <main class="student-main-content flex-grow-1 p-3 p-md-4">
+        <%- include('../partials/flash-messages') %>
+        <% if (typeof bodyView !== 'undefined' && bodyView) { %>
+            <%- include(`../${bodyView}`, typeof viewData !== 'undefined' ? viewData : {}) %>
+        <% } else { %>
+            <p class="text-danger">Error: bodyView not specified for student_layout.</p>
+        <% } %>
+    </main>
+</div>
+
+<%- include('../partials/footer') %>
