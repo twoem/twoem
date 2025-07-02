@@ -761,4 +761,3 @@ module.exports = {
         }
     ]
 };
-[end of src/controllers/adminController.js]
