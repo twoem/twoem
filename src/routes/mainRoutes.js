@@ -19,11 +19,5 @@ router.get('/data-protection', mainController.renderDataProtectionPage);
 // Route for download redirection
 router.get('/redirect', mainController.handleRedirect);
 
-// Placeholder routes for dashboards - these will likely move to their own route files
-// and include authentication middleware once implemented.
-// For now, they are here for basic navigation structure.
-router.get('/student/dashboard', mainController.renderStudentDashboardPage); // Direct access for now
-router.get('/admin/dashboard', mainController.renderAdminDashboardPage);   // Direct access for now
-
 
 module.exports = router;

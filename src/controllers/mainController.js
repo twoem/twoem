@@ -57,23 +57,6 @@ const handleContactForm = async (req, res) => {
     }
 };
 
-// Renders the admin login page
-const renderAdminLoginPage = (req, res) => {
-    // Flash messages (success_msg, error_msg, error) are available via res.locals due to global middleware
-    res.render('pages/admin-login', {
-        title: 'Admin Login'
-    });
-};
-
-// Renders the student login page
-const renderStudentLoginPage = (req, res) => {
-    // Flash messages and activeTab (if set by a redirect to here with query param)
-    res.render('pages/student-login', {
-        title: 'Student Portal Login',
-        activeTab: req.query.activeTab // For activating specific tab on load
-    });
-};
-
 const renderServicesPage = async (req, res) => {
     try {
         const courses = await db.allAsync("SELECT id, name, description FROM courses ORDER BY name ASC");
@@ -132,16 +115,6 @@ const renderDownloadsPage = async (req, res) => {
     }
 };
 
-// Dashboard placeholders - these actual dashboard routes are protected and handled by their respective controllers
-const renderStudentDashboardPage = (req, res) => {
-    // This is likely unused as /student/dashboard is handled by studentRoutes + authStudentController
-    res.render('pages/student-dashboard', { title: 'Student Dashboard', student: req.student });
-};
-const renderAdminDashboardPage = (req, res) => {
-    // This is likely unused as /admin/dashboard is handled by adminRoutes + adminController
-    res.render('pages/admin-dashboard', { title: 'Admin Dashboard', admin: req.admin });
-};
-
 const renderDataProtectionPage = (req, res) => {
     res.render('pages/data-protection', { title: 'Data Protection Policy' /* process removed, pass env vars specifically if needed */ });
 };
@@ -187,12 +160,8 @@ module.exports = {
     renderHomePage,
     renderContactPage,
     handleContactForm,
-    renderAdminLoginPage,
-    renderStudentLoginPage,
     renderServicesPage,
     renderDownloadsPage,
-    renderStudentDashboardPage, // These might be dead code if dashboards are fully handled by auth controllers
-    renderAdminDashboardPage,   //
     renderDataProtectionPage,
     renderGalleryPage,
     handleRedirect,

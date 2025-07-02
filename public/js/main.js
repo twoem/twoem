@@ -1,18 +1,24 @@
-// Custom JavaScript for Twoem Online Productions
+// Custom JavaScript for Twoem V2
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Twoem Online Productions website script loaded.');
+    console.log('Twoem V2 website script loaded.');
 
-    // Example: Add active class to navbar links based on current page
-    const currentLocation = window.location.pathname;
-    const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+    // Any new, relevant JavaScript for the modernized site can be added here.
+    // For example, smooth scroll for anchor links if needed, or mobile menu toggles if a more complex menu is added later.
 
-    navLinks.forEach(link => {
-        if (link.getAttribute('href') === currentLocation) {
-            link.classList.add('active');
-            link.setAttribute('aria-current', 'page');
-        }
+    // Example: Smooth scroll for on-page anchors (if you add any)
+    /*
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            if(targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
     });
-
-    // Add more custom JS interactions here as the site develops
+    */
 });

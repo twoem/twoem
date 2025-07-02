@@ -42,38 +42,22 @@ app.use((req, res, next) => {
     res.locals.success_msg = req.flash('success_msg');
     res.locals.error_msg = req.flash('error_msg');
     res.locals.error = req.flash('error'); // For express-validator errors or other single errors
-    // To make user/admin info available globally in templates if logged in (optional here, as often passed directly)
-    // res.locals.admin = req.admin || null;
-    // res.locals.student = req.student || null;
     next();
 });
 
 
 // Import routes
 const mainRoutes = require('./src/routes/mainRoutes');
-const adminRoutes = require('./src/routes/adminRoutes'); // Import admin routes
 
 // Use routes
 app.use('/', mainRoutes); // Mount main routes
-app.use('/admin', adminRoutes); // Mount admin routes under /admin prefix
-const studentRoutes = require('./src/routes/studentRoutes'); // Import student routes
-app.use('/student', studentRoutes); // Mount student routes under /student prefix
-
-// Customer Portal Routes
-const customerAuthRoutes = require('./src/routes/customerAuthRoutes');
-const customerDashboardRoutes = require('./src/routes/customerDashboardRoutes'); // Assuming this will be for protected routes
-app.use('/portal/customer', customerAuthRoutes); // Handles /portal/customer/login, /portal/customer/logout etc.
-app.use('/portal/customer', customerDashboardRoutes); // Handles /portal/customer/dashboard etc.
 
 
 // Catch 404 and forward to error handler
 app.use((req, res, next) => {
     res.status(404).render('pages/errors/404', {
         title: 'Page Not Found',
-        url: req.originalUrl,
-        // Pass a minimal user object if navbar expects it, or handle absence in navbar
-        admin: req.admin || null,
-        student: req.student || null
+        url: req.originalUrl
     });
 });
 
@@ -87,9 +71,7 @@ app.use((req, res, next) => {
 //     }
 //     res.status(err.status || 500).render('pages/errors/500', { // Assuming 500.ejs exists
 //         title: 'Server Error',
-//         error: process.env.NODE_ENV === 'development' ? err : {}, // Only show error details in dev
-//         admin: req.admin || null,
-//         student: req.student || null
+//         error: process.env.NODE_ENV === 'development' ? err : {} // Only show error details in dev
 //     });
 // });
 
