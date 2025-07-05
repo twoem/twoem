@@ -1,15 +1,29 @@
-<%- include('../partials/customerHeader', { title: title, customer: customer }) %>
-
-<% /* Main container is opened in customerHeader.ejs and closed in customerFooter.ejs */ %>
-    <%- include('../partials/flash-messages') %>
+<% /* This page will be rendered within layouts/portal-customer.ejs */ %>
+<% /* Flash messages are handled in the layout */ %>
 
     <div class="row">
         <div class="col-12">
             <div class="card shadow-lg mb-4" style="border-radius: 0.75rem; background-color: var(--lavender-light-blue);">
-                <div class="card-body text-center" style="color: var(--lavender-nav-text);">
-                    <a href="https://ibb.co/hF8jSC4H"><img src="https://i.ibb.co/XxJgqVKp/IMG-20250701-WA0003.jpg" alt="IMG-20250701-WA0003" border="0" style="max-height: 70px; margin-bottom: 0.5rem;"></a>
-                    <h3 class="mb-0 fw-bold" style="color: var(--lavender-darker-purple);">Welcome Back, <%= customer.firstName %>!</h3>
-                    <p class="lead mb-0" style="font-size: 1.1rem;">Your Mynet Customer Portal Dashboard.</p>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <h3 class="mb-0 fw-bold" style="color: var(--lavender-darker-purple);">Welcome Back, <%= customer.firstName %>!</h3>
+                            <p class="lead mb-0" style="font-size: 1.1rem;">Your Mynet Customer Portal Dashboard.</p>
+                        </div>
+                        <div class="text-end">
+                            <p class="mb-0 small">
+                                <i class="fas fa-calendar-alt me-1"></i> <%= currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                            </p>
+                            <p class="mb-0 small">
+                                <i class="fas fa-clock me-1"></i> <span id="currentTime"></span>
+                            </p>
+                            <% if (customer.lastLoginAt) { %>
+                                <p class="mb-0 small text-muted">
+                                    <i class="fas fa-history me-1"></i> Last Login: <%= new Date(customer.lastLoginAt).toLocaleString() %>
+                                </p>
+                            <% } %>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -54,34 +68,40 @@
 
                         <dt class="col-sm-4">Monthly Payment:</dt>
                         <dd class="col-sm-8">KES <%= customer.paymentPerMonth ? customer.paymentPerMonth.toFixed(2) : '0.00' %></dd>
+
+                        <dt class="col-sm-4">Last Payment Date:</dt>
+                        <dd class="col-sm-8"><%= lastPaymentDate ? new Date(lastPaymentDate).toLocaleDateString() : 'N/A' %></dd>
                     </dl>
-                    <a href="/portal/customer/profile/edit" class="btn btn-sm mt-2" style="background-color: var(--lavender-muted-green); color: white;"><i class="fas fa-edit me-1"></i> Update Details</a>
+                    <a href="/portals/customer/profile" class="btn btn-sm mt-2" style="background-color: var(--lavender-muted-green); color: white;"><i class="fas fa-edit me-1"></i> Update Profile</a>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Actions & Summaries -->
+        <!-- Right Column: Quick Actions, Summaries, Notifications -->
         <div class="col-lg-5 mb-4">
+            <!-- Subscription Overview Card -->
             <div class="card shadow-sm mb-4" style="border-radius: 0.75rem; background-color: var(--lavender-lightest-yellow);">
                 <div class="card-header" style="background-color: var(--lavender-very-light); border-bottom: 1px solid var(--lavender-light-blue);">
                     <h5 class="mb-0 fw-bold" style="color: var(--lavender-darker-purple);"><i class="fas fa-wifi me-2"></i>Subscription Overview</h5>
                 </div>
                 <div class="card-body">
                     <p><strong>Status:</strong> <span class="badge fs-6 <%= customer.isActive && (!customer.disconnectionDate || new Date(customer.disconnectionDate) > new Date()) ? 'bg-success' : 'bg-danger' %>">
-                        <%= customer.isActive && (!customer.disconnectionDate || new Date(customer.disconnectionDate) > new Date()) ? 'Active' : 'Disconnected/Pending' %>
+                        <%= customer.isActive && (!customer.disconnectionDate || new Date(customer.disconnectionDate) > new Date()) ? 'Active' : 'Disconnected' %>
                     </span></p>
-                    <% if (customer.disconnectionDate && new Date(customer.disconnectionDate) > new Date() && customer.isActive) { %>
-                        <p class="text-warning fw-bold">Disconnection Due: <%= new Date(customer.disconnectionDate).toLocaleDateString() %></p>
-                    <% } else if (customer.disconnectionDate && new Date(customer.disconnectionDate) <= new Date()) { %>
-                         <p class="text-danger fw-bold">Account Disconnected On: <%= new Date(customer.disconnectionDate).toLocaleDateString() %></p>
+                    <% if (customer.disconnectionDate && customer.isActive) { %>
+                        <p class="text-warning fw-bold">Potential Disconnection: <%= new Date(customer.disconnectionDate).toLocaleDateString() %></p>
+                    <% } else if (customer.disconnectionDate && !customer.isActive) { %>
+                         <p class="text-danger fw-bold">Disconnected On: <%= new Date(customer.disconnectionDate).toLocaleDateString() %></p>
                     <% } %>
-                    <a href="/portal/customer/subscription" class="btn d-block mb-2" style="background-color: var(--lavender-light-blue); color: var(--lavender-nav-text);"><i class="fas fa-file-invoice-dollar me-2"></i>View Subscription & Payments</a>
-                    <a href="/portal/customer/pay" class="btn d-block" style="background-color: var(--lavender-vibrant-purple); color: white;"><i class="fas fa-credit-card me-2"></i>Make Payment</a>
+                    <a href="/portals/customer/subscription" class="btn d-block mb-2" style="background-color: var(--lavender-light-blue); color: var(--lavender-nav-text);"><i class="fas fa-file-invoice-dollar me-2"></i>View Subscription</a>
+                    <a href="/portals/customer/makepayment" class="btn d-block" style="background-color: var(--lavender-vibrant-purple); color: white;"><i class="fas fa-credit-card me-2"></i>Make Payment</a>
                 </div>
             </div>
-             <div class="card shadow-sm" style="border-radius: 0.75rem; background-color: var(--lavender-lightest-yellow);">
+
+            <!-- Recent Payments Card -->
+             <div class="card shadow-sm mb-4" style="border-radius: 0.75rem; background-color: var(--lavender-lightest-yellow);">
                 <div class="card-header" style="background-color: var(--lavender-very-light); border-bottom: 1px solid var(--lavender-light-blue);">
-                    <h5 class="mb-0 fw-bold" style="color: var(--lavender-darker-purple);"><i class="fas fa-history me-2"></i>Recent Payments</h5>
+                    <h5 class="mb-0 fw-bold" style="color: var(--lavender-darker-purple);"><i class="fas fa-history me-1"></i>Recent Payments</h5>
                 </div>
                 <ul class="list-group list-group-flush" style="border-radius: 0 0 0.75rem 0.75rem;">
                     <% if (customer.paymentLogs && customer.paymentLogs.length > 0) { %>
@@ -96,7 +116,35 @@
                     <% } %>
                 </ul>
             </div>
+
+            <!-- Notifications Card -->
+            <div class="card shadow-sm" style="border-radius: 0.75rem; background-color: var(--lavender-lightest-yellow);">
+                <div class="card-header" style="background-color: var(--lavender-very-light); border-bottom: 1px solid var(--lavender-light-blue);">
+                    <h5 class="mb-0 fw-bold" style="color: var(--lavender-darker-purple);"><i class="fas fa-bell me-2"></i>Notifications</h5>
+                </div>
+                <div class="card-body">
+                    <% if (notifications && notifications.length > 0) { %>
+                        <% notifications.forEach(notification => { %>
+                            <div class="alert alert-info" role="alert" style="background-color: var(--lavender-very-light); border-color: var(--lavender-light-blue); color: var(--lavender-nav-text);">
+                                <h6 class="alert-heading"><%= notification.title %> <small class="text-muted float-end"><%= new Date(notification.date).toLocaleDateString() %></small></h6>
+                                <p><%= notification.message %></p>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <p class="text-muted">No new notifications at the moment.</p>
+                    <% } %>
+                </div>
+            </div>
         </div>
     </div>
 
-<%- include('../partials/customerFooter') %>
+<script>
+    function updateTime() {
+        const timeElement = document.getElementById('currentTime');
+        if (timeElement) {
+            timeElement.innerText = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+    }
+    setInterval(updateTime, 1000);
+    updateTime(); // Initial call
+</script>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twoem V2 | <%= title %></title>
     <link rel="stylesheet" href="/css/style.css">
-    <link rel="icon" href="/logo.jpg" type="image/jpeg"> <!-- Assuming logo.jpg is the favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <!-- Font Awesome for icons (optional, if you keep icons in the new design) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -25,6 +25,14 @@
                     <li><a href="/downloads" class="<%= title === 'Downloads' ? 'current' : '' %>">Downloads</a></li>
                     <li><a href="/gallery" class="<%= title === 'Gallery' ? 'current' : '' %>">Gallery</a></li>
                     <li><a href="/contact" class="<%= title === 'Contact Us' ? 'current' : '' %>">Contact</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="<%= ['Customer Portal', 'Student Portal', 'Admin Portal'].includes(title) ? 'current' : '' %>">Portals <i class="fas fa-caret-down"></i></a>
+                        <div class="dropdown-content">
+                            <a href="/portals/customer" class="<%= title === 'Customer Portal' ? 'current' : '' %>">Customer Portal</a>
+                            <a href="/portals/student" class="<%= title === 'Student Portal' ? 'current' : '' %>">Student Portal</a>
+                            <a href="/portals/admin" class="<%= title === 'Admin Portal' ? 'current' : '' %>">Admin Portal</a>
+                        </div>
+                    </li>
                 </ul>
             </nav>
         </div>

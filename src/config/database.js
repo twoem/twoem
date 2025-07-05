@@ -276,6 +276,54 @@ function initializeDb() {
             else console.log("Student_notification_reads table checked/created.");
         });
 
+        // Student Topic Marks Table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS student_topic_marks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id INTEGER NOT NULL,
+                enrollment_id INTEGER NOT NULL, -- Link to specific enrollment if student can re-enroll or take multiple courses
+                topic_name TEXT NOT NULL,
+                -- Standard topics: Introduction to Computers, Keyboard Management, Ms Word, Ms Excel, Ms Publisher, Ms Powerpoint, Ms Access, Internet and Email
+                -- Record types for exams: MainExamTheory, MainExamPractical
+                marks_obtained INTEGER,
+                max_marks INTEGER DEFAULT 100,
+                is_exempt BOOLEAN DEFAULT FALSE, -- If student is exempted from this topic/exam
+                notes TEXT, -- Admin notes if any
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+                FOREIGN KEY (enrollment_id) REFERENCES enrollments(id) ON DELETE CASCADE
+            )
+        `, (err) => {
+            if (err) console.error("Error creating student_topic_marks table:", err.message);
+            else console.log("Student_topic_marks table checked/created.");
+        });
+
+        // Add columns to enrollments table for exam schedule and status (if they don't exist)
+        const enrollmentColumns = [
+            { name: 'main_exam_schedule_date', type: 'DATETIME' },
+            { name: 'enrollment_status', type: 'TEXT CHECK(enrollment_status IN ("ongoing", "completed", "failed", "dropped_out")) DEFAULT "ongoing"' }
+        ];
+
+        enrollmentColumns.forEach(column => {
+            db.run(`ALTER TABLE enrollments ADD COLUMN ${column.name} ${column.type}`, (alterErr) => {
+                if (alterErr) {
+                    if (alterErr.message.includes(`duplicate column name: ${column.name}`)) {
+                        // console.log(`Column ${column.name} already exists in enrollments table.`);
+                    } else {
+                        console.error(`Error adding ${column.name} column to enrollments:`, alterErr.message);
+                    }
+                } else {
+                    console.log(`Column ${column.name} added to enrollments table.`);
+                    if (column.name === 'enrollment_status') {
+                         db.run(`UPDATE enrollments SET enrollment_status = 'ongoing' WHERE enrollment_status IS NULL`, (updateErr) => {
+                            if (updateErr) console.error(`Error updating existing enrollments for ${column.name}:`, updateErr.message);
+                        });
+                    }
+                }
+            });
+        });
+
     });
 }
 

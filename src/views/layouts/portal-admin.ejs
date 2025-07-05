@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twoem Admin Portal | <%= title %></title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css"> <!-- Main site style -->
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f0f2f5; /* A neutral, professional background */
+        }
+        .admin-portal-header {
+            background-color: #3a3f44; /* Dark, distinct admin header */
+            color: white;
+            padding: 0.75rem 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .admin-portal-header .navbar-brand img {
+            max-height: 40px;
+        }
+        .admin-portal-header .nav-link {
+            color: rgba(255,255,255,.8);
+             padding-left: 0.8rem;
+            padding-right: 0.8rem;
+        }
+        .admin-portal-header .nav-link:hover,
+        .admin-portal-header .nav-link.active {
+            color: white;
+            background-color: rgba(255,255,255,0.15);
+            border-radius: 0.25rem;
+        }
+        .admin-portal-main-content {
+            flex-grow: 1;
+            padding: 25px;
+        }
+        .admin-portal-footer {
+            /* Standard footer will be included */
+        }
+        .card {
+            border-radius: 0.5rem;
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+    <header class="admin-portal-header">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/portals/admin/dashboard">
+                    <img src="<%= process.env.EMAIL_LOGO_URL || 'https://i.ibb.co/XxJgqVKp/IMG-20250701-WA0003.jpg' %>" alt="Twoem Logo" class="d-inline-block align-text-top">
+                    Admin Portal
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminPortalNav" aria-controls="adminPortalNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="adminPortalNav">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+                        <li class="nav-item">
+                            <a class="nav-link <%= title === 'Admin Dashboard' ? 'active' : '' %>" href="/portals/admin/dashboard"><i class="fas fa-chart-line me-1"></i>Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <%= title === 'Students Management' ? 'active' : '' %>" href="/portals/admin/students"><i class="fas fa-user-graduate me-1"></i>Students</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <%= title === 'Customers Management' ? 'active' : '' %>" href="/portals/admin/customers"><i class="fas fa-users me-1"></i>Customers</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <%= title === 'Mailer' ? 'active' : '' %>" href="/portals/admin/mailer"><i class="fas fa-envelope-open-text me-1"></i>Mailer</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <%= title === 'Backup Management' ? 'active' : '' %>" href="/portals/admin/backup"><i class="fas fa-database me-1"></i>Backup</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminAccountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-shield me-1"></i> <%= adminName || 'Admin' %>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminAccountDropdown">
+                                <!-- Admin profile/settings might not be needed if all config is via .env -->
+                                <!-- <li><a class="dropdown-item" href="/portals/admin/profile">Profile</a></li> -->
+                                <!-- <li><hr class="dropdown-divider"></li> -->
+                                <li><a class="dropdown-item" href="/portals/admin/logout">Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="admin-portal-main-content container-fluid mt-4"> <!-- Use container-fluid for wider content area -->
+        <%- include('../partials/flash-messages') %>
+        <%- body %>
+    </main>
+
+    <div class="admin-portal-footer mt-auto">
+        <%- include('../partials/footer') %>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <% if (typeof pageScripts !== 'undefined' && pageScripts && pageScripts.length > 0) { %>
+        <% pageScripts.forEach(scriptPath => { %>
+            <script src="<%= scriptPath %>"></script>
+        <% }); %>
+    <% } %>
+</body>
+</html>

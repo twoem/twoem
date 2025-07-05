@@ -1,75 +1,71 @@
-<%- include('../../partials/adminHeader', { title: title, admin: admin }) %>
-<% /* adminHeader now includes the main container-fluid div. Individual pages just add their content. */ %>
+<% /* This page is rendered within layouts/portal-admin.ejs */ %>
+<% /* Flash messages are handled by the layout */ %>
 
-    <div class="row justify-content-center">
-        <div class="col-md-10 col-lg-8"> <% /* Slightly wider for forms */ %>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/admin/dashboard">Admin Dashboard</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Register New Student</li>
-                </ol>
-            </nav>
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h2 class="h5 mb-0">Register New Student</h2>
-                </div>
-                <div class="card-body">
-                    <p>Fill out the form below to register a new student. They will be assigned a unique registration number and a default password.</p>
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/portals/admin/dashboard">Admin Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/portals/admin/students">Manage Students</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Register New Student</li>
+            </ol>
+        </nav>
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Register New Student</h2>
+            </div>
+            <div class="card-body">
+                <p>Fill out the form below to register a new student. They will be assigned a unique registration number and a default password.</p>
 
-                    <%- include('../../partials/flash-messages') %>
-
-                    <form action="/admin/register-student" method="POST">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="firstName" name="firstName" required value="<%= formData.firstName || '' %>">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="secondName" class="form-label">Second Name (Optional)</label>
-                                <input type="text" class="form-control" id="secondName" name="secondName" value="<%= formData.secondName || '' %>">
-                            </div>
+                <form action="/portals/admin/students/register" method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control <%= locals.errors && errors.find(e => e.param === 'firstName') ? 'is-invalid' : '' %>" id="firstName" name="firstName" required value="<%= locals.formData && formData.firstName ? formData.firstName : '' %>">
                         </div>
-                        <div class="mb-3">
-                            <label for="surname" class="form-label">Surname <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="surname" name="surname" required value="<%= formData.surname || '' %>">
+                        <div class="col-md-6 mb-3">
+                            <label for="secondName" class="form-label">Second Name (Optional)</label>
+                            <input type="text" class="form-control" id="secondName" name="secondName" value="<%= locals.formData && formData.secondName ? formData.secondName : '' %>">
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="phoneNumber" class="form-label">Phone Number (07.../01...) <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" required value="<%= formData.phoneNumber || '' %>" pattern="^(0[17])\d{8}$" title="Phone number must be 10 digits and start with 01 or 07.">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="email" name="email" required value="<%= formData.email || '' %>">
-                                <div class="form-text">Used for communication and password recovery.</div>
-                            </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="surname" class="form-label">Surname <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control <%= locals.errors && errors.find(e => e.param === 'surname') ? 'is-invalid' : '' %>" id="surname" name="surname" required value="<%= locals.formData && formData.surname ? formData.surname : '' %>">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phoneNumber" class="form-label">Phone Number (07.../01...) <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control <%= locals.errors && errors.find(e => e.param === 'phoneNumber') ? 'is-invalid' : '' %>" id="phoneNumber" name="phoneNumber" required value="<%= locals.formData && formData.phoneNumber ? formData.phoneNumber : '' %>" pattern="^(0[17])\d{8}$" title="Phone number must be 10 digits and start with 01 or 07.">
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="enrolledDate" class="form-label">Enrolled Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="enrolledDate" name="enrolledDate" required value="<%= formData.enrolledDate || new Date().toISOString().split('T')[0] %>">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="courseFee" class="form-label">Course Fee (KES) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="courseFee" name="courseFee" required value="<%= formData.courseFee || '' %>" min="0" step="any">
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control <%= locals.errors && errors.find(e => e.param === 'email') ? 'is-invalid' : '' %>" id="email" name="email" required value="<%= locals.formData && formData.email ? formData.email : '' %>">
+                            <div class="form-text">Used for communication and password recovery.</div>
                         </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="enrolledDate" class="form-label">Enrolled Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control <%= locals.errors && errors.find(e => e.param === 'enrolledDate') ? 'is-invalid' : '' %>" id="enrolledDate" name="enrolledDate" required value="<%= locals.formData && formData.enrolledDate ? formData.enrolledDate : new Date().toISOString().split('T')[0] %>">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="courseFee" class="form-label">Initial Course Fee (KES) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control <%= locals.errors && errors.find(e => e.param === 'courseFee') ? 'is-invalid' : '' %>" id="courseFee" name="courseFee" required value="<%= locals.formData && formData.courseFee ? formData.courseFee : '' %>" min="0" step="any">
+                        </div>
+                    </div>
 
-                        <p class="text-muted small mt-3">
-                    A unique Registration Number will be automatically generated.
-                    The student will be assigned the default password: <strong><%= process.env.DEFAULT_STUDENT_PASSWORD %></strong>.
-                    They will be required to change this password upon their first login.
-                </p>
+                    <p class="text-muted small mt-3">
+                        A unique Registration Number will be automatically generated.
+                        The student will be assigned the default password: <strong><%= process.env.DEFAULT_STUDENT_PASSWORD || 'Stud@Twoem2025' %></strong>.
+                        They will be required to change this password upon their first login.
+                    </p>
 
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4"> {/* Added mt-4 for spacing */}
-                    <a href="/admin/dashboard" class="btn btn-outline-secondary me-md-2"><i class="fas fa-times me-1"></i>Cancel</a>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-user-plus me-2"></i>Register Student</button>
-                </div>
-            </form>
-                </div> <%# card-body %>
-                <%# Removed redundant card-footer with duplicated buttons %>
-            </div> <%# card %>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="/portals/admin/students" class="btn btn-outline-secondary me-md-2"><i class="fas fa-times me-1"></i>Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-user-plus me-2"></i>Register Student</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-
-<%- include('../../partials/adminFooter') %> <% /* Assuming adminFooter is similar or will be created */ %>
+</div>

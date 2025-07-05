@@ -143,7 +143,7 @@
                             <div class="tab-content" id="studentLoginTabContent">
                                 <!-- Login Panel -->
                                 <div class="tab-pane fade show active" id="login-panel" role="tabpanel">
-                                    <form action="/student/login" method="POST" id="studentLoginForm">
+                                    <form action="/portals/student/login" method="POST" id="studentLoginForm">
                                         <div class="form-floating mb-3">
                                             <input type="text" class="form-control" id="registrationNumber" name="registrationNumber" placeholder="Registration Number" required>
                                             <label for="registrationNumber"><i class="fas fa-id-badge me-2"></i>Registration Number</label>
@@ -164,20 +164,21 @@
 
                                 <!-- Forgot Password Panel -->
                                 <div class="tab-pane fade" id="forgot-password-panel" role="tabpanel">
-                                    <form action="/student/forgot-password" method="POST" id="forgotPasswordForm">
+                                    <p class="text-muted text-center small mb-3">Enter your registered email and any of your names to receive password reset instructions.</p>
+                                    <form action="/portals/student/forgot-password" method="POST" id="forgotPasswordForm">
                                         <div class="form-floating mb-3">
-                                            <input type="text" class="form-control" id="forgotRegNum" name="registrationNumber" placeholder="Registration Number" required>
-                                            <label for="forgotRegNum"><i class="fas fa-id-badge me-2"></i>Registration Number</label>
+                                            <input type="email" class="form-control" id="forgotEmail" name="email" placeholder="Registered Email Address" required value="<%= locals.formData && locals.formData.email ? locals.formData.email : '' %>">
+                                            <label for="forgotEmail"><i class="fas fa-envelope me-2"></i>Registered Email Address</label>
                                         </div>
 
                                         <div class="form-floating mb-4">
-                                            <input type="email" class="form-control" id="forgotEmail" name="email" placeholder="Email Address" required>
-                                            <label for="forgotEmail"><i class="fas fa-envelope me-2"></i>Email Address</label>
+                                            <input type="text" class="form-control" id="forgotAnyName" name="anyName" placeholder="Any Registered Name" required value="<%= locals.formData && locals.formData.anyName ? locals.formData.anyName : '' %>">
+                                            <label for="forgotAnyName"><i class="fas fa-user me-2"></i>Any Registered Name (First, Second, or Surname)</label>
                                         </div>
 
                                         <div class="d-grid">
                                             <button type="submit" class="btn btn-warning login-btn">
-                                                <i class="fas fa-paper-plane me-2"></i>Send Reset Code
+                                                <i class="fas fa-paper-plane me-2"></i>Send Reset Instructions
                                             </button>
                                         </div>
                                     </form>
@@ -189,7 +190,7 @@
                                         <p class="text-muted">If you've been registered but haven't received your login details, retrieve them here.</p>
                                     </div>
 
-                                    <form action="/student/retrieve-credentials" method="POST" id="retrieveCredentialsForm">
+                                    <form action="/portals/student/retrieve-credentials" method="POST" id="retrieveCredentialsForm">
                                         <div class="form-floating mb-3">
                                             <input type="email" class="form-control" id="newStudentEmail" name="email" placeholder="Email Address" required value="<%= locals.formData && locals.formData.email ? locals.formData.email : '' %>">
                                             <label for="newStudentEmail"><i class="fas fa-envelope me-2"></i>Registered Email Address</label>

@@ -733,3 +733,73 @@ header #branding a img {
     text-decoration: none; /* Should not be needed as images don't have text-decoration */
     border: none; /* Remove border if browser adds one to linked images */
 }
+
+/* Dropdown Menu Styles */
+header nav ul li.dropdown {
+    position: relative;
+}
+
+header nav ul li.dropdown .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #333; /* Match header background */
+    min-width: 200px; /* Adjust as needed */
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1000; /* Ensure dropdown is above other content */
+    border-top: #0779e4 3px solid; /* Match header bottom-border */
+    border-radius: 0 0 5px 5px; /* Optional: rounded corners for dropdown */
+}
+
+header nav ul li.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+header nav ul li.dropdown .dropdown-content a {
+    color: #fff; /* Link color */
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-transform: none; /* Override uppercase from main nav if desired */
+    font-size: 15px; /* Adjust font size */
+    border-bottom: 1px solid #444; /* Separator for items */
+}
+
+header nav ul li.dropdown .dropdown-content a:last-child {
+    border-bottom: none; /* No border for the last item */
+}
+
+header nav ul li.dropdown .dropdown-content a:hover {
+    background-color: #0779e4; /* Hover background color */
+    color: #fff; /* Ensure text remains white on hover */
+}
+
+/* Adjust caret icon if you have one */
+header nav ul li.dropdown a i.fas.fa-caret-down {
+    margin-left: 5px;
+}
+
+/* Responsive adjustments for dropdown */
+@media(max-width: 768px) {
+    header nav ul li.dropdown .dropdown-content {
+        position: static; /* Make dropdown flow in document order */
+        box-shadow: none;
+        border-top: none;
+        border-left: 3px solid #0779e4; /* Indicate it's a sub-menu */
+        margin-left: 15px; /* Indent sub-menu items */
+        background-color: #444; /* Slightly different background for clarity */
+    }
+
+    header nav ul li.dropdown:hover .dropdown-content {
+        display: none; /* By default, hide on mobile, might need JS for click to open */
+    }
+    /* Simple approach: always show dropdown content on mobile when parent is active/hovered in CSS only */
+    /* For a click-to-toggle, JavaScript would be needed */
+     header nav ul li.dropdown:hover .dropdown-content,
+     header nav ul li.dropdown .dropdown-content.show-mobile { /* Add a class with JS to show */
+        display: block;
+    }
+
+    header nav ul li.dropdown .dropdown-content a {
+        padding: 10px 15px;
+    }
+}

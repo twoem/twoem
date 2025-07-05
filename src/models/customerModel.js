@@ -27,6 +27,29 @@ const paymentLogSchema = new mongoose.Schema({
     },
     approvalDate: {
         type: Date,
+    },
+    // Fields for user-submitted payment confirmations
+    isUserSubmission: { // True if this log was submitted by user, false if entered by admin
+        type: Boolean,
+        default: false,
+    },
+    userSubmittedConfirmationCode: { // M-Pesa code submitted by user
+        type: String,
+        trim: true,
+    },
+    userSubmittedAmount: { // Amount user claims to have paid
+        type: Number,
+    },
+    verificationStatus: { // Status of user-submitted payment
+        type: String,
+        enum: ['pending_verification', 'approved', 'rejected', 'not_applicable'], // not_applicable for admin entries
+        default: function() {
+            return this.isUserSubmission ? 'pending_verification' : 'not_applicable';
+        }
+    },
+    adminRemarks: { // Optional remarks from admin during verification
+        type: String,
+        trim: true,
     }
 });
 
@@ -121,6 +144,9 @@ const customerSchema = new mongoose.Schema({
     passwordResetToken: String,
     passwordResetExpires: Date,
     lastBillingDate: { // New field for tracking billing
+        type: Date,
+    },
+    lastLoginAt: {
         type: Date,
     }
 }, {

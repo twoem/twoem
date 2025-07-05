@@ -1,47 +1,60 @@
-<%- include('../../partials/customerHeader', { title: title, customer: customer }) %>
+<% /* This page is rendered within layouts/portal-customer.ejs */ %>
+<% /* Flash messages are handled by the layout */ %>
 
-<% /* Main container is opened in customerHeader.ejs and closed in customerFooter.ejs */ %>
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-7">
-            <div class="card shadow-lg" style="border-radius: 0.75rem;">
-                <div class="card-header text-white" style="background-color: var(--lavender-vibrant-purple); border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem;">
-                    <h4 class="mb-0"><i class="fas fa-credit-card me-2"></i>Make a Payment</h4>
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card shadow-lg" style="border-radius: 0.75rem;">
+            <div class="card-header text-white" style="background-color: var(--lavender-vibrant-purple); border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem;">
+                <h4 class="mb-0"><i class="fas fa-credit-card me-2"></i>Make a Payment</h4>
+            </div>
+            <div class="card-body" style="background-color: var(--lavender-lightest-yellow);">
+
+                <h5 class="fw-bold" style="color: var(--lavender-darker-purple);">Mpesa Payment Instructions:</h5>
+                <div class="alert mt-3" style="background-color: var(--lavender-very-light); border-left: 5px solid var(--lavender-vibrant-purple);">
+                    <p class="mb-1"><strong>1. Go to Mpesa App / *334# / SIM Toolkit</strong></p>
+                    <p class="mb-1"><strong>2. Select Lipa na Mpesa</strong></p>
+                    <p class="mb-1"><strong>3. Select Paybill</strong></p>
+                    <p class="mb-1"><strong>4. Enter Business Number:</strong> <strong class="text-danger"><%= mpesaPaybill %></strong></p>
+                    <p class="mb-1"><strong>5. Enter Account Number:</strong> <strong class="text-danger"><%= customer.accountNumber %></strong></p>
+                    <p class="mb-1"><strong>6. Enter Amount:</strong> The amount you wish to pay.</p>
+                    <p class="mb-0"><strong>7. Enter your Mpesa PIN then Send.</strong></p>
+                    <p class="mt-2">After making the payment, please submit the Mpesa transaction code/message and the amount paid below for verification.</p>
                 </div>
-                <div class="card-body" style="background-color: var(--lavender-lightest-yellow);">
-                    <%- include('../../partials/flash-messages') %>
 
-                    <h5 class="fw-bold" style="color: var(--lavender-darker-purple);">Mpesa Payment Instructions:</h5>
-                    <div class="alert mt-3" style="background-color: var(--lavender-very-light); border-left: 5px solid var(--lavender-vibrant-purple);">
-                        <p class="mb-1"><strong>1. Go to Mpesa App / *334# / SIM Toolkit</strong></p>
-                        <p class="mb-1"><strong>2. Select Lipa na Mpesa</strong></p>
-                        <p class="mb-1"><strong>3. Select Paybill</strong></p>
-                        <p class="mb-1"><strong>4. Enter Business Number:</strong> <strong class="text-danger"><%= BUSINESS_NO ? BUSINESS_NO : 'NOT_CONFIGURED' %></strong></p>
-                        <p class="mb-0"><strong>5. Enter Account Number:</strong> <strong class="text-danger"><%= customer.accountNumber %></strong></p>
-                        <p class="mt-2">After making the payment, please submit the Mpesa transaction code/message below for verification.</p>
+                <hr style="border-color: var(--lavender-light-blue); border-width: 2px;">
+
+                <h5 class="fw-bold mt-4" style="color: var(--lavender-darker-purple);">Submit Your Payment Confirmation:</h5>
+
+                <div class="mb-3">
+                    <p class="mb-1"><strong>Your Current Unpaid Balance:</strong>
+                        <strong class="<%= customer.currentBalance <= 0 ? 'text-success' : 'text-danger' %>">
+                            KES <%= customer.currentBalance ? customer.currentBalance.toFixed(2) : '0.00' %>
+                        </strong>
+                    </p>
+                </div>
+
+                <form action="/portals/customer/submit-payment-confirmation" method="POST">
+                    <div class="mb-3">
+                        <label for="paymentAmount" class="form-label">Amount Paid <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="paymentAmount" name="paymentAmount" step="0.01" min="1" required placeholder="Enter the amount you paid" style="background-color: white; border-color: var(--lavender-light-blue);">
                     </div>
 
-                    <hr style="border-color: var(--lavender-light-blue); border-width: 2px;">
+                    <div class="mb-3">
+                        <label for="confirmationCode" class="form-label">Mpesa Transaction Code / Message <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="confirmationCode" name="confirmationCode" rows="3" required placeholder="Enter the full Mpesa confirmation message or just the transaction code (e.g., RFH7GXXXXX)" style="background-color: white; border-color: var(--lavender-light-blue);"><%= locals.formData && formData.confirmationCode ? formData.confirmationCode : '' %></textarea>
+                        <div class="form-text" style="color: var(--lavender-muted-green);">Please enter the Mpesa code (e.g., RFH7GXXXXX) or the full confirmation message you received.</div>
+                    </div>
 
-                    <h5 class="fw-bold mt-4" style="color: var(--lavender-darker-purple);">Submit Your Mpesa Transaction Code:</h5>
-                    <form action="/portal/customer/pay/submit-code" method="POST">
-                        <div class="mb-3">
-                            <label for="transactionCode" class="form-label">Mpesa Transaction Code / Message <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="transactionCode" name="transactionCode" rows="3" required placeholder="Enter the full Mpesa confirmation message or just the transaction code (e.g., RFH7GXXXXX)" style="background-color: white; border-color: var(--lavender-light-blue);"><%= formData && formData.transactionCode ? formData.transactionCode : '' %></textarea>
-                            <div class="form-text" style="color: var(--lavender-muted-green);">Please enter the Mpesa code (e.g., RFH7GXXXXX) or the full confirmation message you received.</div>
-                        </div>
+                    <div class="alert alert-warning small" style="background-color: #FFF3CD; border-color: #FFEEBA; color: #664D03;">
+                        <strong>Note:</strong> Submitting this form notifies our team to verify your payment. Your account balance will be updated once the payment is confirmed by an administrator. This might take some time.
+                    </div>
 
-                        <div class="alert alert-warning small" style="background-color: #FFF3CD; border-color: #FFEEBA; color: #664D03;">
-                            <strong>Note:</strong> Submitting this form notifies our team to verify your payment. Your account balance will be updated once the payment is confirmed by an administrator. This might take some time.
-                        </div>
-
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="/portal/customer/subscription" class="btn btn-outline-secondary" style="border-color: var(--lavender-muted-green); color: var(--lavender-muted-green);"><i class="fas fa-arrow-left me-1"></i> Back to Subscription</a>
-                            <button type="submit" class="btn" style="background-color: var(--lavender-vibrant-purple); color: white;"><i class="fas fa-paper-plane me-2"></i>Submit Code</button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="/portals/customer/dashboard" class="btn btn-outline-secondary" style="border-color: var(--lavender-muted-green); color: var(--lavender-muted-green);"><i class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
+                        <button type="submit" class="btn" style="background-color: var(--lavender-vibrant-purple); color: white;"><i class="fas fa-paper-plane me-2"></i>Submit Confirmation</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-
-<%- include('../../partials/customerFooter') %>
+</div>

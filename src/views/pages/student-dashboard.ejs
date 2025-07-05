@@ -1,68 +1,107 @@
-<%- include('../partials/studentHeader', { title: 'Student Dashboard', student: student }) %>
+<% /* This page is rendered within layouts/portal-student.ejs */ %>
+<% /* Flash messages are handled by the layout */ %>
 
-<% /* Container-fluid is opened in studentHeader.ejs */ %>
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom" style="border-color: var(--lavender-light-blue) !important;">
-        <h1 class="h2" style="color: var(--lavender-darker-purple);">Student Dashboard</h1>
-        <% if (locals.student && locals.student.first_name) { %> <% /* Changed to first_name to match DB */ %>
-            <span class="fs-5" style="color: var(--lavender-muted-green);">Welcome, <strong><%= student.first_name %></strong>!</span>
-        <% } else { %>
-            <span class="fs-5" style="color: var(--lavender-muted-green);">Welcome, Student!</span>
-        <% } %>
-        <% /* Logout is now in the studentHeader dropdown */ %>
-    </div>
-
-    <!-- First Login Tasks - these will be handled by redirects before reaching dashboard -->
-    <!-- This dashboard is shown AFTER initial setup is complete -->
-     <% if (locals.message) { %><div class="alert alert-success"><%= message %></div><% } %>
-     <% if (locals.error) { %><div class="alert alert-danger"><%= error %></div><% } %>
-
-    <div class="row">
-        <div class="col-md-8">
-             <% if (locals.student && locals.student.firstName) { %>
-                <h4>Welcome, <%= student.firstName %>!</h4>
-            <% } else { %>
-                <h4>Welcome!</h4>
-            <% } %>
-            <p>This is your personal dashboard. Here you can view your academic progress, fee statements, important notifications, and access study resources.</p>
-
-            <div class="card mt-4">
-                <div class="card-header">
-                    Notifications
-                </div>
-                <div class="card-body">
-                    <p class="card-text">No new notifications at this time. (Placeholder)</p>
-                    <!-- List notifications here -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm mb-4 bg-light">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">Hello, <strong class="text-primary"><%= student.first_name %></strong>!</h2>
+                        <p class="lead mb-0 text-muted">Welcome back, we've missed you!</p>
+                    </div>
+                    <div class="text-end">
+                        <p class="mb-0 small"><i class="fas fa-calendar-alt me-1"></i> <%= currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+                        <p class="mb-0 small"><i class="fas fa-clock me-1"></i> <span id="currentTime"></span></p>
+                         <% if (student.last_login_at) { %>
+                            <p class="mb-0 small text-muted"><i class="fas fa-history me-1"></i> Last Login: <%= new Date(student.last_login_at).toLocaleString() %></p>
+                        <% } %>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="list-group">
-                <a href="/student/my-academics" class="list-group-item list-group-item-action">
-                    <i class="fas fa-graduation-cap me-2"></i>View Academic Scores
-                </a>
-                <a href="/student/my-certificates" class="list-group-item list-group-item-action">
-                    <i class="fas fa-certificate me-2"></i>My Certificates
-                </a>
-                <a href="/student/my-fees" class="list-group-item list-group-item-action">
-                    <i class="fas fa-file-invoice-dollar me-2"></i>Check Fees Balance
-                </a>
-                <a href="/student/notifications" class="list-group-item list-group-item-action">
-                    <i class="fas fa-bell me-2"></i>Read Notifications
-                </a>
-                <a href="/student/study-resources" class="list-group-item list-group-item-action">
-                    <i class="fas fa-book-open me-2"></i>Study Resources
-                </a>
-                <a href="/student/wifi-credentials" class="list-group-item list-group-item-action">
-                    <i class="fas fa-wifi me-2"></i>View WiFi Credentials
-                </a>
-                <a href="/student/profile/edit-nok" class="list-group-item list-group-item-action">
-                    <i class="fas fa-user-edit me-2"></i>Update Profile (Next of Kin)
-                </a>
-                <a href="/student/profile/change-password" class="list-group-item list-group-item-action">
-                    <i class="fas fa-key me-2"></i>Change Password
-                </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Student Information Column -->
+    <div class="col-lg-7 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-id-card me-2"></i>Your Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Full Name:</dt>
+                    <dd class="col-sm-8"><%= student.first_name %> <%= student.second_name ? student.second_name + ' ' : '' %><%= student.surname %></dd>
+
+                    <dt class="col-sm-4">Registration No:</dt>
+                    <dd class="col-sm-8"><%= student.registration_number %></dd>
+
+                    <dt class="col-sm-4">Email Address:</dt>
+                    <dd class="col-sm-8"><%= student.email %></dd>
+
+                    <dt class="col-sm-4">Phone Number:</dt>
+                    <dd class="col-sm-8"><%= student.phone_number %></dd>
+
+                    <dt class="col-sm-4">Enrolled On:</dt>
+                    <dd class="col-sm-8"><%= student.enrolled_date ? new Date(student.enrolled_date).toLocaleDateString() : 'N/A' %></dd>
+
+                    <dt class="col-sm-4">Time Studied:</dt>
+                    <dd class="col-sm-8"><%= timeStudied %></dd>
+
+                    <dt class="col-sm-4">Fees Balance:</dt>
+                    <dd class="col-sm-8 fw-bold <%= feesBalance <= 0 ? 'text-success' : 'text-danger' %>">
+                        KES <%= feesBalance ? feesBalance.toFixed(2) : '0.00' %>
+                    </dd>
+
+                    <dt class="col-sm-4">Next of Kin:</dt>
+                    <dd class="col-sm-8">
+                        <% if (student.next_of_kin_details) { %>
+                            <%= student.next_of_kin_details %>
+                        <% } else { %>
+                            <span class="text-muted">Not set.</span>
+                        <% } %>
+                        <% if (nokNeedsUpdate) { %>
+                            <a href="/portals/student/profile/edit-nok" class="ms-2 badge bg-warning text-dark text-decoration-none">Update Now</a>
+                        <% } %>
+                    </dd>
+                </dl>
+                 <a href="/portals/student/profile" class="btn btn-sm btn-outline-primary mt-2"><i class="fas fa-user-edit me-1"></i> View/Edit Profile</a>
             </div>
         </div>
     </div>
 
-<%- include('../partials/studentFooter') %>
+    <!-- Notifications & Quick Links Column -->
+    <div class="col-lg-5 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notifications</h5>
+            </div>
+            <div class="card-body">
+                <% if (notifications && notifications.length > 0) { %>
+                    <% notifications.forEach(notification => { %>
+                        <div class="alert alert-light border-start border-info border-3 mb-2">
+                            <h6 class="alert-heading mb-0"><%= notification.title %></h6>
+                            <p class="mb-0 small"><%= notification.message %></p>
+                            <small class="text-muted"><%= new Date(notification.date).toLocaleDateString() %></small>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p class="text-muted">You have no new notifications.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateTime() {
+        const timeElement = document.getElementById('currentTime');
+        if (timeElement) {
+            timeElement.innerText = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        }
+    }
+    setInterval(updateTime, 1000);
+    updateTime(); // Initial call
+</script>

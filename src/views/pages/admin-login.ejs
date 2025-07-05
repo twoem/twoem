@@ -124,7 +124,7 @@
 
             <%- include('../partials/flash-messages') %>
 
-            <form action="/admin/login" method="POST" id="adminLoginForm">
+            <form action="/portals/admin/login" method="POST" id="adminLoginForm">
                 <div class="form-floating">
                     <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required value="<%= locals.email || '' %>">
                     <label for="email"><i class="fas fa-envelope me-2 opacity-75"></i>Email Address</label>

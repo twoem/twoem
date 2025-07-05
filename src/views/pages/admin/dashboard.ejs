@@ -1,0 +1,133 @@
+<% /* This page is rendered within layouts/portal-admin.ejs */ %>
+<% /* Flash messages are handled by the layout */ %>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Admin Dashboard</h1>
+    <span class="fs-5 text-muted">Hello, <strong><%= adminName %></strong>!</span>
+</div>
+
+<p class="lead">Welcome to the admin control panel. From here you can manage all aspects of the Twoem Online Productions website and associated services.</p>
+
+<!-- Placeholder for Stats - To be implemented in the next step -->
+<div class="row my-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-users me-2"></i>Total Customers</h5>
+                <p class="card-text fs-4"><%= stats.totalCustomers %></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-user-graduate me-2"></i>Total Students</h5>
+                <p class="card-text fs-4"><%= stats.totalStudents %></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-user-check me-2"></i>Active Students</h5>
+                <p class="card-text fs-4"><%= stats.activeStudents %></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger mb-3">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-wifi-slash me-2"></i>Disconnected Customers</h5>
+                <p class="card-text fs-4"><%= stats.disconnectedCustomers %></p>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-6">
+        <div class="card text-dark bg-light mb-3">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-hand-holding-usd me-2"></i>Last Customer Payment Update</h5>
+                <p class="card-text"><%= stats.lastCustomerPaymentInfo %></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-dark bg-light mb-3">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-money-check-alt me-2"></i>Last Student Fee Update</h5>
+                <p class="card-text"><%= stats.lastFeeUpdateInfo %></p>
+            </div>
+        </div>
+    </div>
+</div>
+<hr>
+
+<h3 class="mt-4 mb-3">Quick Actions</h3>
+<div class="row g-3">
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title"><i class="fas fa-user-graduate me-2"></i>Student Management</h5>
+                <p class="card-text small text-muted flex-grow-1">Register new students, view list, edit details, manage enrollments, marks, and fees.</p>
+                <a href="/portals/admin/students/register" class="btn btn-sm btn-primary mt-auto mb-2 d-block">Register New Student</a>
+                <a href="/portals/admin/students" class="btn btn-sm btn-outline-primary d-block">View All Students</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title"><i class="fas fa-users me-2"></i>Customer Management</h5>
+                <p class="card-text small text-muted flex-grow-1">Register new internet customers, view list, edit details, and manage payments.</p>
+                <a href="/portals/admin/customers/add" class="btn btn-sm btn-primary mt-auto mb-2 d-block">Add New Customer</a>
+                <a href="/portals/admin/customers" class="btn btn-sm btn-outline-primary d-block">View All Customers</a>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title"><i class="fas fa-envelope-open-text me-2"></i>Mailer</h5>
+                <p class="card-text small text-muted flex-grow-1">Send emails to students and customers, test templates.</p>
+                <a href="/portals/admin/mailer" class="btn btn-sm btn-primary mt-auto d-block">Open Mailer</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title"><i class="fas fa-database me-2"></i>Backup Management</h5>
+                <p class="card-text small text-muted flex-grow-1">Download and manage system backups.</p>
+                <a href="/portals/admin/backup" class="btn btn-sm btn-primary mt-auto d-block">Manage Backups</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title"><i class="fas fa-bullhorn me-2"></i>Notifications (Students)</h5>
+                <p class="card-text small text-muted flex-grow-1">Create and manage notifications for students.</p>
+                <a href="/portals/admin/notifications" class="btn btn-sm btn-primary mt-auto d-block">Manage Notifications</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title"><i class="fas fa-book-reader me-2"></i>Study Resources</h5>
+                <p class="card-text small text-muted flex-grow-1">Upload and manage study materials for students.</p>
+                <a href="/portals/admin/resources" class="btn btn-sm btn-primary mt-auto d-block">Manage Resources</a>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title"><i class="fas fa-cogs me-2"></i>Site Settings</h5>
+                <p class="card-text small text-muted flex-grow-1">Manage WiFi details and other site configurations.</p>
+                <a href="/portals/admin/settings/wifi" class="btn btn-sm btn-primary mt-auto d-block">WiFi Settings</a>
+            </div>
+        </div>
+    </div>
+    <!-- Add other quick action cards as needed -->
+    <!-- Example: Course Management, Public Downloads Management -->
+</div>

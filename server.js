@@ -1,6 +1,26 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const mongoose = require('mongoose');
+
+// Connect to MongoDB
+if (!process.env.DATABASE_URL) {
+    console.error('FATAL ERROR: DATABASE_URL is not defined in .env file for MongoDB connection.');
+    process.exit(1); // Exit if no DB URL
+}
+
+mongoose.connect(process.env.DATABASE_URL, {
+    // useNewUrlParser: true, // No longer needed in Mongoose 6+
+    // useUnifiedTopology: true, // No longer needed in Mongoose 6+
+    // useCreateIndex: true, // No longer needed, Mongoose 6+ uses `autoCreate` and `autoIndex`
+    // useFindAndModify: false // No longer needed
+}).then(() => {
+    console.log('Successfully connected to MongoDB (for Customer data).');
+}).catch(err => {
+    console.error('MongoDB connection error (for Customer data):', err);
+    process.exit(1); // Exit if connection fails
+});
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
