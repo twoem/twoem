@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f0f0f0; }
+        .certificate-container {
+            width: 800px;
+            height: 560px; /* Approx A4 landscape proportion */
+            border: 10px solid #4a90e2;
+            padding: 30px;
+            text-align: center;
+            background-color: white;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .logo { max-width: 120px; margin-bottom: 20px; }
+        h1 { font-size: 28px; color: #333; margin-bottom: 15px; text-transform: uppercase; }
+        h2 { font-size: 22px; color: #555; margin-bottom: 25px; }
+        p { font-size: 16px; line-height: 1.6; margin-bottom: 15px; }
+        .student-name { font-size: 24px; font-weight: bold; color: #4a90e2; margin: 20px 0; }
+        .course-name { font-size: 20px; font-style: italic; color: #333; margin-bottom: 30px; }
+        .footer-sig { margin-top: 40px; display: flex; justify-content: space-around; align-items: flex-end; }
+        .signature { border-top: 1px solid #777; padding-top: 5px; width: 200px; font-size: 14px; color: #555;}
+        .date-issued { font-size: 14px; color: #555; margin-top: 10px; }
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 72px;
+            color: rgba(74, 144, 226, 0.1);
+            font-weight: bold;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .content { position: relative; z-index: 1; }
+         @media print {
+            body { background-color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .certificate-container { box-shadow: none; border: 5px solid #4a90e2; margin: auto; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate-container">
+        <div class="watermark">Twoem</div>
+        <div class="content">
+            <%- body %>
+        </div>
+    </div>
+    <div class="no-print" style="text-align: center; margin-top: 20px;">
+        <button onclick="window.print()">Print Certificate</button>
+        <a href="/student/my-certificates" style="margin-left: 10px;">Back to Certificates List</a>
+    </div>
+</body>
+</html>

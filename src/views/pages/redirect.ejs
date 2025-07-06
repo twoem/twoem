@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f2f5; /* Light background */
+            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .redirect-container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            max-width: 500px;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: #007bff; /* Primary color for spinner */
+            margin-bottom: 20px;
+        }
+        h4 {
+            margin-bottom: 10px;
+            color: #007bff;
+        }
+        p {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+        .small-text {
+            font-size: 0.9em;
+            color: #6c757d; /* Muted text color */
+        }
+        .logo-redirect {
+            max-width: 100px;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="redirect-container">
+        <a href="https://ibb.co/hF8jSC4H"><img src="https://i.ibb.co/XxJgqVKp/IMG-20250701-WA0003.jpg" alt="IMG-20250701-WA0003" border="0" class="logo-redirect" style="max-height: 80px; margin-bottom: 25px;"></a>
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h4>Preparing Your Download...</h4>
+        <p>Your download for "<strong><%= locals.docTitle ? docTitle : 'the document' %></strong>" is starting.</p>
+        <p class="small-text">Please wait, you will be redirected shortly. If your download doesn't start automatically, the link might be invalid or expired.</p>
+    </div>
+
+    <script>
+        const redirectUrl = "<%= locals.targetUrl ? targetUrl : '/' %>";
+        const delaySeconds = 5; // Changed to 5 seconds delay
+
+        setTimeout(function() {
+            if (redirectUrl && redirectUrl !== '/') {
+                window.location.href = redirectUrl;
+            } else {
+                // Fallback if URL is missing or invalid, maybe redirect to downloads page or home
+                window.location.href = '/downloads';
+            }
+        }, delaySeconds * 1000);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

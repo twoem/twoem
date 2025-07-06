@@ -1,0 +1,39 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "using Node.js/Bun, Python, Ruby, Go, Rust, and Elixir, desing",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "echo \"Build completed\"",
+    "postinstall": "echo \"Dependencies installed successfully\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/twoem/jules-twoem.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/twoem/jules-twoem/issues"
+  },
+  "homepage": "https://github.com/twoem/jules-twoem#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "connect-flash": "^0.1.1",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.6.1",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.3.0",
+    "nodemailer": "^7.0.3",
+    "sqlite3": "^5.1.7"
+  }
+}

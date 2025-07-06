@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= locals.subjectLine || 'New Contact Form Submission' %></title>
+    <style>
+        :root {
+            --lavender-lightest-yellow: #FDFBD4;
+            --lavender-muted-green: #BDB96A;
+            --lavender-light-blue: #C1BFFF;
+            --lavender-very-light: #DBD4FF;
+            --lavender-vibrant-purple: #CF6DFC;
+            --lavender-darker-purple: #a358d3;
+            /* New email variables */
+            --email-bg: #f4f7f9;
+            --email-container-bg: #ffffff;
+            --email-header-bg: #583759; /* Admin-facing, use admin color */
+            --email-header-text: #ffffff;
+            --email-footer-bg: #f0f0f0;
+            --email-footer-text: #555555;
+            --email-link-color: #CF6DFC;
+            --email-text-color: #343a40;
+            --email-card-border: #e0e0e0;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6; color: var(--email-text-color); margin: 0; padding: 0;
+            background-color: var(--email-bg);
+        }
+        .email-wrapper {
+            background-color: var(--email-bg);
+            padding: 30px 20px;
+        }
+        .container {
+            max-width: 650px; margin: 0 auto; background-color: var(--email-container-bg);
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+            overflow: hidden; border: 1px solid var(--email-card-border);
+        }
+        .header {
+            background-color: var(--email-header-bg);
+            color: var(--email-header-text);
+            padding: 30px 20px; /* Standardized padding */
+            text-align: center;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .header img.logo {
+            max-height: 60px; /* Consistent with other emails */
+            margin-bottom: 15px;
+            border-radius: 8px; /* Consistent */
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .content {
+            padding: 40px 30px;
+            font-size: 16px;
+        }
+
+        .welcome-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .welcome-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .details-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .detail-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .detail-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 18px;
+            color: white;
+        }
+
+        .detail-content {
+            flex: 1;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #718096;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .detail-value a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .message-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border: 2px solid #e2e8f0;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 16px;
+            position: relative;
+        }
+
+        .message-card::before {
+            content: '💬';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 20px;
+        }
+
+        .message-card h3 {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+        .message-body {
+            white-space: pre-wrap;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .action-card {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 16px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .action-button {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+
+        .action-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            font-size: 14px;
+            color: #718096;
+            background: #f8fafc;
+        }
+
+        .footer-logo {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 15px;
+            border-radius: 8px;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .social-links {
+            margin: 20px 0;
+        }
+
+        .social-link {
+            display: inline-block;
+            width: 35px;
+            height: 35px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 0 5px;
+            line-height: 35px;
+            font-size: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .email-wrapper { padding: 20px 10px; }
+            .content { padding: 25px 20px; }
+            .header { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="container">
+            <div class="header" style="background-color: var(--email-header-bg); color: var(--email-header-text);">
+                <div class="header-content">
+                    <% if (typeof logoUrl !== 'undefined' && logoUrl) { %>
+                        <img src="<%= logoUrl %>" alt="<%= process.env.EMAIL_FROM_NAME || 'Site Logo' %>" class="logo" style="filter: brightness(0) invert(1);">
+                    <% } else if (process.env.SITE_LOGO_URL_EMAIL) { %>
+                        <img src="<%= process.env.SITE_LOGO_URL_EMAIL %>" alt="<%= process.env.EMAIL_FROM_NAME || 'Site Logo' %>" class="logo" style="filter: brightness(0) invert(1);">
+                    <% } %>
+                    <h1>🎉 New Contact Form Submission!</h1>
+                    <% if (process.env.EMAIL_FROM_NAME) { %>
+                        <p>For <%= process.env.EMAIL_FROM_NAME %></p>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="content">
+                <% /* Removed welcome-card for a more direct approach for admin notifications */ %>
+                <p style="font-size: 1.1em;">A new message has been submitted via the website contact form:</p>
+
+                <div class="details-card" style="background-color: #f8f9fa; border-color: var(--email-card-border);">
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <div class="detail-icon" style="background: var(--email-header-bg);">👤</div>
+                            <div class="detail-content">
+                                <div class="detail-label">From</div>
+                                <div class="detail-value"><%= senderName %></div>
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-icon" style="background: var(--email-header-bg);">📧</div>
+                            <div class="detail-content">
+                                <div class="detail-label">Email Address</div>
+                                <div class="detail-value"><a href="mailto:<%= senderEmail %>" style="color: var(--email-link-color);"><%= senderEmail %></a></div>
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-icon" style="background: var(--email-header-bg);">📝</div>
+                            <div class="detail-content">
+                                <div class="detail-label">Subject</div>
+                                <div class="detail-value"><%= emailSubject %></div>
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-icon" style="background: var(--email-header-bg);">📅</div>
+                            <div class="detail-content">
+                                <div class="detail-label">Submitted On</div>
+                                <div class="detail-value"><%= submissionDate %></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message-card" style="border-color: var(--email-card-border);">
+                    <h3>💬 Their Message</h3>
+                    <div class="message-body" style="border-left-color: var(--email-header-bg);"><%- emailMessage.replace(/\n/g, '<br>') %></div>
+                </div>
+
+                <div class="action-card" style="background: linear-gradient(135deg, var(--lavender-vibrant-purple) 0%, var(--lavender-darker-purple) 100%);">
+                    <h3>🚀 Ready to Respond?</h3>
+                    <p>Great customer service starts with quick responses!</p>
+                    <a href="mailto:<%= senderEmail %>" class="action-button">📧 Reply via Email</a>
+                    <a href="tel:<%= process.env.COMPANY_PHONE_LINK || '+254707330204' %>" class="action-button">📞 Call Sender</a>
+                </div>
+            </div>
+
+            <div class="footer" style="background-color: var(--email-footer-bg); color: var(--email-footer-text);">
+                <p>&copy; <%= new Date().getFullYear() %> <%= process.env.EMAIL_FROM_NAME || "Twoem Online Productions" %>. All rights reserved.</p>
+                <% if (locals.siteUrl) { %><p><a href="<%= siteUrl %>" class="link-alt" style="color: var(--email-link-color);">Visit our website</a></p><% } %>
+                <p>
+                    This is an automated notification from the website contact form.
+                </p>
+                 <p>
+                    Contact for support: <a href="mailto:<%= process.env.CONTACT_RECEIVER_EMAIL %>" class="link-alt" style="color: var(--email-link-color);"><%= process.env.CONTACT_RECEIVER_EMAIL %></a>
+                    <% if (process.env.COMPANY_PHONE) { %> | Phone: <%= process.env.COMPANY_PHONE %><% } %>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

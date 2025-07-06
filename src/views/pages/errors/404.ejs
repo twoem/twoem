@@ -1,0 +1,17 @@
+<%- include('../../partials/header', { title: 'Page Not Found' }) %>
+<%- include('../../partials/navbar') %>
+
+<div class="container mt-4"> <%# Added mt-4 for spacing from fixed navbar %>
+    <div class="error-container text-center">
+        <h1>404</h1>
+        <p class="error-code">Oops! Page Not Found.</p>
+        <p>We're sorry, but the page you were looking for doesn't exist, might have been removed, had its name changed, or is temporarily unavailable.</p>
+        <p>You tried to access: <code><%= locals.url ? url : 'the requested page' %></code></p>
+        <div>
+            <a href="/" class="btn btn-home">Go to Homepage</a>
+            <a href="javascript:history.back()" class="btn">Go Back</a>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

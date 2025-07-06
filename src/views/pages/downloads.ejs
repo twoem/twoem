@@ -1,0 +1,85 @@
+<%- include('../partials/header', { title: 'Downloads' }) %>
+<%- include('../partials/navbar') %>
+
+<main class="pt-0"> <!-- Remove mt-5 if using full-width header image -->
+    <!-- Optional Header Image for Downloads Page -->
+    <div class="container-fluid px-0 mb-5">
+        <div style="background: url('/images/downloads/downloads-header.jpg') no-repeat center center; background-size: cover; height: 30vh; display: flex; align-items: center; justify-content: center; text-align: center;">
+            <h1 class="display-4 fw-bold text-white page-title-hero" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.7);">Downloads</h1>
+        </div>
+    </div>
+
+    <div class="container"> <%# Content container starts here %>
+        <div class="row">
+            <div class="col-12 text-center">
+                <p class="lead mb-5">Find public documents, eulogies, and other resources available for download from Twoem Online Productions.</p>
+                <%- include('../partials/flash-messages') %>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <h3 class="mt-0 mb-4"><i class="fas fa-file-alt text-primary me-2"></i>Public Documents</h3>
+                <% if (publicDocs && publicDocs.length > 0) { %>
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+                        <% publicDocs.forEach(function(doc) { %>
+                            <div class="col">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title"><%= doc.title %></h5>
+                                        <p class="card-text small text-muted flex-grow-1"><%= doc.description %></p>
+                                        <a href="/redirect?url=<%= encodeURIComponent(doc.file_url) %>&title=<%= encodeURIComponent(doc.title) %>" class="btn btn-primary mt-auto"><i class="fas fa-download me-2"></i>Download</a>
+                                    </div>
+                                    <div class="card-footer text-muted small">
+                                        Added: <%= new Date(doc.created_at).toLocaleDateString() %>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-info">No public documents currently available.</div>
+                <% } %>
+
+                <h3 class="mt-5 mb-4"><i class="fas fa-book-dead text-secondary me-2"></i>Eulogy Documents</h3>
+                <p class="text-muted mb-4">These documents are available for a limited time.</p>
+                <% if (eulogyDocs && eulogyDocs.length > 0) { %>
+                     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                        <% eulogyDocs.forEach(function(doc) {
+                            let expiryText = '';
+                            let effectiveExpiry;
+                            if (doc.expiry_date) {
+                                effectiveExpiry = new Date(doc.expiry_date);
+                            } else {
+                                effectiveExpiry = new Date(doc.created_at);
+                                effectiveExpiry.setDate(effectiveExpiry.getDate() + 7);
+                            }
+                            const daysRemaining = Math.ceil((effectiveExpiry - new Date()) / (1000 * 60 * 60 * 24));
+                            if (daysRemaining <= 0) expiryText = 'Expired';
+                            else if (daysRemaining === 1) expiryText = 'Expires today';
+                            else if (daysRemaining <= 7) expiryText = `Expires in ${daysRemaining} days`;
+                            else expiryText = `Expires on ${effectiveExpiry.toLocaleDateString()}`;
+                        %>
+                            <div class="col">
+                                <div class="card h-100 shadow-sm">
+                                     <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title"><%= doc.title %></h5>
+                                        <p class="card-text small text-muted flex-grow-1"><%= doc.description %></p>
+                                        <a href="/redirect?url=<%= encodeURIComponent(doc.file_url) %>&title=<%= encodeURIComponent(doc.title) %>" class="btn btn-secondary mt-auto"><i class="fas fa-download me-2"></i>Download</a>
+                                    </div>
+                                    <div class="card-footer text-danger small">
+                                        <%= expiryText %>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-info">No eulogy documents currently available.</div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>

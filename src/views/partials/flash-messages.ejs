@@ -1,0 +1,57 @@
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 10000;"> <!-- Increased z-index -->
+    <%
+    let allFlashMessages = [];
+    // Consolidate all possible flash message variables into one array
+    if (locals.success_msg && locals.success_msg.length > 0) {
+        locals.success_msg.forEach(msg => allFlashMessages.push({ type: 'success', text: msg, emoji: 'fas fa-check-circle' }));
+    }
+    if (locals.error_msg && locals.error_msg.length > 0) {
+        locals.error_msg.forEach(msg => allFlashMessages.push({ type: 'error', text: msg, emoji: 'fas fa-exclamation-triangle' }));
+    }
+    // Handle single 'error' string (often from validation middleware or custom errors)
+    if (locals.error && typeof locals.error === 'string' && locals.error.length > 0) {
+        allFlashMessages.push({ type: 'error', text: locals.error, emoji: 'fas fa-times-circle' });
+    }
+    // Handle 'error' array (can come from some validation setups)
+    if (locals.error && Array.isArray(locals.error) && locals.error.length > 0) {
+        locals.error.forEach(err => allFlashMessages.push({ type: 'error', text: (typeof err === 'object' && err.msg) ? err.msg : err, emoji: 'fas fa-times-circle' }));
+    }
+    // Handle 'errors' array (often from express-validator)
+    if (locals.errors && Array.isArray(locals.errors) && locals.errors.length > 0) {
+        locals.errors.forEach(err => allFlashMessages.push({ type: 'error', text: (typeof err === 'object' && err.msg) ? err.msg : err, emoji: 'fas fa-times-circle' }));
+    }
+    // Add info_msg if you use it
+    if (locals.info_msg && locals.info_msg.length > 0) {
+        locals.info_msg.forEach(msg => allFlashMessages.push({ type: 'info', text: msg, emoji: 'fas fa-info-circle' }));
+    }
+    %>
+
+    <% allFlashMessages.forEach(function(message, index) { %>
+        <div class="toast align-items-center text-white
+            <%= message.type === 'success' ? 'bg-success' : '' %>
+            <%= message.type === 'error' ? 'bg-danger' : '' %>
+            <%= message.type === 'info' ? 'bg-info text-dark' : '' %> <% /* text-dark for better readability on bg-info */ %>
+            border-0"
+            role="alert" aria-live="assertive" aria-atomic="true" id="flashToast<%= index %>" data-bs-delay="3000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="<%= message.emoji %> me-2"></i><%- message.text %> <% /* Allow HTML */ %>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    <% }); %>
+</div>
+
+<% if (allFlashMessages.length > 0) { %>
+<script>
+    // Ensure this script runs after the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function () {
+        var toastElList = [].slice.call(document.querySelectorAll('.toast-container .toast'));
+        toastElList.forEach(function (toastEl) {
+            var toast = new bootstrap.Toast(toastEl); // Initialize each toast
+            toast.show(); // Show it
+        });
+    });
+</script>
+<% } %>

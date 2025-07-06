@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= locals.subjectLine || notificationTitle %></title>
+    <style>
+        :root {
+            --lavender-lightest-yellow: #FDFBD4;
+            --lavender-muted-green: #BDB96A;
+            --lavender-light-blue: #C1BFFF;
+            --lavender-very-light: #DBD4FF;
+            --lavender-vibrant-purple: #CF6DFC;
+            --lavender-darker-purple: #a358d3;
+            --email-bg: #f4f7f9; /* Light neutral background */
+            --email-container-bg: #ffffff;
+            --email-header-bg: #6c757d; /* Neutral dark grey for general notifications */
+            --email-header-text: #ffffff;
+            --email-footer-bg: #f0f0f0; /* Light grey footer */
+            --email-footer-text: #555555;
+            --email-link-color: #CF6DFC; /* Vibrant purple for links */
+            --email-button-bg: #CF6DFC;
+            --email-button-hover-bg: #a358d3;
+            --email-text-color: #343a40;
+            --email-muted-text: #6c757d;
+            --email-card-border: #e0e0e0;
+        }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: var(--email-text-color); margin: 0; padding: 0; background-color: var(--email-bg); }
+        .email-wrapper { width: 100%; background-color: var(--email-bg); padding: 20px 0; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; background-color: var(--email-container-bg); border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.07); overflow: hidden; border: 1px solid var(--email-card-border); }
+        .header { background-color: var(--email-header-bg); padding: 30px 20px; text-align: center; }
+        .logo { max-height: 50px; width: auto; display: block; margin: 0 auto 15px; filter: brightness(0) invert(1); /* If logo is dark, make it white for dark header */ }
+        .header h1 { margin: 10px 0 0 0; font-size: 22px; font-weight: 600; color: var(--email-header-text); }
+        .content { padding: 30px; font-size: 16px; line-height: 1.7; }
+        .content p { margin-bottom: 18px; }
+        .content-card { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 15px; margin-bottom:25px; border: 1px solid var(--email-card-border); }
+        .button-container { text-align: center; margin: 25px 0; }
+        .button { display: inline-block; padding: 12px 28px; background-color: var(--email-button-bg); color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .button:hover { background-color: var(--email-button-hover-bg); }
+        .link-alt { color: var(--email-link-color); text-decoration: none; }
+        .link-alt:hover { text-decoration: underline; }
+        .footer { text-align: center; padding: 25px; font-size: 13px; color: var(--email-footer-text); background-color: var(--email-footer-bg); border-top: 1px solid var(--email-card-border); }
+        .footer p { margin: 5px 0; }
+        .footer a { color: var(--email-link-color); text-decoration: none; }
+    </style>
+</head>
+<body style="margin:0; padding:0; background-color: var(--email-bg);">
+    <table class="email-wrapper" border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr><td align="center" valign="top">
+            <table class="container" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr><td class="header" style="background-color: var(--email-header-bg); color: var(--email-header-text);">
+                    <% if (typeof logoUrl !== 'undefined' && logoUrl) { %>
+                        <img src="<%= logoUrl %>" alt="<%= process.env.EMAIL_FROM_NAME || 'Site Logo' %>" class="logo">
+                    <% } else if (process.env.SITE_LOGO_URL_EMAIL) { %>
+                        <img src="<%= process.env.SITE_LOGO_URL_EMAIL %>" alt="<%= process.env.EMAIL_FROM_NAME || 'Site Logo' %>" class="logo">
+                    <% } %>
+                    <h1><%= notificationTitle %></h1>
+                </td></tr>
+                <tr><td class="content">
+                    <% if (locals.studentName) { %>
+                        <p>Hello <%= studentName %>,</p>
+                    <% } %>
+
+                    <div class="content-card">
+                        <%- notificationMessage.replace(/\n/g, '<br>') %>
+                    </div>
+
+                    <% if (typeof actionLink !== 'undefined' && actionLink && typeof actionText !== 'undefined' && actionText) { %>
+                        <div class="button-container">
+                            <a href="<%= actionLink %>" class="button"><%= actionText %></a>
+                        </div>
+                    <% } %>
+
+                    <p>If you have any questions, please don't hesitate to contact us.</p>
+                    <p>Sincerely,<br>The <%= process.env.EMAIL_FROM_NAME || "Team" %></p>
+                </td></tr>
+                <tr><td class="footer">
+                    <p>&copy; <%= new Date().getFullYear() %> <%= process.env.EMAIL_FROM_NAME || "Twoem Online Productions" %>. All rights reserved.</p>
+                    <% if (locals.siteUrl) { %><p><a href="<%= siteUrl %>" class="link-alt">Visit our website</a></p><% } %>
+                     <p>
+                        Contact: <a href="mailto:<%= process.env.CONTACT_RECEIVER_EMAIL %>" class="link-alt"><%= process.env.CONTACT_RECEIVER_EMAIL %></a>
+                        <% if (process.env.COMPANY_PHONE) { %> | Phone: <%= process.env.COMPANY_PHONE %><% } %>
+                    </p>
+                </td></tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>

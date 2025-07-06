@@ -1,0 +1,147 @@
+<footer class="footer mt-auto">
+    <div class="container">
+        <div class="row g-4 py-5">
+            <!-- Company Info -->
+            <div class="col-lg-4 col-md-6">
+                <div class="mb-3">
+                    <a href="https://ibb.co/hF8jSC4H"><img src="https://i.ibb.co/XxJgqVKp/IMG-20250701-WA0003.jpg" alt="IMG-20250701-WA0003" border="0" style="max-height: 40px; width: 40px;" class="d-inline-block align-top me-2"></a>
+                    <span class="h5 gradient-text">Twoem Online Productions</span>
+                </div>
+                <p class="text-light opacity-75 mb-3">
+                    Your trusted partner for digital services, computer education, and government assistance in Kagwe Town.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="https://wa.me/254707330204" class="text-light opacity-75" target="_blank">
+                        <i class="fab fa-whatsapp fa-lg"></i>
+                    </a>
+                    <a href="tel:+254707330204" class="text-light opacity-75">
+                        <i class="fas fa-phone fa-lg"></i>
+                    </a>
+                    <a href="mailto:info@twoemonline.com" class="text-light opacity-75">
+                        <i class="fas fa-envelope fa-lg"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="col-lg-2 col-md-6">
+                <h6 class="text-light mb-3">Quick Links</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="/" class="text-light opacity-75 text-decoration-none">Home</a></li>
+                    <li class="mb-2"><a href="/services" class="text-light opacity-75 text-decoration-none">Services</a></li>
+                    <li class="mb-2"><a href="/gallery" class="text-light opacity-75 text-decoration-none">Gallery</a></li>
+                    <li class="mb-2"><a href="/contact" class="text-light opacity-75 text-decoration-none">Contact</a></li>
+                </ul>
+            </div>
+
+            <!-- Services -->
+            <div class="col-lg-3 col-md-6">
+                <h6 class="text-light mb-3">Our Services</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="/services#digital-printing" class="text-light opacity-75 text-decoration-none">Digital Printing</a></li>
+                    <li class="mb-2"><a href="/services#computer-education" class="text-light opacity-75 text-decoration-none">Computer Education</a></li>
+                    <li class="mb-2"><a href="/services#government-services" class="text-light opacity-75 text-decoration-none">Government Services</a></li>
+                    <li class="mb-2"><a href="/services#network-services" class="text-light opacity-75 text-decoration-none">Network Services</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="col-lg-3 col-md-6">
+                <h6 class="text-light mb-3">Contact Info</h6>
+                <div class="mb-3">
+                    <div class="d-flex align-items-start mb-2">
+                        <i class="fas fa-map-marker-alt text-light opacity-75 me-2 mt-1"></i>
+                        <div>
+                            <small class="text-light opacity-75">Plaza Building<br>Opposite Total Petrol Station<br>Kagwe Town</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-phone text-light opacity-75 me-2"></i>
+                        <small class="text-light opacity-75">+254 707 330 204</small>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-clock text-light opacity-75 me-2"></i>
+                        <small class="text-light opacity-75">Mon-Fri: 8AM-6PM<br>Sat: 9AM-4PM</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="row border-top border-light border-opacity-25 py-3">
+            <div class="col-md-6 text-center text-md-start">
+                <small class="text-light opacity-75">
+                    © <%= new Date().getFullYear() %> Twoem Online Productions. All Rights Reserved.
+                </small>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <small class="text-light opacity-75">
+                    <a href="/data-protection" class="text-light opacity-75 text-decoration-none me-3">Privacy Policy</a>
+                    <a href="/contact" class="text-light opacity-75 text-decoration-none">Support</a>
+                </small>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Bootstrap JS Bundle (Popper.js and Bootstrap JS) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS (if any) -->
+<script src="/js/main.js"></script>
+
+<!-- Modern scroll animations -->
+<script>
+    // Add scroll animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    // Observe all animated elements
+    document.addEventListener('DOMContentLoaded', function() {
+        const animatedElements = document.querySelectorAll('.animate-fade-in-up');
+        animatedElements.forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
+            observer.observe(el);
+        });
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Navbar background on scroll
+    window.addEventListener('scroll', function() {
+        const navbar = document.querySelector('.navbar');
+        if (window.scrollY > 50) {
+            navbar.style.background = 'rgba(255, 255, 255, 0.98)';
+            navbar.style.backdropFilter = 'blur(20px)';
+            navbar.style.boxShadow = 'var(--shadow-lg)';
+        } else {
+            navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+            navbar.style.backdropFilter = 'blur(20px)';
+            navbar.style.boxShadow = 'var(--shadow-lg)';
+        }
+    });
+</script>

@@ -1,0 +1,264 @@
+<%- include('../partials/header', { title: 'Contact Us', page_styles: [{cssText: "body { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }"}] }) %>
+<%- include('../partials/navbar') %>
+
+<main class="container mt-5 section-padding">
+    <!-- Header Section -->
+    <div class="text-center mb-5 animate-fade-in-up">
+        <h1 class="gradient-text display-4 mb-4">Get In Touch</h1>
+        <p class="lead text-muted col-lg-8 mx-auto">
+            We're here to help you with all your digital service needs. Contact our expert team through multiple channels for fast and reliable assistance.
+        </p>
+    </div>
+
+    <!-- Location & Contact Form Row -->
+    <div class="row g-4 mb-5">
+        <!-- Location Card -->
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100">
+                <div class="text-center mb-4">
+                    <div class="contact-icon mx-auto mb-3">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h4 class="gradient-text">Visit Our Office</h4>
+                    <p class="text-muted">Located in the heart of Kagwe Town</p>
+                </div>
+
+                <div class="mb-4">
+                    <div class="d-flex align-items-start mb-3">
+                        <i class="fas fa-building text-primary me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Address</h6>
+                            <p class="text-muted mb-0">Plaza Building<br>Opposite Total Petrol Station<br>Kagwe Town</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-start mb-3">
+                        <i class="fas fa-clock text-primary me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Business Hours</h6>
+                            <p class="text-muted mb-0">Monday - Friday: 8:00 AM - 6:00 PM<br>Saturday: 9:00 AM - 4:00 PM<br>Sunday: Closed</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Embedded Map -->
+                <div class="mb-3">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d249.325339761183!2d36.74358037049942!3d-1.0042823491578443!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f2da96f98fd53%3A0x34924abb76e7801!2sTotalEnergies%20Kagwe%20service%20station!5e0!3m2!1sen!2ske!4v1751127330805!5m2!1sen!2ske"
+                            width="100%"
+                            height="250"
+                            style="border:0; border-radius: var(--border-radius);"
+                            allowfullscreen=""
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Form -->
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100">
+                <div class="text-center mb-4">
+                    <div class="contact-icon mx-auto mb-3">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h4 class="gradient-text">Send us a Message</h4>
+                    <p class="text-muted">We'll get back to you within 24 hours</p>
+                </div>
+
+                <%- include('../partials/flash-messages') %>
+
+                <form action="/contact/send" method="POST" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="+254...">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                            <select class="form-control" id="subject" name="subject" required>
+                                <option value="">Select a service...</option>
+                                <option value="Digital Printing">Digital Printing Services</option>
+                                <option value="Computer Education">Computer Education</option>
+                                <option value="Government Services">Government Services</option>
+                                <option value="Network Installation">Network Installation</option>
+                                <option value="Billing Issues">Billing Issues</option>
+                                <option value="Portal Support">Portal Support</option>
+                                <option value="General Inquiry">General Inquiry</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="message" class="form-label">Message *</label>
+                        <textarea class="form-control" id="message" name="message" rows="4" required placeholder="Tell us how we can help you..."></textarea>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Methods Grid (Moved Here) -->
+    <div class="row g-4 mb-5">
+        <!-- Admin 1 - General Services & Calls -->
+        <div class="col-md-6 col-lg-4">
+            <div class="contact-card h-100">
+                <div class="contact-icon">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <h5 class="mb-3">Admin 1 - General Services</h5>
+                <p class="text-muted mb-4">General inquiries, service bookings, and customer support</p>
+
+                <div class="mb-3">
+                    <a href="https://wa.me/254707330204" class="whatsapp-btn w-100 justify-content-center mb-2" target="_blank">
+                        <i class="fab fa-whatsapp"></i>
+                        WhatsApp: +254 707 330 204
+                    </a>
+                    <a href="tel:+254707330204" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-phone"></i>
+                        Call: +254 707 330 204
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin 2 - Network & Billing -->
+        <div class="col-md-6 col-lg-4">
+            <div class="contact-card h-100">
+                <div class="contact-icon">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                <h5 class="mb-3">Admin 2 - Network & Billing</h5>
+                <p class="text-muted mb-4">Network installation, billing issues, and technical support</p>
+
+                <div class="mb-3">
+                    <a href="https://wa.me/254708069405" class="whatsapp-btn w-100 justify-content-center mb-2" target="_blank">
+                        <i class="fab fa-whatsapp"></i>
+                        WhatsApp: +254 708 069 405
+                    </a>
+                    <a href="tel:+254708069405" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-phone"></i>
+                        Call: +254 708 069 405
+                    </a>
+                </div>
+
+                <div class="mt-3 pt-3 border-top">
+                    <small class="text-muted d-block">
+                        <i class="fas fa-wifi me-1"></i> Network Installation Specialist
+                    </small>
+                    <small class="text-muted d-block">
+                        <i class="fas fa-credit-card me-1"></i> Billing Issues Resolution
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portals Services Specialist -->
+        <div class="col-md-6 col-lg-4">
+            <div class="contact-card h-100">
+                <div class="contact-icon">
+                    <i class="fas fa-desktop"></i>
+                </div>
+                <h5 class="mb-3">Portals Services - Josphat</h5>
+                <p class="text-muted mb-4">Student portal, admin systems, and platform assistance</p>
+
+                <div class="mb-3">
+                    <a href="https://wa.me/254740841168" class="whatsapp-btn w-100 justify-content-center mb-2" target="_blank">
+                        <i class="fab fa-whatsapp"></i>
+                        WhatsApp: +254 740 841 168
+                    </a>
+                    <a href="tel:+254740841168" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-phone"></i>
+                        Call: +254 740 841 168
+                    </a>
+                </div>
+
+                <div class="mt-3 pt-3 border-top">
+                    <small class="text-muted d-block">
+                        <i class="fas fa-graduation-cap me-1"></i> Student Portal Support
+                    </small>
+                    <small class="text-muted d-block">
+                        <i class="fas fa-cogs me-1"></i> System Administration
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="text-center">
+        <div class="glass-card p-5">
+            <h4 class="gradient-text mb-4">Need Immediate Help?</h4>
+            <p class="text-muted mb-4">For urgent matters, contact us directly via WhatsApp or phone</p>
+            <div class="row justify-content-center">
+                <div class="col-md-4 mb-3">
+                    <a href="https://wa.me/254707330204" class="whatsapp-btn w-100 justify-content-center" target="_blank">
+                        <i class="fab fa-whatsapp"></i>
+                        Quick WhatsApp
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="tel:+254707330204" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-phone"></i>
+                        Call Now
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="/services" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-list"></i>
+                        View Services
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+</script>
+
+<%- include('../partials/footer') %>
