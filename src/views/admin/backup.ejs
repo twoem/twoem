@@ -1,0 +1,93 @@
+<%- include('../partials/header', { title: pageTitle, success: typeof success !== 'undefined' ? success : null, error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="container-fluid admin-portal-content backup-container">
+    <div class="row">
+        <!-- Admin Sidebar -->
+        <%- include('../partials/admin_sidebar', { activePage: 'backup' }) %>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Database Backup & Restore</h1>
+            </div>
+
+
+            <!-- Download Backup Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-download"></i> Download Data Backup</h3>
+                </div>
+                <div class="card-body">
+                    <p>Click the button below to download a ZIP archive containing JSON exports of your main data collections (Students, Customers, Admins, Payment Confirmations).</p>
+                    <form action="/admin/backup/download" method="GET"> <%# GET is fine for initiating a download %>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-cloud-download-alt"></i> Download Backup Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Upload Backup Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-upload"></i> Upload & Restore Backup (Conceptual)</h3>
+                </div>
+                <div class="card-body">
+                    <p>Upload a previously downloaded ZIP backup file. The system will attempt to process it.</p>
+                    <p class="text-danger"><strong>Caution:</strong> Restoring data can overwrite existing information. Ensure you have a separate, reliable backup before proceeding with any restore operation.</p>
+                    <form action="/admin/backup/upload" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="backupFile" class="form-label">Select Backup ZIP File:</label>
+                            <input class="form-control" type="file" id="backupFile" name="backupFile" accept=".zip" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="fas fa-cloud-upload-alt"></i> Upload & Process Backup
+                        </button>
+                    </form>
+                    <div class="mt-3">
+                        <p class="text-muted small">
+                            <strong>Note on Restore:</strong> Currently, this feature accepts the ZIP file. The actual data restoration process from the uploaded file is a placeholder and would require significant backend logic (e.g., unzipping, parsing JSON, and careful data insertion/updating with <code>mongorestore</code> or equivalent custom logic). Admins should rely on standard database restore procedures for critical recovery.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="backupWarningModal" tabindex="-1" aria-labelledby="backupWarningModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="backupWarningModalLabel"><i class="fas fa-exclamation-triangle text-warning"></i> Important Notice!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This backup utility provides a way to download your current data as JSON files within a ZIP archive. For comprehensive disaster recovery, regular, automated, and off-site backups using native database tools (e.g., <code>mongodump</code> for MongoDB) are strongly recommended.</p>
+                <hr>
+                <p class="mb-0">The restore functionality is currently limited and primarily for uploading a previously downloaded ZIP archive. Direct database restore from arbitrary files requires careful manual intervention or more advanced tools.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+<style>
+    .backup-container .card-header { background-color: #f8f9fa; }
+    .backup-container .card-header h3 { font-size: 1.25rem; margin-bottom: .25rem; }
+    .backup-container .alert-warning { border-left: 5px solid #ffc107; }
+    .backup-container .btn-lg { padding: 10px 20px; font-size: 1.1em; }
+    .backup-container .fas { margin-right: 8px; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var myModal = new bootstrap.Modal(document.getElementById('backupWarningModal'), {
+            keyboard: false
+        });
+        myModal.show();
+    });
+</script>

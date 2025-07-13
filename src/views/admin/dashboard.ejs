@@ -1,0 +1,138 @@
+<%- include('../partials/header', { title: pageTitle, success: typeof success !== 'undefined' ? success : null, error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="container dashboard-container admin-dashboard">
+    <% if (user && stats) { %>
+        <div class="welcome-admin-banner card">
+            <h1>Hello <%= adminFirstName %>, Welcome to your Portal again!</h1>
+            <p>Oversee and manage all portal activities from here.</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-users stat-icon"></i>
+                <h4>Total Students</h4>
+                <p class="stat-value"><%= stats.totalStudents %></p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-user-tie stat-icon"></i>
+                <h4>Total Customers</h4>
+                <p class="stat-value"><%= stats.totalCustomers %></p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-user-graduate stat-icon"></i>
+                <h4>Active Students</h4>
+                <p class="stat-value"><%= stats.activeStudents %></p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-user-slash stat-icon"></i>
+                <h4>Disconnected Customers</h4>
+                <p class="stat-value"><%= stats.disconnectedCustomers %></p>
+            </div>
+        </div>
+
+        <div class="card system-activity-card mt-4">
+            <div class="card-header">
+                <h3>System Activity Summary</h3>
+            </div>
+            <div class="card-body">
+                <p><strong>Last Updated Fees by Admin:</strong> <%= stats.lastUpdatedFeesByAdmin %></p>
+                <p><strong>Last Updated Customer Payment by Admin:</strong> <%= stats.lastUpdatedCustomerPaymentByAdmin %></p>
+                <p class="text-muted small">Note: Detailed activity logging for specific admin updates is a feature planned for future implementation.</p>
+            </div>
+        </div>
+
+    <% } else if (error) { %>
+        <div class="alert alert-danger">
+            <h4><i class="fas fa-exclamation-triangle"></i> Error Loading Dashboard</h4>
+            <p><%= error %></p>
+            <p>Please try refreshing the page or <a href="/admin/login" class="alert-link">log in again</a>. If the issue persists, contact technical support.</p>
+        </div>
+    <% } else { %>
+        <p class="alert alert-info">Loading admin dashboard data...</p>
+    <% } %>
+
+    <div class="admin-quick-actions mt-5">
+        <h2 class="text-center mb-4">Quick Actions</h2>
+        <div class="d-flex flex-wrap justify-content-center">
+            <a href="/admin/students" class="btn btn-lg btn-primary m-2 action-btn"><i class="fas fa-user-friends"></i> Manage Students</a>
+            <a href="/admin/customers" class="btn btn-lg btn-success m-2 action-btn"><i class="fas fa-address-book"></i> Manage Customers</a>
+            <a href="/admin/mailer" class="btn btn-lg btn-warning m-2 action-btn"><i class="fas fa-envelope-open-text"></i> Send Mail</a>
+            <a href="/admin/backup" class="btn btn-lg btn-danger m-2 action-btn"><i class="fas fa-database"></i> Backup System</a>
+            <a href="/admin/logout" class="btn btn-lg btn-secondary m-2 action-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<%# Font Awesome for icons (optional, include in main header if used widely) %>
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> -->
+
+<style>
+    .admin-dashboard .welcome-admin-banner {
+        background: linear-gradient(to right, #4A00E0, #8E2DE2); /* Admin purple gradient */
+        color: white;
+        padding: 25px;
+        margin-bottom: 30px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .admin-dashboard .welcome-admin-banner h1 { margin-top: 0; font-size: 2.2em; }
+
+    .admin-dashboard .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .admin-dashboard .stat-card {
+        background-color: #ffffff;
+        padding: 25px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        text-align: center;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .admin-dashboard .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    }
+    .admin-dashboard .stat-icon {
+        font-size: 2.5em; /* Requires Font Awesome */
+        margin-bottom: 15px;
+        color: #8E2DE2; /* Admin theme color */
+    }
+    .admin-dashboard .stat-card h4 {
+        font-size: 1.1em;
+        color: #555;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+    .admin-dashboard .stat-card .stat-value {
+        font-size: 2.2em;
+        font-weight: 700;
+        color: #4A00E0; /* Darker Admin theme color */
+    }
+    .admin-dashboard .system-activity-card .card-header { background-color: #f8f9fa; }
+    .admin-dashboard .system-activity-card .card-body p { margin-bottom: 0.75rem; }
+
+    .admin-dashboard .admin-quick-actions .action-btn {
+        min-width: 200px; /* Ensure buttons have a decent width */
+        padding: 12px 20px;
+        font-size: 1em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .admin-dashboard .action-btn .fas {
+        margin-right: 8px;
+    }
+    .admin-dashboard .d-flex { display: flex !important; }
+    .admin-dashboard .flex-wrap { flex-wrap: wrap !important; }
+    .admin-dashboard .justify-content-center { justify-content: center !important; }
+    .admin-dashboard .m-2 { margin: 0.5rem !important; }
+    .admin-dashboard .mb-4 { margin-bottom: 1.5rem !important; }
+    .admin-dashboard .mt-4 { margin-top: 1.5rem !important; }
+    .admin-dashboard .mt-5 { margin-top: 3rem !important; }
+    .admin-dashboard .text-center { text-align: center !important; }
+</style>

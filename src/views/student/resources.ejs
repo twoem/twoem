@@ -1,0 +1,149 @@
+<%- include('../partials/header', { title: pageTitle, success: typeof success !== 'undefined' ? success : null, error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="container resources-container">
+    <div class="card resources-main-card">
+        <div class="card-header">
+            <h1>Study Resources & Portal Utilities</h1>
+        </div>
+        <div class="card-body">
+
+            <!-- Study Resources Section -->
+            <section class="study-resources-section mb-5">
+                <h2><i class="fas fa-book-open"></i> Study Materials</h2>
+                <p>Here you can find study materials uploaded by the administration. Click to view or download.</p>
+                <% if (resources && resources.length > 0) { %>
+                    <ul class="list-group resource-list">
+                        <% resources.forEach(resource => { %>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1"><%= resource.title %></h5>
+                                    <p class="mb-1 text-muted small"><%= resource.description %></p>
+                                    <% if (resource.uploadDate) { %>
+                                        <small class="text-muted">Uploaded: <%= formatDate(resource.uploadDate) %></small>
+                                    <% } %>
+                                </div>
+                                <% if (resource.fileUrl) { %>
+                                    <a href="<%= resource.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download"></i> View/Download
+                                    </a>
+                                <% } else if (resource.content) { %>
+                                     <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#resourceModal<%= resource.id || Math.random().toString(36).substring(7) %>">
+                                        <i class="fas fa-eye"></i> View Content
+                                    </button>
+                                    <!-- Modal for content -->
+                                    <div class="modal fade" id="resourceModal<%= resource.id || Math.random().toString(36).substring(7) %>" tabindex="-1" aria-labelledby="resourceModalLabel<%= resource.id %>" aria-hidden="true">
+                                      <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                          <div class="modal-header">
+                                            <h5 class="modal-title" id="resourceModalLabel<%= resource.id %>"><%= resource.title %></h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                          </div>
+                                          <div class="modal-body">
+                                            <pre><%= resource.content %></pre>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                <% } else { %>
+                                    <span class="text-muted small">No direct link/content</span>
+                                <% } %>
+                            </li>
+                        <% }); %>
+                    </ul>
+                <% } else { %>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No study resources have been uploaded yet. Please check back later.
+                    </div>
+                <% } %>
+            </section>
+
+            <hr class="my-4">
+
+            <!-- Wi-Fi Details Section -->
+            <section class="wifi-details-section">
+                <h2><i class="fas fa-wifi"></i> Campus Wi-Fi Details</h2>
+                <% if (wifiDetails && wifiDetails.ssid) { %>
+                    <table class="table table-bordered wifi-table">
+                        <tbody>
+                            <tr>
+                                <td><strong>Wi-Fi Network Name (SSID):</strong></td>
+                                <td><strong><%= wifiDetails.ssid %></strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Password:</strong></td>
+                                <td><strong><%= wifiDetails.password %></strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="disclaimer text-muted small">
+                        <i class="fas fa-exclamation-triangle"></i> Please use the Wi-Fi responsibly and for educational purposes only. Adhere to the institution's internet usage policy.
+                    </p>
+                <% } else { %>
+                     <div class="alert alert-warning">
+                        <i class="fas fa-wifi"></i> Wi-Fi details are currently not configured or available through the portal. Please contact administration for assistance.
+                    </div>
+                <% } %>
+            </section>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="/student/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<%# Bootstrap JS for Modal (optional, include in main footer if used widely) %>
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> -->
+<%# Font Awesome for icons (optional, include in main header if used widely) %>
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> -->
+
+
+<style>
+    .resources-container { padding-top: 20px; }
+    .resources-main-card .card-header { text-align: center; background-color: #eef7f6; } /* Light teal header */
+    .resources-main-card .card-header h1 { color: #138496; margin-bottom: 0; } /* Teal color */
+
+    .study-resources-section h2, .wifi-details-section h2 {
+        color: #138496; /* Teal */
+        border-bottom: 2px solid #1abc9c; /* Lighter teal border */
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        font-size: 1.5em;
+    }
+    .study-resources-section h2 .fas, .wifi-details-section h2 .fas { margin-right: 10px; }
+
+    .resource-list .list-group-item {
+        margin-bottom: 10px;
+        border-radius: 5px;
+        border-left: 5px solid #1abc9c; /* Teal accent */
+        transition: background-color 0.2s ease-in-out;
+    }
+    .resource-list .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    .resource-list h5 { color: #343a40; }
+    .btn-outline-primary { color: #007bff; border-color: #007bff; }
+    .btn-outline-primary:hover { background-color: #007bff; color: white; }
+    .btn-outline-info { color: #17a2b8; border-color: #17a2b8; }
+    .btn-outline-info:hover { background-color: #17a2b8; color: white; }
+
+    .wifi-table { margin-top: 15px; }
+    .wifi-table td { padding: 12px; font-size: 1.1em; }
+    .wifi-table td:first-child { width: 40%; background-color: #f9f9f9; }
+
+    .disclaimer { margin-top: 15px; font-style: italic; }
+    .my-4 { margin-top: 1.5rem !important; margin-bottom: 1.5rem !important; }
+    .mb-5 { margin-bottom: 3rem !important; }
+
+    /* Basic Modal Styling (if not using Bootstrap CSS) */
+    .modal-dialog { max-width: 800px; }
+    .modal-content { border-radius: .3rem; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1rem; border-bottom: 1px solid #dee2e6; border-top-left-radius: calc(.3rem - 1px); border-top-right-radius: calc(.3rem - 1px); }
+    .modal-title { margin-bottom: 0; line-height: 1.5; }
+    .btn-close { box-sizing: content-box; width: 1em; height: 1em; padding: .25em .25em; color: #000; background: transparent; border: 0; border-radius: .25rem; opacity: .5; }
+    .modal-body { position: relative; flex: 1 1 auto; padding: 1rem; }
+    .modal-body pre { white-space: pre-wrap; word-wrap: break-word; background-color: #f8f9fa; padding: 10px; border-radius: 4px; }
+    .fas { margin-right: 5px; }
+</style>

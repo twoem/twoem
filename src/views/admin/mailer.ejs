@@ -1,0 +1,131 @@
+<%- include('../partials/header', { title: pageTitle, success: typeof success !== 'undefined' ? success : null, error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="container-fluid admin-portal-content mailer-container">
+    <div class="row">
+        <!-- Admin Sidebar -->
+        <%- include('../partials/admin_sidebar', { activePage: 'mailer' }) %>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Mailer Dashboard</h1>
+            </div>
+
+            <!-- Part 1: Test Emails -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>Part 1: Test System Emails</h3>
+                    <p class="text-muted small">Send sample emails to a test recipient (configured in <code>.env</code>: <code>TEST_EMAIL_RECIPIENT</code>) to verify templates and delivery.</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <form action="/admin/mailer/test/customer-password-reset" method="POST">
+                                <button type="submit" class="btn btn-outline-info w-100">Test Customer Password Reset Email</button>
+                            </form>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                             <form action="/admin/mailer/test/student-password-reset" method="POST">
+                                <button type="submit" class="btn btn-outline-info w-100">Test Student Password Reset Email</button>
+                            </form>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <form action="/admin/mailer/test/new-student-details" method="POST">
+                                <button type="submit" class="btn btn-outline-info w-100">Test New Student Initial Details Email</button>
+                                <small class="text-muted d-block text-center">(Note: This email isn't sent automatically by current system; for template testing only)</small>
+                            </form>
+                        </div>
+                        <!-- Add more test email buttons as new email types are created -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Part 2: Bulk Messaging - Students -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>Part 2: Bulk Messaging - Students</h3>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/mailer/bulk-students" method="POST">
+                        <div class="mb-3">
+                            <label for="studentRecipients" class="form-label">Recipients</label>
+                            <select class="form-select" id="studentRecipients" name="studentRecipients" disabled>
+                                <option value="all" selected>All Active Students (Feature simplified for now)</option>
+                                <!-- Future: <option value="selected">Selected Students (Not implemented)</option> -->
+                            </select>
+                            <small class="text-muted">Currently sends to all students with valid emails. Individual selection will be a future enhancement.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="studentSubject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="studentSubject" name="subject" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="studentMessageBody" class="form-label">Message Body (HTML allowed)</label>
+                            <textarea class="form-control" id="studentMessageBody" name="messageBody" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send to Students</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Part 3: Bulk Messaging - Customers -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>Part 3: Bulk Messaging - Customers</h3>
+                </div>
+                <div class="card-body">
+                     <form action="/admin/mailer/bulk-customers" method="POST">
+                        <div class="mb-3">
+                            <label for="customerRecipients" class="form-label">Recipients</label>
+                            <select class="form-select" id="customerRecipients" name="customerRecipients" disabled>
+                                <option value="all" selected>All Active Customers (Feature simplified for now)</option>
+                            </select>
+                             <small class="text-muted">Currently sends to all customers with valid emails.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="customerSubject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="customerSubject" name="subject" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="customerMessageBody" class="form-label">Message Body (HTML allowed)</label>
+                            <textarea class="form-control" id="customerMessageBody" name="messageBody" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send to Customers</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Part 4: Random Email -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Part 4: Send Single Email</h3>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/mailer/send-single" method="POST">
+                        <div class="mb-3">
+                            <label for="randomEmailRecipient" class="form-label">Recipient Email Address</label>
+                            <input type="email" class="form-control" id="randomEmailRecipient" name="recipientEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="randomEmailSubject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="randomEmailSubject" name="subject" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="randomEmailMessageBody" class="form-label">Message Body (HTML allowed)</label>
+                            <textarea class="form-control" id="randomEmailMessageBody" name="messageBody" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">Send Email</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+<style>
+    .mailer-container .card-header { background-color: #f8f9fa; }
+    .mailer-container .card-header h3 { font-size: 1.25rem; margin-bottom: .25rem; }
+    .mailer-container .form-label { font-weight: 500; }
+    .mailer-container .w-100 { width: 100% !important; }
+    .mailer-container .mb-2 { margin-bottom: 0.5rem !important; }
+</style>

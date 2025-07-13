@@ -1,0 +1,21 @@
+<%- include('../partials/header', { title: pageTitle, error: typeof error !== 'undefined' ? error : null, success: typeof success !== 'undefined' ? success : null }) %>
+
+<div class="portal-login-container">
+    <h1>Customer Login</h1>
+    <p>Welcome to the Twoem Customers Portal. Please log in to continue.</p>
+    <!-- Login form will go here in Phase 1 -->
+    <form action="/customer/login" method="POST">
+        <div>
+            <label for="username">Username (Account No/Email/Phone):</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Login</button>
+        <p><a href="/customer/forgot-password">Forgot Password?</a></p>
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

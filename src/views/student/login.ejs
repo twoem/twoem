@@ -1,0 +1,22 @@
+<%- include('../partials/header', { title: pageTitle, error: typeof error !== 'undefined' ? error : null, success: typeof success !== 'undefined' ? success : null }) %>
+
+<div class="portal-login-container">
+    <h1>Student Portal Login</h1>
+    <p>Access your student dashboard, academics, and resources.</p>
+    <!-- Login form will go here in Phase 3 -->
+     <form action="/student/login" method="POST">
+        <div>
+            <label for="registrationNumber">Registration Number:</label>
+            <input type="text" id="registrationNumber" name="registrationNumber" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Login</button>
+        <p><a href="/student/forgot-password">Forgot Password?</a></p>
+        <p><a href="/student/new-student-lookup">New Student?</a></p>
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

@@ -10,13 +10,7 @@ const renderHomePage = (req, res) => {
 // Renders the contact page
 const renderContactPage = (req, res) => {
     res.render('pages/contact', {
-        title: 'Contact Us',
-        // Flash messages are now handled by global middleware,
-        // so they will be available in res.locals directly in the template.
-        // No need to pass message/error from query params here if using flash for POST submissions.
-        // However, keeping them if some GET routes might still use query params for messages.
-        message: req.query.message,
-        error: req.query.error
+        title: 'Contact Us'
     });
 };
 

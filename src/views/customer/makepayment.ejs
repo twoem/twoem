@@ -1,0 +1,90 @@
+<%- include('../partials/header', { title: pageTitle, success: typeof success !== 'undefined' ? success : null, error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="container makepayment-container">
+    <div class="card payment-instructions-card">
+        <div class="card-header">
+            <h1>Subscription Payment</h1>
+            <p>Follow the instructions below to pay your bill via M-Pesa.</p>
+        </div>
+        <div class="card-body">
+            <h2>How to Pay:</h2>
+            <ol>
+                <li>Go to your M-Pesa Menu.</li>
+                <li>Select <strong>Lipa na M-Pesa</strong>.</li>
+                <li>Select <strong>Pay Bill</strong>.</li>
+                <li>Enter Business Number: <strong><%= process.env.PAYBILL_NUMBER || 'XXXXXX' %></strong></li>
+                <li>Enter Account Number: <strong><%= user.accountNumber %></strong></li>
+                <li>Enter Amount: <strong>Ksh <%= formatCurrency(user.balanceDue > 0 ? user.balanceDue : user.subscriptionPerMonth) %></strong>
+                    <em>(<%= user.balanceDue > 0 ? "Your current balance due" : "Your monthly subscription" %>)</em>
+                </li>
+                <li>Enter your M-Pesa PIN and press Send.</li>
+            </ol>
+            <p class="text-muted">You will receive a confirmation SMS from M-Pesa.</p>
+        </div>
+    </div>
+
+    <div class="card payment-confirmation-card">
+        <div class="card-header">
+            <h2>Submit M-Pesa Confirmation</h2>
+            <p>After completing the payment, please enter the M-Pesa confirmation code (e.g., QBC12XYZ78) and the amount you paid below.</p>
+        </div>
+        <div class="card-body">
+            <form action="/customer/submit-payment-confirmation" method="POST">
+                <div>
+                    <label for="mpesaConfirmationCode">M-Pesa Confirmation Code:</label>
+                    <input type="text" id="mpesaConfirmationCode" name="mpesaConfirmationCode" class="form-control" required
+                           pattern="[A-Z0-9]{10,15}" title="Enter a valid M-Pesa code (e.g., QBC12XYZ78, usually 10 characters).">
+                </div>
+                <div>
+                    <label for="amountPaid">Amount Paid (Ksh):</label>
+                    <input type="number" id="amountPaid" name="amountPaid" class="form-control"
+                           value="<%= user.balanceDue > 0 ? user.balanceDue : user.subscriptionPerMonth %>"
+                           min="1" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Submit Confirmation</button>
+            </form>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="/customer/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<style>
+    .makepayment-container {
+        padding-top: 20px;
+        max-width: 800px; /* Limit width for better readability */
+        margin: auto;
+    }
+    .payment-instructions-card, .payment-confirmation-card {
+        margin-bottom: 30px;
+    }
+    .card-header h1, .card-header h2 {
+        margin-top: 0;
+    }
+    .payment-instructions-card ol {
+        padding-left: 20px;
+        line-height: 1.8;
+    }
+    .payment-instructions-card ol li {
+        margin-bottom: 10px;
+    }
+    .form-control { /* Basic styling for form inputs */
+        width: calc(100% - 22px); /* Full width minus padding and border */
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #545b62;
+    }
+</style>

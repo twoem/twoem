@@ -24,55 +24,18 @@
                 <li class="nav-item">
                     <a class="nav-link <%= (typeof title !== 'undefined' && title === 'Contact Us') ? 'active' : '' %>" href="/contact">Contact</a>
                 </li>
+                <!-- Portals Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle <%= (typeof title !== 'undefined' && (title.includes('Portal') || title.includes('Customers') || title.includes('Student') || title.includes('Admin'))) ? 'active' : '' %>" href="#" id="portalsNavbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Portals
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="portalsNavbarDropdown">
+                        <li><a class="dropdown-item" href="/customer/login">Customers Portal</a></li>
+                        <li><a class="dropdown-item" href="/student/login">Student Portal</a></li>
+                        <li><a class="dropdown-item" href="/admin/login">Admin Portal</a></li>
+                    </ul>
+                </li>
             </ul>
-            <div class="navbar-nav ms-3">
-                <a href="https://wa.me/254707330204" class="btn btn-primary btn-sm" target="_blank">
-                    <i class="fab fa-whatsapp me-1"></i>WhatsApp
-                </a>
-            </div>
         </div>
     </div>
 </nav>
-
-<!-- Add padding to body to account for fixed navbar -->
-<style>
-body { padding-top: 80px; } /* Adjust this value based on actual navbar height */
-
-/* Ensure dropdown menu respects modern CSS variables and appears correctly */
-.navbar .dropdown-menu {
-    margin-top: 0.5rem !important;
-    padding: 0.5rem !important;
-    background-color: var(--glass-bg) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid var(--glass-border) !important;
-    box-shadow: var(--shadow-lg) !important;
-    border-radius: var(--border-radius) !important; /* Use modern border radius */
-}
-.navbar .dropdown-item {
-    border-radius: var(--border-radius) !important; /* Use modern border radius for items */
-    margin-bottom: 0.25rem !important;
-    transition: all 0.3s ease !important;
-    color: var(--text-color) !important;
-    padding: 0.5rem 1rem !important; /* Consistent padding */
-}
-.navbar .dropdown-item:hover, .navbar .dropdown-item:focus {
-    background: var(--primary-gradient) !important;
-    color: white !important;
-    transform: translateX(5px) !important;
-}
-.navbar .dropdown-item .text-muted {
-    color: var(--text-muted) !important;
-}
-.navbar .dropdown-item:hover .text-muted {
-    color: rgba(255, 255, 255, 0.8) !important;
-}
-/* Ensure navbar toggler icon is visible - uses Bootstrap's variable if defined by new style.css */
-.navbar-toggler-icon {
-    background-image: var(--bs-navbar-toggler-icon-bg);
-}
-/* Ensure fixed navbar has appropriate z-index */
-.navbar.fixed-top {
-    z-index: 1030; /* Default Bootstrap fixed navbar z-index, adjust if needed */
-}
-</style>

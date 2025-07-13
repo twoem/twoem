@@ -1,0 +1,205 @@
+<%- include('../partials/header', { title: pageTitle, success: typeof success !== 'undefined' ? success : null, error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="container dashboard-container">
+    <% if (user) { %>
+        <div class="welcome-banner card">
+            <h1>Hello <%= user.firstName %>, Welcome Back!</h1>
+            <p>We're glad to see you. Here's an overview of your account.</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card profile-card">
+                <div class="card-header">
+                    <img src="/images/user_avatar_placeholder.png" alt="User Avatar" class="avatar"> <!-- Placeholder image -->
+                    <h2><%= user.firstName %> <%= user.lastName %></h2>
+                    <p class="text-muted"><%= user.email %></p>
+                </div>
+                <div class="card-body">
+                    <p><strong>Account Number:</strong> <%= user.accountNumber %></p>
+                    <p><strong>Phone Number:</strong> <%= user.phoneNumber %></p>
+                    <p><strong>Location:</strong> <%= user.location %></p>
+                </div>
+            </div>
+
+            <div class="card account-status-card">
+                <div class="card-header">
+                    <h3>Account Status</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Connection Status:</strong>
+                        <span class="status-badge status-<%= user.connectionStatus ? user.connectionStatus.toLowerCase() : 'unknown' %>">
+                            <%= user.connectionStatus || 'N/A' %>
+                        </span>
+                    </p>
+                    <% if (user.connectionStatus === 'Disconnected' && user.disconnectionDate) { %>
+                        <p><strong>Disconnection Date:</strong> <%= formatDate(user.disconnectionDate) %></p>
+                    <% } %>
+                     <p><strong>Subscription / Month:</strong> Ksh <%= formatCurrency(user.subscriptionPerMonth) %></p>
+                </div>
+            </div>
+
+            <div class="card billing-card">
+                <div class="card-header">
+                    <h3>Billing & Payments</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Account Owing (Balance Due):</strong>
+                        <span class="balance <%= user.balanceDue > 0 ? 'due' : 'paid' %>">
+                            Ksh <%= formatCurrency(user.balanceDue) %>
+                        </span>
+                    </p>
+                    <p><strong>Last Payment Date:</strong> <%= formatDate(user.lastPaymentDate) %></p>
+                    <a href="/customer/makepayment" class="btn btn-success btn-block">Make Payment</a>
+                </div>
+            </div>
+
+            <div class="card quick-actions-card">
+                <div class="card-header">
+                    <h3>Quick Actions</h3>
+                </div>
+                <div class="card-body">
+                    <a href="/customer/change-password" class="btn btn-primary btn-block">Change Password</a>
+                    <a href="/customer/logout" class="btn btn-danger btn-block" style="margin-top: 10px;">Logout</a>
+                    <!-- Add more actions as needed, e.g., view payment history, support tickets -->
+                </div>
+            </div>
+        </div>
+
+    <% } else if (error) { %>
+        <div class="card error-card">
+             <p>Error loading dashboard data. Please try again or contact support.</p>
+        </div>
+    <% } else { %>
+        <div class="card loading-card">
+            <p>Loading your dashboard...</p> <%/* Could add a spinner here */%>
+        </div>
+    <% } %>
+</div>
+
+<%- include('../partials/footer') %>
+
+<style>
+    .dashboard-container {
+        padding-top: 20px;
+    }
+    .welcome-banner {
+        background: linear-gradient(to right, #3498db, #2980b9);
+        color: white;
+        padding: 25px;
+        margin-bottom: 30px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .welcome-banner h1 {
+        margin-top: 0;
+        font-size: 2.2em;
+    }
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+    }
+    .card { /* Base card style is in portals.css, adding specifics here */
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .card-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        background-color: #f9f9f9; /* Light header for cards */
+        border-radius: 8px 8px 0 0;
+    }
+    .card-header h2, .card-header h3 {
+        margin: 0;
+        font-size: 1.4em;
+        color: #333;
+    }
+    .card-body {
+        padding: 20px;
+    }
+    .card-body p {
+        margin-bottom: 12px;
+        line-height: 1.6;
+        color: #555;
+    }
+    .card-body p strong {
+        color: #333;
+    }
+
+    .profile-card .card-header {
+        text-align: center;
+    }
+    .avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin-bottom: 10px;
+        border: 3px solid #fff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .text-muted {
+        color: #777;
+        font-size: 0.9em;
+    }
+
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        font-weight: bold;
+        color: white;
+    }
+    .status-badge.status-active { background-color: #28a745; }
+    .status-badge.status-disconnected { background-color: #dc3545; }
+    .status-badge.status-suspended { background-color: #ffc107; color: #333; }
+    .status-badge.status-unknown { background-color: #6c757d; }
+
+    .balance {
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+    .balance.due { color: #dc3545; }
+    .balance.paid { color: #28a745; }
+
+    .btn { /* General button styling, can be in portals.css if shared more widely */
+        display: inline-block;
+        padding: 10px 15px;
+        font-size: 1em;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        border: none;
+        font-weight: 500;
+    }
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+    .btn-primary { background-color: #007bff; color: white; }
+    .btn-primary:hover { background-color: #0056b3; }
+    .btn-success { background-color: #28a745; color: white; }
+    .btn-success:hover { background-color: #1e7e34; }
+    .btn-danger { background-color: #dc3545; color: white; }
+    .btn-danger:hover { background-color: #b02a37; }
+
+    .btn-block {
+        display: block;
+        width: 100%;
+    }
+
+    /* Placeholder for user avatar */
+    /* You'll need to add an actual image to public/images/user_avatar_placeholder.png or use a dynamic source */
+</style>
+
+<%# Add a placeholder image for user avatar in public/images if it doesn't exist %>
+<% if (false) { %> <%# This is a comment for you, Jules, to remember to add the image %>
+    <!-- Create a simple placeholder image at public/images/user_avatar_placeholder.png -->
+    <!-- For example, a generic silhouette or initials. -->
+<% } %>

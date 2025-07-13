@@ -1,0 +1,24 @@
+<%- include('../partials/header', { title: pageTitle, success: typeof success !== 'undefined' ? success : null, error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="portal-login-container"> <%/* Re-using login container style for form */%>
+    <h1>Update Your Profile</h1>
+    <p>Please provide your Next of Kin information to complete your profile setup.</p>
+
+    <form action="/student/update-profile" method="POST">
+        <div>
+            <label for="nextOfKinName">Next of Kin Full Name:</label>
+            <input type="text" id="nextOfKinName" name="nextOfKinName" value="<%= user && user.nextOfKinName ? user.nextOfKinName : '' %>" required>
+        </div>
+        <div>
+            <label for="nextOfKinPhone">Next of Kin Phone Number:</label>
+            <input type="text" id="nextOfKinPhone" name="nextOfKinPhone" value="<%= user && user.nextOfKinPhone ? user.nextOfKinPhone : '' %>" pattern="0[17][0-9]{8}" title="Phone number must be 10 digits starting with 01 or 07." required>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Profile</button>
+    </form>
+
+    <% if (user && !user.profileRequiresUpdate) { %> <%# Only show if profile is already complete but user is here anyway %>
+        <p style="margin-top: 20px;"><a href="/student/dashboard" class="btn btn-secondary">Back to Dashboard</a></p>
+    <% } %>
+</div>
+
+<%- include('../partials/footer') %>

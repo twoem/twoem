@@ -1,0 +1,14 @@
+</div> <!-- Closing the .container div from header.ejs -->
+
+    <footer class="portal-footer">
+        <p>&copy; <%= new Date().getFullYear() %> Twoem Online Productions. All Rights Reserved.</p>
+        <p>
+            Need help? <a href="mailto:<%= process.env.CONTACT_US_EMAIL || 'twoemcyber@gmail.com' %>">Contact Us</a> |
+            Visit our main site: <a href="<%= process.env.WEBSITE_URL || '#' %>" target="_blank">twoemcyberkagwe.onrender.com</a>
+        </p>
+    </footer>
+
+    <!-- You might want to include global JS files here -->
+    <!-- <script src="/js/main.js"></script> -->
+</body>
+</html>

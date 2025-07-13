@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %></title>
+    <!-- Link to existing public CSS if applicable and a new one for portals -->
+    <!-- <link rel="stylesheet" href="/css/style.css"> Commenting out, assuming public pages are styled separately -->
+    <link rel="stylesheet" href="/css/portals.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        /* Basic styles for alerts, can be moved to portals.css */
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 250px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .alert-info {
+            color: #0c5460;
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <%# Placeholder for potential success/error messages that appear at top right %>
+    <% if (typeof success !== 'undefined' && success) { %>
+        <div class="alert alert-success" role="alert" id="success-alert">
+            <%= success %>
+        </div>
+    <% } %>
+    <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-danger" role="alert" id="error-alert">
+            <%= error %>
+        </div>
+    <% } %>
+
+    <%- include('navbar') %>
+
+    <div class="container"> <!-- This class can be used for general page content styling -->
+        <!-- Page content will go here -->
+    </div>
+
+    <script>
+        // Auto-hide alerts after 3 seconds
+        setTimeout(() => {
+            const successAlert = document.getElementById('success-alert');
+            if (successAlert) successAlert.style.display = 'none';
+            const errorAlert = document.getElementById('error-alert');
+            if (errorAlert) errorAlert.style.display = 'none';
+        }, 3000);
+    </script>
+</body>
+</html>

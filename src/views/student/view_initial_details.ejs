@@ -1,0 +1,84 @@
+<%- include('../partials/header', { title: pageTitle, success: typeof success !== 'undefined' ? success : null, error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="container initial-details-container card">
+    <div class="card-header">
+        <h1>Your Initial Account Details</h1>
+    </div>
+    <div class="card-body">
+        <% if (studentDetails) { %>
+            <p class="alert alert-warning"><strong>Important:</strong> Please note these details down securely. This page is shown only once. You will be required to change your password upon first login.</p>
+
+            <table class="details-table">
+                <tr>
+                    <td><strong>Full Name:</strong></td>
+                    <td><%= studentDetails.firstName %> <%= studentDetails.lastName %></td>
+                </tr>
+                <tr>
+                    <td><strong>Registration Number:</strong></td>
+                    <td><strong><%= studentDetails.registrationNumber %></strong> (This is your username)</td>
+                </tr>
+                <tr>
+                    <td><strong>Registered Email:</strong></td>
+                    <td><%= studentDetails.email %></td>
+                </tr>
+                <tr>
+                    <td><strong>Registered Phone:</strong></td>
+                    <td><%= studentDetails.phoneNumber %></td>
+                </tr>
+                <tr>
+                    <td><strong>Default Password:</strong></td>
+                    <td><strong><%= studentDetails.defaultPassword %></strong></td>
+                </tr>
+            </table>
+
+            <p style="margin-top: 20px; text-align: center;">
+                You can now <a href="/student/login" class="btn btn-success">Proceed to Login</a>.
+            </p>
+        <% } else { %>
+            <p class="alert alert-danger">Could not retrieve student details. Please try the lookup again or contact administration.</p>
+            <p style="text-align: center;">
+                <a href="/student/new-student-lookup" class="btn btn-primary">Try Lookup Again</a>
+            </p>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<style>
+    .initial-details-container {
+        max-width: 700px;
+        margin: 30px auto;
+        padding: 0; /* Card already has padding */
+    }
+    .initial-details-container .card-header {
+        text-align: center;
+    }
+    .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .details-table td {
+        padding: 10px;
+        border: 1px solid #eee;
+    }
+    .details-table td:first-child {
+        background-color: #f9f9f9;
+        width: 35%;
+    }
+    .alert-warning {
+        color: #856404;
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+        padding: .75rem 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: .25rem;
+    }
+     .alert-danger {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+</style>

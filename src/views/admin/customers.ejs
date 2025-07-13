@@ -1,0 +1,304 @@
+<%- include('../partials/header', { title: pageTitle, success: typeof success !== 'undefined' ? success : null, error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="container-fluid admin-portal-content customer-management-container">
+    <div class="row">
+        <!-- Admin Sidebar -->
+        <%- include('../partials/admin_sidebar', { activePage: 'customers' }) %>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Customer Management</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#registerCustomerModal">
+                        <i class="fas fa-user-plus"></i> Register New Customer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Register New Customer Modal -->
+            <div class="modal fade" id="registerCustomerModal" tabindex="-1" aria-labelledby="registerCustomerModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="registerCustomerModalLabel">Register New Customer</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Registration form will go here (Step 2) -->
+                            <p class="text-muted">Customer registration form will be here.</p>
+                             <form id="registerCustomerForm" action="/admin/customers/register" method="POST">
+                                <!-- Form fields will be added in Step 2 -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="custFirstName" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="custFirstName" name="firstName" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="custLastName" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="custLastName" name="lastName" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="custPhoneNumber" class="form-label">Phone Number (07.../01...)</label>
+                                        <input type="tel" class="form-control" id="custPhoneNumber" name="phoneNumber" pattern="0[17][0-9]{8}" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="custEmail" class="form-label">Email Address</label>
+                                        <input type="email" class="form-control" id="custEmail" name="email" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="custLocation" class="form-label">Location</label>
+                                    <input type="text" class="form-control" id="custLocation" name="location" required>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="custSubscription" class="form-label">Subscription/Month (Ksh)</label>
+                                        <input type="number" class="form-control" id="custSubscription" name="subscriptionPerMonth" value="1000" min="0" step="50" required>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="custAccountNumber" class="form-label">Account Number (Optional)</label>
+                                        <input type="text" class="form-control" id="custAccountNumber" name="accountNumber" placeholder="Auto-generated if blank">
+                                        <small class="form-text text-muted">Leave blank to auto-generate (e.g., CUST-0001).</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="custInitialBalance" class="form-label">Initial Balance Due (Ksh)</label>
+                                        <input type="number" class="form-control" id="custInitialBalance" name="balanceDue" value="0" min="0" step="0.01" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary">Register Customer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manage Existing Customers Section -->
+            <div class="card manage-customers-card mt-4">
+                <div class="card-header">
+                    <h3>Existing Customers</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Acc. No</th>
+                                    <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Location</th>
+                                    <th>Sub/Month</th>
+                                    <th>Balance Due</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (customers && customers.length > 0) { %>
+                                    <% customers.forEach(customer => { %>
+                                        <tr>
+                                            <td><%= customer.accountNumber %></td>
+                                            <td><%= customer.firstName %> <%= customer.lastName %></td>
+                                            <td><%= customer.email %></td>
+                                            <td><%= customer.phoneNumber %></td>
+                                            <td><%= customer.location %></td>
+                                            <td><%= customer.subscriptionPerMonth.toFixed(2) %></td>
+                                            <td><%= customer.balanceDue.toFixed(2) %></td>
+                                            <td>
+                                                <span class="badge bg-<%= customer.connectionStatus === 'Active' ? 'success' : (customer.connectionStatus === 'Disconnected' ? 'danger' : 'warning') %>">
+                                                    <%= customer.connectionStatus %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-secondary view-customer-details-btn"
+                                                        title="View Details"
+                                                        data-bs-toggle="modal" data-bs-target="#detailsModalCust"
+                                                        data-customer-id="<%= customer._id %>"
+                                                        data-customer-name="<%= customer.firstName %> <%= customer.lastName %>">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-warning" title="Edit Customer" disabled><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-sm btn-outline-success" title="Update Payment" disabled><i class="fas fa-money-check-alt"></i></button>
+                                                <form action="/admin/customers/<%= customer._id %>/toggle-connection" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to toggle connection status for <%= customer.firstName %> <%= customer.lastName %>?');">
+                                                    <button type="submit" class="btn btn-sm btn-outline-info" title="Toggle Connection Status">
+                                                        <i class="fas fa-wifi"></i> <%= customer.connectionStatus === 'Active' ? 'Disconnect' : 'Connect' %>
+                                                    </button>
+                                                </form>
+                                                <form action="/admin/customers/<%= customer._id %>/reset-password" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to reset password for <%= customer.firstName %> <%= customer.lastName %> to default (Mynet@2025)?');">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Reset Password to Default"><i class="fas fa-key"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">No customers found. Register a new customer to get started.</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Payment Confirmations Section -->
+            <div class="card mt-4 pending-confirmations-card">
+                <div class="card-header bg-info text-white">
+                    <h3><i class="fas fa-hourglass-half"></i> Pending Payment Confirmations</h3>
+                </div>
+                <div class="card-body">
+                    <% if (pendingConfirmations && pendingConfirmations.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date Submitted</th>
+                                        <th>Customer Name</th>
+                                        <th>Account No.</th>
+                                        <th>M-Pesa Code</th>
+                                        <th>Amount Claimed</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% pendingConfirmations.forEach(confirmation => { %>
+                                        <tr>
+                                            <td><%= new Date(confirmation.createdAt).toLocaleDateString() %> <%= new Date(confirmation.createdAt).toLocaleTimeString() %></td>
+                                            <td><%= confirmation.customer ? confirmation.customer.firstName + ' ' + confirmation.customer.lastName : 'N/A' %></td>
+                                            <td><%= confirmation.customer ? confirmation.customer.accountNumber : 'N/A' %></td>
+                                            <td><%= confirmation.mpesaConfirmationCode %></td>
+                                            <td>Ksh <%= confirmation.amountPaid.toFixed(2) %></td>
+                                            <td>
+                                                <button class="btn btn-xs btn-success me-1" title="Approve Payment (Conceptual)" disabled>
+                                                    <i class="fas fa-check"></i> Approve
+                                                </button>
+                                                <button class="btn btn-xs btn-danger" title="Reject Payment (Conceptual)" disabled>
+                                                    <i class="fas fa-times"></i> Reject
+                                                </button>
+                                                <!-- Actual forms/routes for approve/reject would be like:
+                                                <form action="/admin/payments/<%= confirmation._id %>/approve" method="POST" style="display: inline;">
+                                                    <button type="submit" class="btn btn-xs btn-success me-1" title="Approve Payment"><i class="fas fa-check"></i></button>
+                                                </form>
+                                                <form action="/admin/payments/<%= confirmation._id %>/reject" method="POST" style="display: inline;">
+                                                    <button type="submit" class="btn btn-xs btn-danger" title="Reject Payment"><i class="fas fa-times"></i></button>
+                                                </form>
+                                                -->
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <p class="text-center text-muted">No payment confirmations are currently pending verification.</p>
+                    <% } %>
+                </div>
+            </div>
+            <!-- End Pending Payment Confirmations Section -->
+
+        </main>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<style>
+    .admin-portal-content { padding-top: 1rem; }
+    .customer-management-container .card-header { background-color: #f8f9fa; }
+    .table-responsive { margin-top: 1rem; }
+    .modal-footer { border-top: 1px solid #dee2e6; }
+    .btn-toolbar .btn { margin-left: 5px; }
+    .fas { margin-right: 0.25rem; }
+    .pending-confirmations-card .card-header { color: white; } /* Ensure text is white on bg-info */
+    .btn-xs { padding: .2rem .4rem; font-size: .75rem; border-radius: .2rem; } /* Extra small button */
+    .me-1 { margin-right: .25rem !important; } /* Margin end (right) */
+    .bg-info { background-color: #0dcaf0 !important; } /* Bootstrap info color */
+    #detailsModalTableCust td { padding: .5rem; vertical-align: top; } /* Differentiate from student modal table if on same page in future */
+    #detailsModalTableCust td:first-child { font-weight: bold; width: 30%; }
+</style>
+
+<!-- Generic Details Modal (can be shared if moved to a layout partial) -->
+<div class="modal fade" id="detailsModalCust" tabindex="-1" aria-labelledby="detailsModalCustLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detailsModalCustLabel">Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="detailsModalCustBody">
+        <p>Loading details...</p>
+        <table class="table table-sm table-bordered" id="detailsModalTableCust" style="display:none;"></table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Ensure Bootstrap modal instance is available if not loaded globally
+    // const bootstrap = window.bootstrap || {}; // Basic check
+
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const detailsModalCust = new bootstrap.Modal(document.getElementById('detailsModalCust'));
+        const detailsModalCustLabel = document.getElementById('detailsModalCustLabel');
+        const detailsModalCustBody = document.getElementById('detailsModalCustBody');
+        const detailsModalTableCust = document.getElementById('detailsModalTableCust');
+
+        document.querySelectorAll('.view-customer-details-btn').forEach(button => {
+            button.addEventListener('click', async function () {
+                const customerId = this.dataset.customerId;
+                const customerName = this.dataset.customerName;
+                detailsModalCustLabel.textContent = `Customer Details: ${customerName}`;
+                detailsModalCustBody.innerHTML = '<p>Loading details...</p>';
+                detailsModalTableCust.style.display = 'none';
+                detailsModalTableCust.innerHTML = ''; // Clear previous
+                detailsModalCust.show();
+
+                try {
+                    const response = await fetch(`/admin/customers/${customerId}/details-json`);
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.error || `HTTP error! status: ${response.status}`);
+                    }
+                    const customer = await response.json();
+
+                    let tableContent = '<tbody>';
+                    for (const key in customer) {
+                        if (customer.hasOwnProperty(key) && key !== '_id' && key !== '__v') {
+                            let value = customer[key];
+                            if (typeof value === 'object' && value !== null) {
+                                if (Array.isArray(value) && value.length === 0) value = '<i>None</i>';
+                                else if (Array.isArray(value)) value = value.map(item => typeof item === 'object' ? JSON.stringify(item, null, 2) : item).join('<br>');
+                                else value = JSON.stringify(value, null, 2);
+                            } else if (value === null || value === undefined || String(value).trim() === '') {
+                                value = '<i>N/A</i>';
+                            } else if (key.toLowerCase().includes('date') || key === 'createdAt' || key === 'updatedAt') {
+                                value = new Date(value).toLocaleString();
+                            }
+                            tableContent += `<tr><td>${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</td><td>${value}</td></tr>`;
+                        }
+                    }
+                    tableContent += '</tbody>';
+                    detailsModalTableCust.innerHTML = tableContent;
+                    detailsModalCustBody.innerHTML = ''; // Clear "Loading..."
+                    detailsModalTableCust.style.display = ''; // Show table
+
+                } catch (error) {
+                    console.error('Error fetching customer details:', error);
+                    detailsModalCustBody.innerHTML = `<p class="text-danger">Error loading details: ${error.message}</p>`;
+                }
+            });
+        });
+    } else {
+        console.warn('Bootstrap Modal JS not found. Detail modals may not work.');
+    }
+});
+</script>

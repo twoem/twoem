@@ -1,0 +1,86 @@
+<%- include('../partials/header', { title: pageTitle, success: typeof success !== 'undefined' ? success : null, error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="container financial-container">
+    <div class="card financial-summary-card">
+        <div class="card-header">
+            <h1>Financial Overview</h1>
+        </div>
+        <div class="card-body">
+            <% if (user && typeof studentData !== 'undefined' && studentData !== null) { %>
+                <div class="balance-display">
+                    <p class="balance-label">Your Current Fees Balance:</p>
+                    <h2 class="balance-amount <%= studentData.feesBalance > 0 ? 'text-danger' : 'text-success' %>">
+                        Ksh <%= formatCurrency(studentData.feesBalance) %>
+                    </h2>
+                    <% if (studentData.feesBalance <= 0) { %>
+                        <p class="text-success"><i class="fas fa-check-circle"></i> Your account is currently up to date. Thank you!</p>
+                    <% } else { %>
+                        <p class="text-danger"><i class="fas fa-exclamation-triangle"></i> Please clear your outstanding balance at your earliest convenience.</p>
+                    <% } %>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="payment-info">
+                    <h4>Payment Information</h4>
+                    <p>To make a payment, please use the following details:</p>
+                    <ul>
+                        <li><strong>M-Pesa Paybill:</strong> <%= process.env.PAYBILL_NUMBER || 'XXXXXX' %></li>
+                        <li><strong>Account Number:</strong> <%= user.registrationNumber %></li>
+                        <li><strong>Amount:</strong> Your outstanding balance or desired installment.</li>
+                    </ul>
+                    <p class="text-muted small">
+                        After making a payment, it may take some time to reflect on your portal.
+                        If you have made a payment and it's not reflecting after a reasonable period, please contact administration.
+                    </p>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="transaction-log-notice">
+                    <h4>Transaction Log</h4>
+                    <p class="text-muted">
+                        A detailed log of your fee payments and transactions will be available here in a future update.
+                        For any immediate queries regarding your payment history, please contact the administration office.
+                    </p>
+                </div>
+
+            <% } else if (error) { %>
+                <div class="alert alert-danger"><%= error %></div>
+            <% } else { %>
+                <p class="text-center">Loading financial details...</p>
+            <% } %>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="/student/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<%# Font Awesome for icons (optional, include in main header if used widely) %>
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> -->
+
+<style>
+    .financial-container { padding-top: 20px; max-width: 800px; margin: auto; }
+    .financial-summary-card .card-header { text-align: center; background-color: #f8f9fa; }
+    .financial-summary-card .card-header h1 { color: #0056b3; margin-bottom: 0; } /* Dark blue for heading */
+    .balance-display { text-align: center; padding: 20px 0; }
+    .balance-label { font-size: 1.1em; color: #555; margin-bottom: 5px; }
+    .balance-amount { font-size: 2.5em; font-weight: 700; margin-top: 0; margin-bottom: 10px; }
+    .text-danger { color: #dc3545 !important; }
+    .text-success { color: #28a745 !important; }
+    .payment-info ul { list-style: none; padding-left: 0; }
+    .payment-info li { margin-bottom: 8px; font-size: 1.05em; }
+    .my-4 { margin-top: 1.5rem !important; margin-bottom: 1.5rem !important; }
+    .transaction-log-notice, .payment-info {
+        padding: 15px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        margin-top: 15px;
+    }
+     .transaction-log-notice h4, .payment-info h4 { margin-top:0; color: #333; }
+    .fas { margin-right: 5px; } /* For Font Awesome icons */
+</style>

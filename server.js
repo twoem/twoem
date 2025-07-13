@@ -12,12 +12,10 @@ if (!process.env.DATABASE_URL) {
 mongoose.connect(process.env.DATABASE_URL, {
     // useNewUrlParser: true, // No longer needed in Mongoose 6+
     // useUnifiedTopology: true, // No longer needed in Mongoose 6+
-    // useCreateIndex: true, // No longer needed, Mongoose 6+ uses `autoCreate` and `autoIndex`
-    // useFindAndModify: false // No longer needed
 }).then(() => {
-    console.log('Successfully connected to MongoDB (for Customer data).');
+    console.log('Successfully connected to MongoDB.'); // Generic message
 }).catch(err => {
-    console.error('MongoDB connection error (for Customer data):', err);
+    console.error('MongoDB connection error:', err);
     process.exit(1); // Exit if connection fails
 });
 
@@ -62,41 +60,71 @@ app.use((req, res, next) => {
     res.locals.success_msg = req.flash('success_msg');
     res.locals.error_msg = req.flash('error_msg');
     res.locals.error = req.flash('error'); // For express-validator errors or other single errors
+    // Making user info available to all views if logged in (from my portal auth)
+    // This might conflict if your mainRoutes also sets req.user differently.
+    // For now, this makes portal user data available.
+    if (req.user) {
+        res.locals.currentUser = req.user; // Portal user
+    }
+    // Making title available for navbar active state
+    // This is a common pattern, but your mainRoutes might handle title differently.
+    // For portal pages, pageTitle is passed directly in res.render.
+    // We need a consistent way for the shared navbar to know the 'active' page.
+    // Let's rely on `title` being passed from `res.render` for now.
+    // res.locals.title = ''; // Example: set a default title if needed
     next();
 });
 
 
 // Import routes
 const mainRoutes = require('./src/routes/mainRoutes');
+const customerPortalRoutes = require('./src/routes/portals/customerPortalRoutes');
+const studentPortalRoutes = require('./src/routes/portals/studentPortalRoutes');
+const adminPortalRoutes = require('./src/routes/portals/adminPortalRoutes');
+
 
 // Use routes
 app.use('/', mainRoutes); // Mount main routes
 
+// Mount portal routes
+app.use('/customer', customerPortalRoutes);
+app.use('/student', studentPortalRoutes);
+app.use('/admin', adminPortalRoutes);
+
 
 // Catch 404 and forward to error handler
 app.use((req, res, next) => {
-    res.status(404).render('pages/errors/404', {
+    // Check if the request was for a portal asset that might be missing
+    // or if it's a general 404 for your public site.
+    // For now, using your existing 404 page.
+    res.status(404).render('pages/errors/404', { // Assuming this is your public 404 page
         title: 'Page Not Found',
         url: req.originalUrl
     });
 });
 
-// TODO: Add a more generic error handler (for 500 errors etc.)
+// Generic error handler (your existing one was commented out)
 // This should ideally be the VERY last middleware.
-// app.use((err, req, res, next) => {
-//     console.error(err.stack);
-//     // Check if headers have already been sent
-//     if (res.headersSent) {
-//         return next(err);
-//     }
-//     res.status(err.status || 500).render('pages/errors/500', { // Assuming 500.ejs exists
-//         title: 'Server Error',
-//         error: process.env.NODE_ENV === 'development' ? err : {} // Only show error details in dev
-//     });
-// });
+app.use((err, req, res, next) => {
+    console.error("Global Error Handler:",err.stack);
+    // Check if headers have already been sent
+    if (res.headersSent) {
+        return next(err);
+    }
+    const statusCode = err.status || 500;
+    // Render a generic error page for portals, or your existing one
+    // For now, sending a simple text response for non-404 portal errors to avoid conflicts
+    if (req.originalUrl.startsWith('/customer') || req.originalUrl.startsWith('/student') || req.originalUrl.startsWith('/admin')) {
+        res.status(statusCode).send(`Error ${statusCode}: An unexpected error occurred on the portal.`);
+    } else {
+         res.status(statusCode).render('pages/errors/500', { // Assuming 500.ejs for public site
+            title: 'Server Error',
+            error: process.env.NODE_ENV === 'development' ? err : { message: "An unexpected error occurred." }
+        });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
     console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
-    // console.log(`Default student pass: ${process.env.DEFAULT_STUDENT_PASSWORD}`); // Removed for cleaner logs
 });

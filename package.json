@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/twoem/jules-twoem#readme",
   "dependencies": {
+    "archiver": "^7.0.1",
     "bcryptjs": "^3.0.2",
     "connect-flash": "^0.1.1",
     "cookie-parser": "^1.4.7",
@@ -32,8 +33,9 @@
     "express-session": "^1.18.1",
     "express-validator": "^7.2.1",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.3.0",
-    "nodemailer": "^7.0.3",
+    "mongoose": "^8.16.2",
+    "multer": "^2.0.1",
+    "nodemailer": "^7.0.5",
     "sqlite3": "^5.1.7"
   }
 }

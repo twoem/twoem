@@ -1,0 +1,112 @@
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link <%= activePage === 'dashboard' ? 'active' : '' %>" aria-current="page" href="/admin/dashboard">
+                    <i class="fas fa-home sidebar-icon"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= activePage === 'students' ? 'active' : '' %>" href="/admin/students">
+                    <i class="fas fa-user-graduate sidebar-icon"></i>
+                    Students
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= activePage === 'customers' ? 'active' : '' %>" href="/admin/customers">
+                    <i class="fas fa-users sidebar-icon"></i>
+                    Customers
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= activePage === 'mailer' ? 'active' : '' %>" href="/admin/mailer">
+                    <i class="fas fa-envelope sidebar-icon"></i>
+                    Mailer
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= activePage === 'backup' ? 'active' : '' %>" href="/admin/backup">
+                    <i class="fas fa-database sidebar-icon"></i>
+                    Backup
+                </a>
+            </li>
+        </ul>
+
+        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+            <span>Settings & Account</span>
+        </h6>
+        <ul class="nav flex-column mb-2">
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/settings" disabled> <%# Placeholder %>
+                    <i class="fas fa-cog sidebar-icon"></i>
+                    Site Settings (Soon)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/logout">
+                    <i class="fas fa-sign-out-alt sidebar-icon"></i>
+                    Logout
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<style>
+    .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 100; /* Behind the navbar */
+        padding: 48px 0 0; /* Height of navbar */
+        box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+        background-color: #f8f9fa!important; /* Ensure it's light */
+    }
+
+    @media (max-width: 767.98px) {
+        .sidebar {
+            top: 56px; /* Adjust if navbar height changes */
+        }
+    }
+
+    .sidebar-sticky {
+        position: relative;
+        top: 0;
+        height: calc(100vh - 48px);
+        padding-top: .5rem;
+        overflow-x: hidden;
+        overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    }
+
+    .sidebar .nav-link {
+        font-weight: 500;
+        color: #333;
+        padding: .75rem 1rem; /* Increased padding */
+    }
+    .sidebar-icon {
+        margin-right: 8px;
+        width: 16px; /* Fixed width for icons */
+        text-align: center;
+    }
+
+    .sidebar .nav-link.active {
+        color: #007bff; /* Bootstrap primary blue */
+        background-color: #e9ecef; /* Light active background */
+        border-left: 3px solid #007bff;
+    }
+    .sidebar .nav-link:hover:not(.active) {
+        color: #0056b3;
+        background-color: #e9ecef;
+    }
+
+    .sidebar-heading {
+        font-size: .75rem;
+        text-transform: uppercase;
+    }
+    /* Adjust main content padding for fixed sidebar */
+    .col-md-9.ms-sm-auto.col-lg-10.px-md-4 {
+        padding-top: 1.5rem; /* Add some top padding to main content area */
+    }
+</style>

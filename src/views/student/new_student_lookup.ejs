@@ -1,0 +1,22 @@
+<%- include('../partials/header', { title: pageTitle, success: typeof success !== 'undefined' ? success : null, error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="portal-login-container"> <%/* Re-using login container style */%>
+    <h1>New Student Details Lookup</h1>
+    <p>If you are a newly registered student and need to find your initial login details (Registration Number and Default Password), please enter your First Name and the Email Address you were registered with.</p>
+    <p class="text-muted"><small>This information can only be viewed once per student for security reasons.</small></p>
+
+    <form action="/student/new-student-lookup" method="POST">
+        <div>
+            <label for="firstName">Your First Name:</label>
+            <input type="text" id="firstName" name="firstName" value="<%= typeof oldInput !== 'undefined' && oldInput.firstName ? oldInput.firstName : '' %>" required>
+        </div>
+        <div>
+            <label for="email">Your Registered Email Address:</label>
+            <input type="email" id="email" name="email" value="<%= typeof oldInput !== 'undefined' && oldInput.email ? oldInput.email : '' %>" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Lookup My Details</button>
+    </form>
+    <p style="margin-top: 20px;"><a href="/student/login">Back to Login</a></p>
+</div>
+
+<%- include('../partials/footer') %>
